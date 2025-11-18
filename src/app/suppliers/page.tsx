@@ -24,9 +24,14 @@ export default function SuppliersPage() {
   const loadSuppliers = async () => {
     try {
       const response = await apiClient.get('/suppliers');
-      setSuppliers(response.data);
+      // Handle both cases: direct array or object with data property
+      const suppliersData = Array.isArray(response.data) 
+        ? response.data 
+        : response.data?.data || [];
+      setSuppliers(suppliersData);
     } catch (error) {
       console.error('Failed to load suppliers:', error);
+      setSuppliers([]); // Ensure suppliers is always an array
     } finally {
       setLoading(false);
     }

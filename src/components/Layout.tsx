@@ -1,10 +1,13 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import Notifications from './Notifications';
-import Link from 'next/link';
+import Sidebar from './Sidebar';
+import SidebarOverlay from './SidebarOverlay';
+import TopHeader from './TopHeader';
+import MainContent from './MainContent';
+import LoadingScreen from './LoadingScreen';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -14,6 +17,7 @@ export default function Layout({ children }: LayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, loading, logout } = useAuth();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !user && pathname !== '/login') {
@@ -26,78 +30,37 @@ export default function Layout({ children }: LayoutProps) {
     router.push('/login');
   };
 
+  const handleSidebarClose = () => {
+    setSidebarOpen(false);
+  };
+
+  const handleSidebarToggle = () => {
+    setSidebarOpen((prev) => !prev);
+  };
+
   if (pathname === '/login') {
     return <>{children}</>;
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
-  const navigation = [
-    { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Products', href: '/products' },
-    { name: 'Stock Movements', href: '/movements' },
-    { name: 'Purchases', href: '/purchases' },
-    { name: 'Sales', href: '/sales' },
-    { name: 'Suppliers', href: '/suppliers' },
-    { name: 'Customers', href: '/customers' },
-    { name: 'Categories', href: '/categories' },
-    { name: 'Warehouses', href: '/warehouses' },
-    { name: 'Reports', href: '/reports' },
-  ];
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex">
-              <div className="flex-shrink-0 flex items-center">
-                <h1 className="text-xl font-semibold">Gestion de Stock Pro</h1>
-              </div>
-              <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                {navigation.map((item) => {
-                  const isActive = pathname === item.href;
-                  return (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      className={`${
-                        isActive
-                          ? 'border-primary-500 text-gray-900'
-                          : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                      } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
-                    >
-                      {item.name}
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Notifications />
-              <span className="text-sm text-gray-700">
-                {user?.firstName} {user?.lastName} ({user?.role})
-              </span>
-              <button
-                onClick={handleLogout}
-                className="text-sm text-gray-700 hover:text-gray-900"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-gray-50 flex">
+      <Sidebar
+        isOpen={sidebarOpen}
+        onClose={handleSidebarClose}
+        user={user}
+        onLogout={handleLogout}
+      />
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        {children}
-      </main>
+      <SidebarOverlay isOpen={sidebarOpen} onClose={handleSidebarClose} />
+
+      <div className="flex-1 flex flex-col lg:ml-0">
+        <TopHeader onMenuClick={handleSidebarToggle} user={user} />
+        <MainContent>{children}</MainContent>
+      </div>
     </div>
   );
 }
