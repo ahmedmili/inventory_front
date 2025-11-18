@@ -60,6 +60,40 @@ Backend issues cookies for refresh tokens; ensure your domain/port config matche
 
 ---
 
+## 🐳 Docker Deployment
+
+### Using Docker Compose
+
+Le projet inclut un `docker-compose.yml` pour déployer le frontend.
+
+```bash
+# Démarrer le service
+docker-compose up -d
+
+# Voir les logs
+docker-compose logs -f frontend
+
+# Arrêter le service
+docker-compose down
+
+# Rebuild et redémarrer
+docker-compose up -d --build
+```
+
+### Using Docker Only
+
+```bash
+# Build l'image
+docker build -t gestion-stock-frontend .
+
+# Run le container
+docker run -p 3000:3000 \
+  -e NEXT_PUBLIC_API_URL=http://your-backend-url:4000 \
+  gestion-stock-frontend
+```
+
+**Note** : Assurez-vous que `NEXT_PUBLIC_API_URL` pointe vers l'URL de votre backend.
+
 ## 🧪 Scripts
 
 | Command | Description |

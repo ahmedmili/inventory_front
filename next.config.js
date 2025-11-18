@@ -4,6 +4,7 @@ const nextConfig = {
   swcMinify: true,
   compress: true,
   poweredByHeader: false,
+  output: 'standalone', // Required for Docker
   images: {
     domains: ['localhost'],
     formats: ['image/avif', 'image/webp'],
