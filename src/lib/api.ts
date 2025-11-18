@@ -1,0 +1,97 @@
+import axios, { AxiosInstance, AxiosError } from 'axios';
+import Cookies from 'js-cookie';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+
+class ApiClient {
+  private client: AxiosInstance;
+
+  constructor() {
+    this.client = axios.create({
+      baseURL: API_URL,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      withCredentials: true,
+    });
+
+    // Request interceptor to add auth token
+    this.client.interceptors.request.use(
+      (config) => {
+        const token = Cookies.get('accessToken');
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+      },
+      (error) => Promise.reject(error),
+    );
+
+    // Response interceptor to handle token refresh and errors
+    this.client.interceptors.response.use(
+      (response) => response,
+      async (error: AxiosError) => {
+        const originalRequest = error.config as any;
+
+        // Handle 401 Unauthorized - Try to refresh token
+        if (error.response?.status === 401 && !originalRequest._retry) {
+          originalRequest._retry = true;
+
+          try {
+            const refreshToken = Cookies.get('refreshToken');
+            if (refreshToken) {
+              const response = await axios.post(
+                `${API_URL}/auth/refresh`,
+                { refreshToken },
+              );
+              const { accessToken } = response.data;
+              Cookies.set('accessToken', accessToken);
+              originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+              return this.client(originalRequest);
+            }
+          } catch (refreshError) {
+            Cookies.remove('accessToken');
+            Cookies.remove('refreshToken');
+            if (typeof window !== 'undefined') {
+              window.location.href = '/login';
+            }
+            return Promise.reject(refreshError);
+          }
+        }
+
+        // Handle 403 Forbidden
+        if (error.response?.status === 403) {
+          const message = error.response?.data?.message || 'You do not have permission to perform this action';
+          if (typeof window !== 'undefined') {
+            // Could show a toast here, but we'll let the component handle it
+            console.warn('Forbidden:', message);
+          }
+        }
+
+        // Handle 404 Not Found
+        if (error.response?.status === 404) {
+          const message = error.response?.data?.message || 'Resource not found';
+          console.warn('Not Found:', message);
+        }
+
+        // Handle 500 Server Error
+        if (error.response?.status >= 500) {
+          console.error('Server Error:', {
+            status: error.response.status,
+            message: error.response?.data?.message,
+            url: originalRequest?.url,
+          });
+        }
+
+        return Promise.reject(error);
+      },
+    );
+  }
+
+  get instance() {
+    return this.client;
+  }
+}
+
+export const apiClient = new ApiClient().instance;
+
