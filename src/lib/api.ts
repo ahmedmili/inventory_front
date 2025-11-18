@@ -61,7 +61,8 @@ class ApiClient {
 
         // Handle 403 Forbidden
         if (error.response?.status === 403) {
-          const message = error.response?.data?.message || 'You do not have permission to perform this action';
+          const data = error.response?.data as { message?: string } | undefined;
+          const message = data?.message || 'You do not have permission to perform this action';
           if (typeof window !== 'undefined') {
             // Could show a toast here, but we'll let the component handle it
             console.warn('Forbidden:', message);
@@ -70,15 +71,17 @@ class ApiClient {
 
         // Handle 404 Not Found
         if (error.response?.status === 404) {
-          const message = error.response?.data?.message || 'Resource not found';
+          const data = error.response?.data as { message?: string } | undefined;
+          const message = data?.message || 'Resource not found';
           console.warn('Not Found:', message);
         }
 
         // Handle 500 Server Error
-        if (error.response?.status >= 500) {
+        if (error.response?.status && error.response.status >= 500) {
+          const data = error.response?.data as { message?: string } | undefined;
           console.error('Server Error:', {
             status: error.response.status,
-            message: error.response?.data?.message,
+            message: data?.message,
             url: originalRequest?.url,
           });
         }
