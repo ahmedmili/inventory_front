@@ -23,6 +23,10 @@ export default function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(() => {
     const saved = localStorageService.getItem(SIDEBAR_MINIMIZED_KEY);
+    // Default to minimized on desktop, expanded on mobile
+    if (saved === null) {
+      return typeof window !== 'undefined' && window.innerWidth >= 1024;
+    }
     return saved === 'true';
   });
 
@@ -72,9 +76,9 @@ export default function Layout({ children }: LayoutProps) {
         onToggleMinimize={handleToggleMinimize}
       />
 
-      <SidebarOverlay isOpen={sidebarOpen} onClose={handleSidebarClose} />
+      <SidebarOverlay isOpen={sidebarOpen && !isMinimized} onClose={handleSidebarClose} />
 
-      <div className="flex-1 flex flex-col lg:ml-0">
+      <div className="flex-1 flex flex-col min-w-0">
         <TopHeader onMenuClick={handleSidebarToggle} user={user} />
         <MainContent>{children}</MainContent>
       </div>

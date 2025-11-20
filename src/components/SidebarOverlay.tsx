@@ -10,7 +10,7 @@ export default function SidebarOverlay({ isOpen, onClose }: SidebarOverlayProps)
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden transition-opacity duration-300"
+      className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden transition-opacity duration-300"
       onClick={onClose}
       aria-hidden="true"
     />

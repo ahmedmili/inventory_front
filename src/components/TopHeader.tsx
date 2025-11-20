@@ -18,7 +18,7 @@ const getRoleLabel = (role: User['role']) => {
 
 export default function TopHeader({ onMenuClick, user }: TopHeaderProps) {
   return (
-    <header className="bg-white shadow-sm h-16 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30">
+    <header className="bg-white shadow-sm h-16 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-20">
       <button
         onClick={onMenuClick}
         className="lg:hidden text-gray-500 hover:text-gray-700 p-2 transition-colors"

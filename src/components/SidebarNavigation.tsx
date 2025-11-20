@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { navigationItems, NavigationItem } from './navigationConfig';
 import NavItem from './NavItem';
-import { isItemActive } from './utils/routeMatcher';
+import { isItemActive, hasActiveChild } from './utils/routeMatcher';
 import { useAuth } from '@/contexts/AuthContext';
 import { hasAccess, AccessRequirements } from '@/lib/permissions';
 
@@ -69,9 +69,10 @@ export default function SidebarNavigation({ onNavigate, isMinimized = false }: S
     items.map((item) => {
       const key = getItemKey(item, depth);
       const hasChildren = Boolean(item.children?.length);
-      const active = isItemActive(pathname, item);
+      const active = isItemActive(pathname, item, depth);
       const shouldBeExpanded = expanded[key];
-      const fallbackExpanded = hasChildren && active;
+      // Check if this item or any of its children/descendants is active
+      const fallbackExpanded = hasChildren && (active || hasActiveChild(pathname, item));
       const isExpanded = hasChildren ? (shouldBeExpanded ?? fallbackExpanded) : false;
 
       return (
@@ -101,7 +102,7 @@ export default function SidebarNavigation({ onNavigate, isMinimized = false }: S
     });
 
   return (
-    <nav className={`flex-1 py-6 space-y-1 overflow-y-auto ${isMinimized ? 'px-2' : 'px-4'}`}>
+    <nav className={`flex-1 py-4 space-y-0.5 overflow-y-auto overflow-x-hidden min-h-0 ${isMinimized ? 'px-2' : 'px-3'}`}>
       {renderItems(filteredItems)}
     </nav>
   );

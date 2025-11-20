@@ -1,14 +1,10 @@
 'use client';
 
 import SidebarHeader from './SidebarHeader';
+import SidebarSearch from './SidebarSearch';
 import SidebarNavigation from './SidebarNavigation';
 import SidebarFooter from './SidebarFooter';
-
-interface User {
-  firstName?: string;
-  lastName?: string;
-  role?: string;
-}
+import { User } from '@/lib/auth';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -32,9 +28,10 @@ export default function Sidebar({
   return (
     <aside
       className={`
-        fixed inset-y-0 left-0 z-50 ${width} bg-white shadow-lg transform transition-all duration-300 ease-in-out
-        lg:translate-x-0 lg:static lg:inset-0
-        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+        fixed top-0 bottom-0 left-0 z-40 ${width} bg-white shadow-xl border-r border-gray-100 transform transition-all duration-300 ease-in-out
+        lg:translate-x-0 lg:relative lg:z-auto lg:h-screen
+        ${isOpen || isMinimized ? 'translate-x-0' : '-translate-x-full'}
+        flex flex-col
       `}
     >
       <SidebarHeader 
@@ -43,6 +40,7 @@ export default function Sidebar({
         isMinimized={isMinimized}
         onToggleMinimize={onToggleMinimize}
       />
+      <SidebarSearch isMinimized={isMinimized} />
       <SidebarNavigation 
         onNavigate={onClose}
         isMinimized={isMinimized}
