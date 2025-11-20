@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService } from '@/lib/auth';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { refreshUser } = useAuth();
+  const { user, loading: authLoading, refreshUser, logout } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -29,6 +29,27 @@ export default function LoginPage() {
     }
   };
 
+  const handleLogout = async () => {
+    await logout();
+    setEmail('');
+    setPassword('');
+  };
+
+  const handleContinue = () => {
+    router.push('/dashboard');
+  };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-md">
@@ -40,6 +61,30 @@ export default function LoginPage() {
             Sign in to your account
           </p>
         </div>
+
+        {/* Show message if user is already logged in */}
+        {user && (
+          <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-md">
+            <p className="font-medium mb-2">
+              You are already logged in as {user.firstName} {user.lastName}
+            </p>
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={handleContinue}
+                className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm font-medium"
+              >
+                Continue to Dashboard
+              </button>
+              <button
+                onClick={handleLogout}
+                className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 text-sm font-medium"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        )}
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
