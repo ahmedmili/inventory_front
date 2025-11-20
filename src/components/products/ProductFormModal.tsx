@@ -7,40 +7,43 @@ import { z } from 'zod';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
 import Modal from '../Modal';
-import ImageUpload from '../ImageUpload';
+// Commented out - can be restored later
+// import ImageUpload from '../ImageUpload';
 import {
-  CategoryOption,
+  // CategoryOption, // Commented out - can be restored later
   SupplierSummary,
   extractCollection,
 } from '@/types/api';
 
 const productSchema = z.object({
-  name: z.string().min(1, 'Le nom du produit est requis'),
+  name: z.string().min(1, 'Le nom du produit est requis'), // Nom de produit (required)
   sku: z.string().optional(), // Référence (optional)
-  barcode: z.string().optional(),
-  description: z.string().optional(),
-  categoryId: z.string().optional(),
+  description: z.string().optional(), // Description (optional)
   supplierId: z.string().optional(), // Fournisseur (optional)
-  purchasePrice: z.number().min(0, 'Le prix doit être positif'),
-  salePrice: z.number().min(0, 'Le prix doit être positif'),
-  minStock: z.number().int().min(0, 'Le seuil doit être non négatif'),
-  images: z.array(z.string()).optional(),
+  salePrice: z.number().min(0, 'Le prix doit être positif'), // Prix (required)
+  minStock: z.number().int().min(0, 'Le seuil doit être non négatif'), // Seuil (required)
+  // Commented out fields - can be restored later
+  // barcode: z.string().optional(),
+  // categoryId: z.string().optional(),
+  // purchasePrice: z.number().min(0, 'Le prix doit être positif'),
+  // images: z.array(z.string()).optional(),
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
 
 interface Product {
   id: string;
-  name: string;
-  sku?: string | null;
-  barcode?: string | null;
-  description?: string | null;
-  categoryId?: string | null;
-  supplierId?: string | null;
-  purchasePrice: number | string;
-  salePrice: number | string;
-  minStock: number;
-  images?: string[] | null;
+  name: string; // Nom de produit
+  sku?: string | null; // Référence (optional)
+  description?: string | null; // Description (optional)
+  supplierId?: string | null; // Fournisseur (optional)
+  salePrice: number | string; // Prix
+  minStock: number; // Seuil
+  // Commented out fields - can be restored later
+  // barcode?: string | null;
+  // categoryId?: string | null;
+  // purchasePrice: number | string;
+  // images?: string[] | null;
 }
 
 interface ProductFormModalProps {
@@ -60,7 +63,8 @@ export default function ProductFormModal({
   const [loading, setLoading] = useState(false);
   const [loadingProduct, setLoadingProduct] = useState(false);
   const [error, setError] = useState('');
-  const [categories, setCategories] = useState<CategoryOption[]>([]);
+  // Commented out - can be restored later
+  // const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [suppliers, setSuppliers] = useState<SupplierSummary[]>([]);
 
   const isEditMode = !!productId;
@@ -74,12 +78,14 @@ export default function ProductFormModal({
     formState: { errors },
   } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
-    defaultValues: {
-      images: [],
-    },
+    // Commented out default values - can be restored later
+    // defaultValues: {
+    //   images: [],
+    // },
   });
 
-  const images = watch('images') || [];
+  // Commented out - can be restored later
+  // const images = watch('images') || [];
 
   // Load categories and suppliers
   useEffect(() => {
@@ -97,14 +103,15 @@ export default function ProductFormModal({
       reset({
         name: '',
         sku: '',
-        barcode: '',
         description: '',
-        categoryId: '',
         supplierId: '',
-        purchasePrice: 0,
         salePrice: 0,
         minStock: 0,
-        images: [],
+        // Commented out fields - can be restored later
+        // barcode: '',
+        // categoryId: '',
+        // purchasePrice: 0,
+        // images: [],
       });
       setError('');
     }
@@ -112,11 +119,13 @@ export default function ProductFormModal({
 
   const loadOptions = async () => {
     try {
-      const [categoriesRes, suppliersRes] = await Promise.all([
-        apiClient.get('/categories'),
-        apiClient.get('/suppliers'),
-      ]);
-      setCategories(extractCollection<CategoryOption>(categoriesRes.data));
+      // Commented out categories - can be restored later
+      // const [categoriesRes, suppliersRes] = await Promise.all([
+      //   apiClient.get('/categories'),
+      //   apiClient.get('/suppliers'),
+      // ]);
+      // setCategories(extractCollection<CategoryOption>(categoriesRes.data));
+      const suppliersRes = await apiClient.get('/suppliers');
       setSuppliers(extractCollection<SupplierSummary>(suppliersRes.data));
     } catch (error) {
       console.error('Failed to load options:', error);
@@ -134,14 +143,15 @@ export default function ProductFormModal({
       reset({
         name: product.name,
         sku: product.sku || '',
-        barcode: product.barcode || '',
         description: product.description || '',
-        categoryId: product.categoryId || '',
         supplierId: product.supplierId || '',
-        purchasePrice: Number(product.purchasePrice),
         salePrice: Number(product.salePrice),
         minStock: product.minStock,
-        images: product.images || [],
+        // Commented out fields - can be restored later
+        // barcode: product.barcode || '',
+        // categoryId: product.categoryId || '',
+        // purchasePrice: Number(product.purchasePrice),
+        // images: product.images || [],
       });
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Échec du chargement du produit';
@@ -162,13 +172,14 @@ export default function ProductFormModal({
         name: data.name,
         sku: data.sku || undefined,
         supplierId: data.supplierId || undefined,
-        categoryId: data.categoryId || undefined,
         description: data.description || undefined,
-        barcode: data.barcode || undefined,
-        purchasePrice: data.purchasePrice,
         salePrice: data.salePrice,
         minStock: data.minStock,
-        images: data.images && data.images.length > 0 ? data.images : undefined,
+        // Commented out fields - can be restored later
+        // categoryId: data.categoryId || undefined,
+        // barcode: data.barcode || undefined,
+        // purchasePrice: data.purchasePrice,
+        // images: data.images && data.images.length > 0 ? data.images : undefined,
       };
 
       if (isEditMode && productId) {
@@ -275,8 +286,30 @@ export default function ProductFormModal({
               )}
             </div>
 
-            {/* Prix d'achat - Required */}
+            {/* Prix - Required */}
             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Prix <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">€</span>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  {...register('salePrice', { valueAsNumber: true })}
+                  placeholder="0.00"
+                  className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 pl-8 pr-4 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                />
+              </div>
+              {errors.salePrice && (
+                <p className="mt-1 text-sm text-red-600">{errors.salePrice.message}</p>
+              )}
+            </div>
+
+            {/* Commented out fields - can be restored later */}
+            {/* Prix d'achat - Required */}
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Prix d'achat <span className="text-red-500">*</span>
               </label>
@@ -294,28 +327,7 @@ export default function ProductFormModal({
               {errors.purchasePrice && (
                 <p className="mt-1 text-sm text-red-600">{errors.purchasePrice.message}</p>
               )}
-            </div>
-
-            {/* Prix de vente - Required */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Prix de vente <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">€</span>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  {...register('salePrice', { valueAsNumber: true })}
-                  placeholder="0.00"
-                  className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 pl-8 pr-4 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                />
-              </div>
-              {errors.salePrice && (
-                <p className="mt-1 text-sm text-red-600">{errors.salePrice.message}</p>
-              )}
-            </div>
+            </div> */}
 
             {/* Seuil - Required */}
             <div>
@@ -337,8 +349,9 @@ export default function ProductFormModal({
               </p>
             </div>
 
+            {/* Commented out fields - can be restored later */}
             {/* Catégorie - Optional */}
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Catégorie
               </label>
@@ -353,7 +366,7 @@ export default function ProductFormModal({
                   </option>
                 ))}
               </select>
-            </div>
+            </div> */}
 
             {/* Description - Optional */}
             <div className="md:col-span-2">
@@ -368,8 +381,9 @@ export default function ProductFormModal({
               />
             </div>
 
+            {/* Commented out fields - can be restored later */}
             {/* Images */}
-            <div className="md:col-span-2">
+            {/* <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Images du produit
               </label>
@@ -379,7 +393,7 @@ export default function ProductFormModal({
                 maxImages={5}
                 disabled={loading}
               />
-            </div>
+            </div> */}
           </div>
 
           {/* Actions */}

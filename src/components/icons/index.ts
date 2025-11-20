@@ -9,4 +9,10 @@ export { default as BuildingIcon } from './BuildingIcon';
 export { default as WarehouseIcon } from './WarehouseIcon';
 export { default as ReportIcon } from './ReportIcon';
 export { default as DashboardIcon } from './DashboardIcon';
+export { default as EyeIcon } from './EyeIcon';
+export { default as EditIcon } from './EditIcon';
+export { default as PlusIcon } from './PlusIcon';
+export { default as SearchIcon } from './SearchIcon';
+export { default as CloseIcon } from './CloseIcon';
+export { default as TrashIcon } from './TrashIcon';
 

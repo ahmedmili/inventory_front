@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+
+export type AnimationType = 'fade' | 'slide' | 'scale' | 'slide-up' | 'slide-down' | 'zoom' | 'none';
 
 interface ModalProps {
   isOpen: boolean;
@@ -10,6 +12,7 @@ interface ModalProps {
   children: React.ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
   showCloseButton?: boolean;
+  animation?: AnimationType;
 }
 
 const sizeClasses = {
@@ -27,18 +30,47 @@ export default function Modal({
   children,
   size = 'lg',
   showCloseButton = true,
+  animation = 'scale',
 }: ModalProps) {
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [shouldRender, setShouldRender] = useState(false);
+
+  const animationDuration = animation === 'none' ? 0 : 200;
+  const durationClass = animation === 'none' ? '' : 'duration-200';
+
   useEffect(() => {
     if (isOpen) {
+      setShouldRender(true);
+      if (animation !== 'none') {
+        // Trigger animation after render
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            setIsAnimating(true);
+          });
+        });
+      } else {
+        setIsAnimating(true);
+      }
       document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = 'unset';
+      setIsAnimating(false);
+      // Wait for animation to complete before unmounting
+      if (animation !== 'none') {
+        const timer = setTimeout(() => {
+          setShouldRender(false);
+        }, animationDuration);
+        document.body.style.overflow = 'unset';
+        return () => clearTimeout(timer);
+      } else {
+        setShouldRender(false);
+        document.body.style.overflow = 'unset';
+      }
     }
 
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [isOpen]);
+  }, [isOpen, animation, animationDuration]);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -56,13 +88,57 @@ export default function Modal({
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!shouldRender) return null;
+
+  // Animation classes based on animation type
+  const getBackdropClasses = () => {
+    if (animation === 'none') return isAnimating ? 'opacity-50' : 'opacity-0';
+    return `transition-opacity ${durationClass} ${isAnimating ? 'opacity-50' : 'opacity-0'}`;
+  };
+
+  const getModalClasses = () => {
+    const baseClasses = `relative bg-white rounded-lg shadow-xl w-full ${sizeClasses[size]} transform transition-all ${durationClass}`;
+    
+    if (animation === 'none') {
+      return `${baseClasses} ${isAnimating ? 'opacity-100' : 'opacity-0'}`;
+    }
+
+    const animationClasses: Record<Exclude<AnimationType, 'none'>, { enter: string; exit: string }> = {
+      fade: {
+        enter: 'opacity-100',
+        exit: 'opacity-0',
+      },
+      slide: {
+        enter: 'opacity-100 translate-x-0',
+        exit: 'opacity-0 translate-x-full',
+      },
+      scale: {
+        enter: 'opacity-100 scale-100 translate-y-0',
+        exit: 'opacity-0 scale-95 translate-y-4',
+      },
+      'slide-up': {
+        enter: 'opacity-100 translate-y-0',
+        exit: 'opacity-0 translate-y-8',
+      },
+      'slide-down': {
+        enter: 'opacity-100 translate-y-0',
+        exit: 'opacity-0 -translate-y-8',
+      },
+      zoom: {
+        enter: 'opacity-100 scale-100',
+        exit: 'opacity-0 scale-75',
+      },
+    };
+
+    const anim = animationClasses[animation];
+    return `${baseClasses} ${isAnimating ? anim.enter : anim.exit}`;
+  };
 
   const modalContent = (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+        className={`fixed inset-0 bg-black ${getBackdropClasses()}`}
         onClick={onClose}
         aria-hidden="true"
       />
@@ -70,7 +146,7 @@ export default function Modal({
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
         <div
-          className={`relative bg-white rounded-lg shadow-xl w-full ${sizeClasses[size]} transform transition-all`}
+          className={getModalClasses()}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
