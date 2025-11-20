@@ -8,6 +8,7 @@ import SidebarOverlay from './SidebarOverlay';
 import TopHeader from './TopHeader';
 import MainContent from './MainContent';
 import LoadingScreen from './LoadingScreen';
+import SidebarToggleButton from './SidebarToggleButton';
 import { localStorageService } from '@/lib/local-storage';
 
 interface LayoutProps {
@@ -74,12 +75,21 @@ export default function Layout({ children }: LayoutProps) {
         onLogout={handleLogout}
         isMinimized={isMinimized}
         onToggleMinimize={handleToggleMinimize}
+        onToggleOpen={handleSidebarToggle}
       />
 
       <SidebarOverlay isOpen={sidebarOpen && !isMinimized} onClose={handleSidebarClose} />
 
+      {/* Single unified toggle button - always visible */}
+      <SidebarToggleButton
+        isMinimized={isMinimized}
+        isOpen={sidebarOpen}
+        onToggleMinimize={handleToggleMinimize}
+        onToggleOpen={handleSidebarToggle}
+      />
+
       <div className="flex-1 flex flex-col min-w-0">
-        <TopHeader onMenuClick={handleSidebarToggle} user={user} />
+        <TopHeader user={user} />
         <MainContent>{children}</MainContent>
       </div>
     </div>

@@ -42,7 +42,7 @@ export default function NavItem({
       className={`flex items-center w-full ${isMinimized ? 'justify-center' : 'gap-3'}`}
       style={!isMinimized && paddingLeft ? { paddingLeft: `${paddingLeft}px` } : undefined}
     >
-      <span className={`flex-shrink-0 ${isActive ? 'text-gray-900' : 'text-gray-500 group-hover:text-gray-700'} ${depth > 0 ? 'scale-75' : ''}`}>
+      <span className={`flex-shrink-0 flex items-center justify-center ${isActive ? 'text-gray-900' : 'text-gray-500 group-hover:text-gray-700'} ${depth > 0 && !isMinimized ? 'scale-75' : ''}`}>
         {item.icon}
       </span>
       {!isMinimized && (

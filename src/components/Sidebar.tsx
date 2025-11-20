@@ -13,6 +13,7 @@ interface SidebarProps {
   onLogout: () => void;
   isMinimized?: boolean;
   onToggleMinimize?: () => void;
+  onToggleOpen?: () => void;
 }
 
 export default function Sidebar({ 
@@ -21,7 +22,8 @@ export default function Sidebar({
   user, 
   onLogout, 
   isMinimized = false,
-  onToggleMinimize 
+  onToggleMinimize,
+  onToggleOpen
 }: SidebarProps) {
   const width = isMinimized ? 'w-20' : 'w-64';
 
@@ -35,10 +37,7 @@ export default function Sidebar({
       `}
     >
       <SidebarHeader 
-        onClose={onClose} 
-        showCloseButton={true}
         isMinimized={isMinimized}
-        onToggleMinimize={onToggleMinimize}
       />
       <SidebarSearch isMinimized={isMinimized} />
       <SidebarNavigation 
