@@ -8,6 +8,7 @@ import SidebarOverlay from './SidebarOverlay';
 import TopHeader from './TopHeader';
 import MainContent from './MainContent';
 import LoadingScreen from './LoadingScreen';
+import { localStorageService } from '@/lib/local-storage';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -21,11 +22,8 @@ export default function Layout({ children }: LayoutProps) {
   const { user, loading, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(SIDEBAR_MINIMIZED_KEY);
-      return saved === 'true';
-    }
-    return false;
+    const saved = localStorageService.getItem(SIDEBAR_MINIMIZED_KEY);
+    return saved === 'true';
   });
 
   useEffect(() => {
@@ -35,9 +33,7 @@ export default function Layout({ children }: LayoutProps) {
   }, [user, loading, pathname, router]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(SIDEBAR_MINIMIZED_KEY, String(isMinimized));
-    }
+    localStorageService.setItem(SIDEBAR_MINIMIZED_KEY, String(isMinimized));
   }, [isMinimized]);
 
   const handleLogout = async () => {

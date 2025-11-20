@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { authService, User } from '@/lib/auth';
 
 interface AuthContextType {
@@ -16,20 +16,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const refreshUser = async () => {
+  const refreshUser = useCallback(async (options?: { silent?: boolean }) => {
+    const silent = options?.silent ?? false;
+    if (!silent) {
+      setLoading(true);
+    }
+
     try {
-      const currentUser = await authService.getCurrentUser();
+      const currentUser = await authService.getCurrentUser({ forceRemote: true });
       setUser(currentUser);
     } catch {
       setUser(null);
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
-  };
+  }, []);
 
   useEffect(() => {
-    refreshUser();
-  }, []);
+    const cachedUser = authService.getStoredUser();
+    if (cachedUser) {
+      setUser(cachedUser);
+      setLoading(false);
+    }
+
+    refreshUser({ silent: !!cachedUser });
+  }, [refreshUser]);
 
   const logout = async () => {
     await authService.logout();
@@ -37,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, refreshUser, logout }}>
+    <AuthContext.Provider value={{ user, loading, refreshUser: () => refreshUser(), logout }}>
       {children}
     </AuthContext.Provider>
   );

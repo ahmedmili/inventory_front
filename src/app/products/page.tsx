@@ -7,6 +7,7 @@ import Layout from '@/components/Layout';
 import Link from 'next/link';
 import Pagination from '@/components/Pagination';
 import { TableSkeleton } from '@/components/SkeletonLoader';
+import RouteGuard from '@/components/guards/RouteGuard';
 
 interface Product {
   id: string;
@@ -54,8 +55,14 @@ export default function ProductsPage() {
   };
 
   return (
-    <Layout>
-      <div className="px-4 py-6 sm:px-0">
+    <RouteGuard
+      requirements={{
+        requireAuth: true,
+        requirePermissions: ['products.read'],
+      }}
+    >
+      <Layout>
+        <div className="px-4 py-6 sm:px-0">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold">Products</h2>
           <Link
@@ -160,6 +167,7 @@ export default function ProductsPage() {
         )}
       </div>
     </Layout>
+    </RouteGuard>
   );
 }
 
