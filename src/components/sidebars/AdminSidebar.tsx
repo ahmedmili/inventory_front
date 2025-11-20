@@ -44,7 +44,7 @@ export default function AdminSidebar({
       <SidebarHeader 
         isMinimized={isMinimized}
       />
-      <SidebarSearch isMinimized={isMinimized} />
+      {/* <SidebarSearch isMinimized={isMinimized} /> */}
       <SidebarNavigation 
         onNavigate={onClose}
         isMinimized={isMinimized}

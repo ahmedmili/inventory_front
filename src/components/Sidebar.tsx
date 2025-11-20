@@ -41,7 +41,7 @@ export default function Sidebar({
       <SidebarHeader 
         isMinimized={isMinimized}
       />
-      <SidebarSearch isMinimized={isMinimized} />
+      {/* <SidebarSearch isMinimized={isMinimized} /> */}
       <SidebarNavigation 
         onNavigate={onClose}
         isMinimized={isMinimized}
