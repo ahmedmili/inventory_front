@@ -7,8 +7,16 @@ import LayoutSelector from '@/components/layouts/LayoutSelector';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Gestion de Stock Pro',
+  title: 'SAUTER',
   description: 'Professional inventory management system',
+  icons: {
+    icon: [
+      { url: '/logo/app_logo.svg', type: 'image/svg+xml' },
+      { url: '/logo/app_logo.jpeg', type: 'image/jpeg' },
+    ],
+    apple: '/logo/app_logo.jpeg',
+    shortcut: '/logo/app_logo.svg',
+  },
 };
 
 export default function RootLayout({

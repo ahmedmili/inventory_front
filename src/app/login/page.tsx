@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { authService } from '@/lib/auth';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUserRoleCode } from '@/lib/permissions';
@@ -71,16 +72,15 @@ export default function LoginPage() {
         {/* Logo and Header */}
         <div className="text-center">
           <div className="flex justify-center mb-6">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 via-blue-500 to-green-500 p-2 shadow-lg">
-              <div className="w-full h-full rounded-xl bg-white flex items-center justify-center">
-                <div className="grid grid-cols-2 gap-1 w-8 h-8">
-                  <div className="bg-red-500 rounded-tl-lg"></div>
-                  <div className="bg-blue-500 rounded-tr-lg"></div>
-                  <div className="bg-green-500 rounded-bl-lg"></div>
-                  <div className="bg-yellow-500 rounded-br-lg"></div>
-                </div>
-              </div>
-            </div>
+            <Image
+              src="/logo/app_logo.jpeg"
+              alt="SAUTER Logo"
+              width={200}
+              height={60}
+              priority
+              className="h-auto"
+              unoptimized
+            />
           </div>
           <h2 className="text-4xl font-bold text-gray-900 tracking-tight">
             Gestion de Stock Pro

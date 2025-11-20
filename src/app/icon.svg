@@ -1,0 +1,51 @@
+<svg width="200" height="60" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Gradient for text emboss effect -->
+    <linearGradient id="textGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563EB;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1E3A8A;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Wave-like arcs graphic element - ascending pattern -->
+  <g id="waves">
+    <!-- Top arc - Yellow -->
+    <path d="M 5 18 Q 15 8, 25 12 Q 30 14, 35 18" 
+          stroke="#FFD700" 
+          stroke-width="3.5" 
+          fill="none" 
+          stroke-linecap="round"/>
+    
+    <!-- Second arc - Light Blue -->
+    <path d="M 5 26 Q 15 16, 25 20 Q 30 22, 35 26" 
+          stroke="#87CEEB" 
+          stroke-width="3.5" 
+          fill="none" 
+          stroke-linecap="round"/>
+    
+    <!-- Third arc - Medium Blue -->
+    <path d="M 5 34 Q 15 24, 25 28 Q 30 30, 35 34" 
+          stroke="#4682B4" 
+          stroke-width="3.5" 
+          fill="none" 
+          stroke-linecap="round"/>
+    
+    <!-- Bottom arc - Dark Blue -->
+    <path d="M 5 42 Q 15 32, 25 36 Q 30 38, 35 42" 
+          stroke="#1E3A8A" 
+          stroke-width="3.5" 
+          fill="none" 
+          stroke-linecap="round"/>
+  </g>
+  
+  <!-- SAUTER Text with emboss effect -->
+  <text x="45" y="38" 
+        font-family="Arial, sans-serif" 
+        font-size="26" 
+        font-weight="bold" 
+        fill="url(#textGradient)" 
+        letter-spacing="2">
+    SAUTER
+  </text>
+</svg>
+
