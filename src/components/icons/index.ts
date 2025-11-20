@@ -15,4 +15,5 @@ export { default as PlusIcon } from './PlusIcon';
 export { default as SearchIcon } from './SearchIcon';
 export { default as CloseIcon } from './CloseIcon';
 export { default as TrashIcon } from './TrashIcon';
+export { default as ArrowLeftIcon } from './ArrowLeftIcon';
 

@@ -1,145 +1,309 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { apiClient } from '@/lib/api';
-// Layout is handled by (shared)/layout.tsx
+import { useState } from 'react';
+import { useApi } from '@/hooks/useApi';
+import RouteGuard from '@/components/guards/RouteGuard';
 import { format } from 'date-fns';
+import Table, { Column } from '@/components/Table';
+import { SearchIcon, CloseIcon } from '@/components/icons';
+import Link from 'next/link';
 
 interface StockMovement {
   id: string;
   type: 'IN' | 'OUT' | 'TRANSFER' | 'ADJUSTMENT';
   quantity: number;
   reason?: string;
-  product: { name: string; sku: string };
-  warehouse: { name: string };
+  reference?: string;
+  product: {
+    id: string;
+    name: string;
+    sku?: string;
+  };
+  warehouse: {
+    id: string;
+    name: string;
+    code: string;
+  };
+  user?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
   createdAt: string;
 }
 
 export default function MovementsPage() {
-  const [movements, setMovements] = useState<StockMovement[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'IN' | 'OUT'>('all');
+  const [filter, setFilter] = useState<'all' | 'IN' | 'OUT' | 'TRANSFER' | 'ADJUSTMENT'>('all');
+  const [search, setSearch] = useState('');
 
-  useEffect(() => {
-    loadMovements();
-  }, [filter]);
+  const queryParams = new URLSearchParams();
+  if (filter !== 'all') {
+    queryParams.set('type', filter);
+  }
 
-  const loadMovements = async () => {
-    try {
-      const params = filter !== 'all' ? { type: filter } : {};
-      const response = await apiClient.get('/stock-movements', { params });
-      setMovements(response.data);
-    } catch (error) {
-      console.error('Failed to load stock movements:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: movements, loading, error, mutate } = useApi<StockMovement[]>(
+    `/stock-movements?${queryParams.toString()}`
+  );
 
   const getTypeColor = (type: string) => {
     const colors: Record<string, string> = {
-      IN: 'bg-green-100 text-green-800',
-      OUT: 'bg-red-100 text-red-800',
-      TRANSFER: 'bg-blue-100 text-blue-800',
-      ADJUSTMENT: 'bg-yellow-100 text-yellow-800',
+      IN: 'bg-green-100 text-green-800 border-green-200',
+      OUT: 'bg-red-100 text-red-800 border-red-200',
+      TRANSFER: 'bg-blue-100 text-blue-800 border-blue-200',
+      ADJUSTMENT: 'bg-yellow-100 text-yellow-800 border-yellow-200',
     };
-    return colors[type] || 'bg-gray-100 text-gray-800';
+    return colors[type] || 'bg-gray-100 text-gray-800 border-gray-200';
   };
 
-  if (loading) {
+  const getTypeLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      IN: 'Dispose',
+      OUT: 'Withdraw',
+      TRANSFER: 'Transfer',
+      ADJUSTMENT: 'Adjustment',
+    };
+    return labels[type] || type;
+  };
+
+  const getTypeIcon = (type: string) => {
+    if (type === 'IN') {
+      return (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+        </svg>
+      );
+    }
+    if (type === 'OUT') {
+      return (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+        </svg>
+      );
+    }
+    return null;
+  };
+
+  // Filter movements by search term
+  const filteredMovements = movements?.filter((movement) => {
+    if (!search) return true;
+    const searchLower = search.toLowerCase();
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Loading stock movements...</div>
-      </div>
+      movement.product.name.toLowerCase().includes(searchLower) ||
+      movement.product.sku?.toLowerCase().includes(searchLower) ||
+      movement.warehouse.name.toLowerCase().includes(searchLower) ||
+      movement.warehouse.code.toLowerCase().includes(searchLower) ||
+      movement.user?.firstName.toLowerCase().includes(searchLower) ||
+      movement.user?.lastName.toLowerCase().includes(searchLower) ||
+      movement.user?.email.toLowerCase().includes(searchLower) ||
+      movement.reason?.toLowerCase().includes(searchLower) ||
+      movement.reference?.toLowerCase().includes(searchLower)
     );
-  }
+  }) || [];
+
+  const columns: Column<StockMovement>[] = [
+    {
+      key: 'createdAt',
+      label: 'Date & Heure',
+      sortable: false,
+      render: (movement) => (
+        <div className="text-sm">
+          <div className="font-medium text-gray-900">
+            {format(new Date(movement.createdAt), 'dd MMM yyyy')}
+          </div>
+          <div className="text-gray-500">
+            {format(new Date(movement.createdAt), 'HH:mm:ss')}
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'product',
+      label: 'Produit',
+      sortable: false,
+      render: (movement) => (
+        <div>
+          <Link
+            href={`/products/${movement.product.id}`}
+            className="text-sm font-medium text-primary-600 hover:text-primary-900"
+          >
+            {movement.product.name}
+          </Link>
+          {movement.product.sku && (
+            <div className="text-xs text-gray-500 font-mono mt-0.5">
+              {movement.product.sku}
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'warehouse',
+      label: 'Entrepôt',
+      sortable: false,
+      render: (movement) => (
+        <div>
+          <div className="text-sm font-medium text-gray-900">{movement.warehouse.name}</div>
+          <div className="text-xs text-gray-500 font-mono">{movement.warehouse.code}</div>
+        </div>
+      ),
+    },
+    {
+      key: 'type',
+      label: 'Type',
+      sortable: false,
+      render: (movement) => (
+        <span
+          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${getTypeColor(
+            movement.type,
+          )}`}
+        >
+          {getTypeIcon(movement.type)}
+          {getTypeLabel(movement.type)}
+        </span>
+      ),
+    },
+    {
+      key: 'quantity',
+      label: 'Quantité',
+      sortable: false,
+      className: 'text-right',
+      render: (movement) => (
+        <div className="text-right">
+          <span
+            className={`text-sm font-semibold ${
+              movement.type === 'OUT' ? 'text-red-600' : 'text-green-600'
+            }`}
+          >
+            {movement.type === 'OUT' ? '-' : '+'}
+            {movement.quantity}
+          </span>
+        </div>
+      ),
+    },
+    {
+      key: 'user',
+      label: 'Effectué par',
+      sortable: false,
+      render: (movement) => (
+        <div className="text-sm">
+          {movement.user ? (
+            <>
+              <div className="font-medium text-gray-900">
+                {movement.user.firstName} {movement.user.lastName}
+              </div>
+              <div className="text-xs text-gray-500">{movement.user.email}</div>
+            </>
+          ) : (
+            <span className="text-gray-400 italic">Système</span>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'reason',
+      label: 'Raison / Référence',
+      sortable: false,
+      render: (movement) => (
+        <div className="text-sm max-w-xs">
+          {movement.reason && (
+            <div className="text-gray-900 mb-1">{movement.reason}</div>
+          )}
+          {movement.reference && (
+            <div className="text-xs text-gray-500 font-mono">
+              Réf: {movement.reference}
+            </div>
+          )}
+          {!movement.reason && !movement.reference && (
+            <span className="text-gray-400 italic">-</span>
+          )}
+        </div>
+      ),
+    },
+  ];
 
   return (
-    <div className="px-4 py-6 sm:px-0">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Stock Movements</h2>
-          <div className="flex space-x-2">
+    <RouteGuard
+      requirements={{
+        requireAuth: true,
+        requirePermissions: ['stock.read', 'products.read'], // Allow either stock.read or products.read
+      }}
+    >
+      <div className="px-4 py-6 sm:px-0">
+        {/* Header */}
+        <div className="mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Mouvements de stock</h2>
+              {movements && (
+                <p className="mt-1 text-sm text-gray-500">
+                  {filteredMovements.length} mouvement{filteredMovements.length !== 1 ? 's' : ''}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="mb-6 flex flex-col sm:flex-row gap-4">
+          {/* Search */}
+          <div className="flex-1 relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <SearchIcon className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Rechercher par produit, entrepôt, utilisateur..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              >
+                <CloseIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+              </button>
+            )}
+          </div>
+
+          {/* Type Filter */}
+          <div>
             <select
               value={filter}
-              onChange={(e) => setFilter(e.target.value as any)}
-              className="px-4 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+              onChange={(e) => {
+                setFilter(e.target.value as any);
+                mutate?.();
+              }}
+              className="block w-full sm:w-auto px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all bg-white"
             >
-              <option value="all">All Types</option>
-              <option value="IN">IN</option>
-              <option value="OUT">OUT</option>
+              <option value="all">Tous les types</option>
+              <option value="IN">Dispose (IN)</option>
+              <option value="OUT">Withdraw (OUT)</option>
+              <option value="TRANSFER">Transfer</option>
+              <option value="ADJUSTMENT">Adjustment</option>
             </select>
           </div>
         </div>
 
-        <div className="bg-white shadow overflow-hidden sm:rounded-md">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Product
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Warehouse
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Type
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Quantity
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Reason
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {movements.map((movement) => (
-                <tr key={movement.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {format(new Date(movement.createdAt), 'MMM dd, yyyy HH:mm')}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      {movement.product.name}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {movement.product.sku}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {movement.warehouse.name}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getTypeColor(
-                        movement.type,
-                      )}`}
-                    >
-                      {movement.type}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {movement.type === 'OUT' ? '-' : '+'}
-                    {movement.quantity}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
-                    {movement.reason || '-'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {movements.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500">No stock movements found</p>
+        {/* Table */}
+        {error ? (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-800">Échec du chargement des mouvements. Veuillez réessayer.</p>
           </div>
+        ) : (
+          <>
+            <Table
+              data={filteredMovements}
+              columns={columns}
+              loading={loading}
+              emptyMessage="Aucun mouvement de stock trouvé"
+            />
+          </>
         )}
       </div>
+    </RouteGuard>
   );
 }
 
