@@ -8,14 +8,15 @@ import Link from 'next/link';
 import Pagination from '@/components/Pagination';
 import { TableSkeleton } from '@/components/SkeletonLoader';
 import RouteGuard from '@/components/guards/RouteGuard';
+import ProductFormModal from '@/components/products/ProductFormModal';
 
 interface Product {
   id: string;
   name: string;
-  sku: string;
+  sku?: string | null;
   barcode: string;
-  purchasePrice: number;
-  salePrice: number;
+  purchasePrice: number | string;
+  salePrice: number | string;
   minStock: number;
   category?: { name: string };
   supplier?: { name: string };
@@ -37,6 +38,8 @@ export default function ProductsPage() {
   const router = useRouter();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const limit = 20;
 
   const searchParams = useMemo(() => {
@@ -47,11 +50,33 @@ export default function ProductsPage() {
     return params.toString();
   }, [page, search, limit]);
 
-  const { data, loading, error } = useApi<ProductsResponse>(`/products?${searchParams}`);
+  const { data, loading, error, mutate } = useApi<ProductsResponse>(`/products?${searchParams}`);
 
   const handleSearch = (value: string) => {
     setSearch(value);
     setPage(1); // Reset to first page on search
+  };
+
+  const handleOpenCreateModal = () => {
+    setEditingProductId(null);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEditModal = (productId: string) => {
+    setEditingProductId(productId);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingProductId(null);
+  };
+
+  const handleModalSuccess = () => {
+    // Refresh the products list
+    if (mutate) {
+      mutate();
+    }
   };
 
   return (
@@ -63,22 +88,22 @@ export default function ProductsPage() {
     >
       <div className="px-4 py-6 sm:px-0">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Products</h2>
-          <Link
-            href="/products/new"
-            className="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700"
+          <h2 className="text-2xl font-bold">Produits</h2>
+          <button
+            onClick={handleOpenCreateModal}
+            className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 font-medium transition-colors shadow-sm hover:shadow-md"
           >
-            Add Product
-          </Link>
+            + Ajouter un produit
+          </button>
         </div>
 
         <div className="mb-4">
           <input
             type="text"
-            placeholder="Search products..."
+            placeholder="Rechercher des produits..."
             value={search}
             onChange={(e) => handleSearch(e.target.value)}
-            className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+            className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
           />
         </div>
 
@@ -88,7 +113,7 @@ export default function ProductsPage() {
           </div>
         ) : error ? (
           <div className="bg-red-50 border border-red-200 rounded-md p-4">
-            <p className="text-red-800">Failed to load products. Please try again.</p>
+            <p className="text-red-800">Échec du chargement des produits. Veuillez réessayer.</p>
           </div>
         ) : (
           <>
@@ -104,11 +129,16 @@ export default function ProductsPage() {
                               {product.name}
                             </p>
                             <p className="text-sm text-gray-500">
-                              SKU: {product.sku} | Barcode: {product.barcode}
+                              Réf: {product.sku || 'N/A'} | Code-barres: {product.barcode}
                             </p>
                             {product.category && (
                               <p className="text-xs text-gray-400">
-                                Category: {product.category.name}
+                                Catégorie: {product.category.name}
+                              </p>
+                            )}
+                            {product.supplier && (
+                              <p className="text-xs text-gray-400">
+                                Fournisseur: {product.supplier.name}
                               </p>
                             )}
                           </div>
@@ -116,28 +146,28 @@ export default function ProductsPage() {
                         <div className="flex items-center space-x-4">
                           <div className="text-right">
                             <p className="text-sm font-medium text-gray-900">
-                              Purchase: ${product.purchasePrice}
+                              Achat: {Number(product.purchasePrice).toFixed(2)}€
                             </p>
                             <p className="text-sm text-gray-500">
-                              Sale: ${product.salePrice}
+                              Vente: {Number(product.salePrice).toFixed(2)}€
                             </p>
                             <p className="text-xs text-gray-400">
-                              Min Stock: {product.minStock}
+                              Seuil: {product.minStock}
                             </p>
                           </div>
                           <div className="flex space-x-2">
                             <Link
                               href={`/products/${product.id}`}
-                              className="text-primary-600 hover:text-primary-900"
+                              className="text-primary-600 hover:text-primary-900 text-sm font-medium"
                             >
-                              View
+                              Voir
                             </Link>
-                            <Link
-                              href={`/products/${product.id}/edit`}
-                              className="text-gray-600 hover:text-gray-900"
+                            <button
+                              onClick={() => handleOpenEditModal(product.id)}
+                              className="text-gray-600 hover:text-gray-900 text-sm font-medium"
                             >
-                              Edit
-                            </Link>
+                              Modifier
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -149,7 +179,7 @@ export default function ProductsPage() {
 
             {data?.data?.length === 0 && (
               <div className="text-center py-12">
-                <p className="text-gray-500">No products found</p>
+                <p className="text-gray-500">Aucun produit trouvé</p>
               </div>
             )}
 
@@ -164,6 +194,14 @@ export default function ProductsPage() {
             )}
           </>
         )}
+
+        {/* Product Form Modal */}
+        <ProductFormModal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          onSuccess={handleModalSuccess}
+          productId={editingProductId}
+        />
       </div>
     </RouteGuard>
   );

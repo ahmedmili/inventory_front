@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
+import { getImageUrl } from '@/lib/images';
 import LazyImage from './LazyImage';
 
 interface ImageUploadProps {
@@ -19,9 +20,14 @@ export default function ImageUpload({
   disabled = false,
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
-  const [previewUrls, setPreviewUrls] = useState<string[]>(value);
+  const [previewUrls, setPreviewUrls] = useState<string[]>(value.map(getImageUrl));
   const fileInputRef = useRef<HTMLInputElement>(null);
   const toast = useToast();
+
+  // Update preview URLs when value changes
+  useEffect(() => {
+    setPreviewUrls(value.map(getImageUrl));
+  }, [value]);
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -45,12 +51,14 @@ export default function ImageUpload({
           },
         });
 
+        // Store the relative path from the backend
         return response.data.url;
       });
 
       const newUrls = await Promise.all(uploadPromises);
       const updatedUrls = [...value, ...newUrls];
-      setPreviewUrls(updatedUrls);
+      // Store relative paths, but display with full URLs
+      setPreviewUrls(newUrls.map(getImageUrl));
       onChange(updatedUrls);
       toast.success(`${newUrls.length} image(s) uploaded successfully`);
     } catch (error: any) {
@@ -65,7 +73,7 @@ export default function ImageUpload({
 
   const handleRemove = (index: number) => {
     const updatedUrls = value.filter((_, i) => i !== index);
-    setPreviewUrls(updatedUrls);
+    setPreviewUrls(updatedUrls.map(getImageUrl));
     onChange(updatedUrls);
   };
 
@@ -75,7 +83,7 @@ export default function ImageUpload({
         {previewUrls.map((url, index) => (
           <div key={index} className="relative group">
             <LazyImage
-              src={url}
+              src={url || getImageUrl(value[index])}
               alt={`Preview ${index + 1}`}
               width={128}
               height={128}

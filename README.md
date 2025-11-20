@@ -114,6 +114,7 @@ Créez un fichier `.env.local` :
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:4000
+NEXT_PUBLIC_IMAGES_BASE_URL=http://localhost:4000
 ```
 
 **Important** : Les variables commençant par `NEXT_PUBLIC_` sont exposées au client.
@@ -135,6 +136,7 @@ L'application sera disponible sur `http://localhost:3000`
 | Variable | Description | Défaut |
 |----------|-------------|--------|
 | `NEXT_PUBLIC_API_URL` | URL de l'API backend | `http://localhost:4000` |
+| `NEXT_PUBLIC_IMAGES_BASE_URL` | URL de base pour les images uploadées | `NEXT_PUBLIC_API_URL` ou `http://localhost:4000` |
 | `NEXT_PUBLIC_WS_URL` | URL WebSocket (optionnel) | - |
 | `NEXT_PUBLIC_STORAGE_URL` | URL de stockage média | - |
 

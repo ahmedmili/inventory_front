@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import { getImageUrl } from '@/lib/images';
 
 interface LazyImageProps {
   src: string;
@@ -23,15 +24,18 @@ export default function LazyImage({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
 
+  // Get the full image URL
+  const imageUrl = getImageUrl(src);
+
   // If it's an external URL, use regular img tag
-  if (src.startsWith('http://') || src.startsWith('https://')) {
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
     return (
       <div className={`relative ${className}`} style={{ width, height }}>
         {isLoading && (
           <div className="absolute inset-0 bg-gray-200 animate-pulse rounded" />
         )}
         <img
-          src={src}
+          src={imageUrl}
           alt={alt}
           className={`${className} ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
           style={{ width, height, objectFit }}
@@ -54,13 +58,15 @@ export default function LazyImage({
   }
 
   // For local images, use Next.js Image component
+  // But if it's an external URL, we already handled it above
+  // So this should only be for Next.js public folder images
   return (
     <div className={`relative ${className}`}>
       {isLoading && (
         <div className="absolute inset-0 bg-gray-200 animate-pulse rounded" />
       )}
       <Image
-        src={src}
+        src={imageUrl}
         alt={alt}
         width={width || 300}
         height={height || 300}
@@ -72,6 +78,7 @@ export default function LazyImage({
           setIsLoading(false);
         }}
         loading="lazy"
+        unoptimized={imageUrl.startsWith('http://') || imageUrl.startsWith('https://')}
       />
       {error && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-100 text-gray-400">
