@@ -3,28 +3,28 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import Sidebar from './Sidebar';
-import SidebarOverlay from './SidebarOverlay';
-import TopHeader from './TopHeader';
-import MainContent from './MainContent';
-import LoadingScreen from './LoadingScreen';
-import SidebarToggleButton from './SidebarToggleButton';
+import EmployeeSidebar from '../sidebars/EmployeeSidebar';
+import SidebarOverlay from '../SidebarOverlay';
+import EmployeeTopHeader from '../headers/EmployeeTopHeader';
+import MainContent from '../MainContent';
+import LoadingScreen from '../LoadingScreen';
+import SidebarToggleButton from '../SidebarToggleButton';
 import { localStorageService } from '@/lib/local-storage';
+import { getUserRoleCode } from '@/lib/permissions';
 
-interface LayoutProps {
+interface EmployeeLayoutProps {
   children: React.ReactNode;
 }
 
 const SIDEBAR_MINIMIZED_KEY = 'sidebar-minimized';
 
-export default function Layout({ children }: LayoutProps) {
+export default function EmployeeLayout({ children }: EmployeeLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, loading, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(() => {
     const saved = localStorageService.getItem(SIDEBAR_MINIMIZED_KEY);
-    // Default to minimized on desktop, expanded on mobile
     if (saved === null) {
       return typeof window !== 'undefined' && window.innerWidth >= 1024;
     }
@@ -32,8 +32,19 @@ export default function Layout({ children }: LayoutProps) {
   });
 
   useEffect(() => {
-    if (!loading && !user && pathname !== '/login') {
-      router.push('/login');
+    if (!loading) {
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+      
+      // Check if user is employee or stock keeper (employee-level access)
+      const roleCode = getUserRoleCode(user);
+      if (roleCode === 'ADMIN' || roleCode === 'MANAGER') {
+        // Redirect admin users to their appropriate layout
+        router.push('/dashboard');
+        return;
+      }
     }
   }, [user, loading, pathname, router]);
 
@@ -57,7 +68,6 @@ export default function Layout({ children }: LayoutProps) {
   const handleToggleMinimize = () => {
     setIsMinimized((prev) => {
       const newMinimized = !prev;
-      // On mobile, if expanding (not minimizing), also open the sidebar
       if (typeof window !== 'undefined' && window.innerWidth < 1024 && !newMinimized) {
         setSidebarOpen(true);
       }
@@ -65,17 +75,17 @@ export default function Layout({ children }: LayoutProps) {
     });
   };
 
-  if (pathname === '/login') {
-    return <>{children}</>;
-  }
-
   if (loading) {
     return <LoadingScreen />;
   }
 
+  if (!user) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <Sidebar
+      <EmployeeSidebar
         isOpen={sidebarOpen}
         onClose={handleSidebarClose}
         user={user}
@@ -87,7 +97,6 @@ export default function Layout({ children }: LayoutProps) {
 
       <SidebarOverlay isOpen={sidebarOpen && !isMinimized} onClose={handleSidebarClose} />
 
-      {/* Single unified toggle button - always visible */}
       <SidebarToggleButton
         isMinimized={isMinimized}
         isOpen={sidebarOpen}
@@ -95,8 +104,8 @@ export default function Layout({ children }: LayoutProps) {
         onToggleOpen={handleSidebarToggle}
       />
 
-      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 'lg:ml-0'ized ? 'lg:ml-20' : 'lg:ml-64'}`}>
-        <TopHeader user={user} />
+      <div className="flex-1 flex flex-col min-w-0">
+        <EmployeeTopHeader user={user} />
         <MainContent>{children}</MainContent>
       </div>
     </div>
