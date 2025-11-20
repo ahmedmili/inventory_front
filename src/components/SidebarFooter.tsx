@@ -26,11 +26,18 @@ export default function SidebarFooter({ user, onLogout, isMinimized = false }: S
   if (isMinimized) {
     return (
       <div className="px-2 py-4 border-t border-gray-100">
-        <div className="flex items-center justify-center">
-          <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center shadow-sm">
+        <div className="flex items-center justify-center group relative">
+          <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center shadow-sm cursor-pointer">
             <span className="text-white font-semibold text-sm">
               {initials}
             </span>
+          </div>
+          <div className="absolute left-full ml-2 px-2.5 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity duration-200 shadow-lg">
+            <div className="mb-0.5">{fullName || 'User'}</div>
+            {roleLabel && (
+              <div className="text-gray-300 text-[10px]">{roleLabel}</div>
+            )}
+            <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900" />
           </div>
         </div>
       </div>

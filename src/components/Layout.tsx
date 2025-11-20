@@ -55,7 +55,14 @@ export default function Layout({ children }: LayoutProps) {
   };
 
   const handleToggleMinimize = () => {
-    setIsMinimized((prev) => !prev);
+    setIsMinimized((prev) => {
+      const newMinimized = !prev;
+      // On mobile, if expanding (not minimizing), also open the sidebar
+      if (typeof window !== 'undefined' && window.innerWidth < 1024 && !newMinimized) {
+        setSidebarOpen(true);
+      }
+      return newMinimized;
+    });
   };
 
   if (pathname === '/login') {
@@ -88,7 +95,7 @@ export default function Layout({ children }: LayoutProps) {
         onToggleOpen={handleSidebarToggle}
       />
 
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${isMinimized ? 'lg:ml-20' : 'lg:ml-64'}`}>
         <TopHeader user={user} />
         <MainContent>{children}</MainContent>
       </div>

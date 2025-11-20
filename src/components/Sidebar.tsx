@@ -32,9 +32,10 @@ export default function Sidebar({
       className={`
         fixed top-0 bottom-0 left-0 z-40 ${width} bg-white shadow-xl border-r border-gray-100 transform transition-all duration-300 ease-in-out
         lg:translate-x-0 lg:relative lg:z-auto lg:h-screen
-        ${isOpen || isMinimized ? 'translate-x-0' : '-translate-x-full'}
-        flex flex-col
+        ${isMinimized ? 'translate-x-0' : (isOpen ? 'translate-x-0' : '-translate-x-full')}
+        flex flex-col h-screen
       `}
+      style={{ maxWidth: isMinimized ? '5rem' : '16rem' }}
     >
       <SidebarHeader 
         isMinimized={isMinimized}

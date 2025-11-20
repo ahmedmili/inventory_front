@@ -61,12 +61,6 @@ export default function NavItem({
           )}
         </>
       )}
-      {isMinimized && (
-        <div className="absolute left-full ml-2 px-2 py-1.5 bg-gray-900 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity shadow-lg">
-          {item.name}
-          <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900" />
-        </div>
-      )}
     </div>
   );
 
@@ -77,15 +71,27 @@ export default function NavItem({
       className={`${baseClasses} ${activeClasses}`}
     >
       {content}
+      {isMinimized && (
+        <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2.5 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[60] transition-opacity duration-200 shadow-lg">
+          {item.name}
+          <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900" />
+        </div>
+      )}
     </button>
   ) : (
     <Link href={item.href} onClick={onNavigate} className={`${baseClasses} ${activeClasses}`}>
       {content}
+      {isMinimized && (
+        <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2.5 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[60] transition-opacity duration-200 shadow-lg">
+          {item.name}
+          <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900" />
+        </div>
+      )}
     </Link>
   );
 
   return (
-    <div>
+    <div className="relative">
       {row}
       {hasChildren && !isMinimized && (
         <div
