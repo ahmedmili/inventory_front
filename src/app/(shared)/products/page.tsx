@@ -109,7 +109,7 @@ export default function ProductsPage() {
 
     try {
       await deleteProduct(`/products/${productToDelete.id}`, 'DELETE');
-      toast.success('Produit supprimé avec succès!');
+      toast.success('Produit supprimé avec succès! Il peut être restauré si nécessaire.');
       setIsDeleteModalOpen(false);
       setProductToDelete(null);
       // Refresh the products list
@@ -389,10 +389,10 @@ export default function ProductsPage() {
           isOpen={isDeleteModalOpen}
           onClose={handleDeleteCancel}
           onConfirm={handleDeleteConfirm}
-          message={`Êtes-vous sûr de vouloir supprimer le produit "${productToDelete?.name}" ?\n\nCette action est irréversible et ne peut pas être annulée.`}
+          message={`Êtes-vous sûr de vouloir supprimer le produit "${productToDelete?.name}" ?\n\nLe produit sera masqué mais pourra être restauré ultérieurement si nécessaire.`}
           confirmText="Supprimer"
           cancelText="Annuler"
-          type="danger"
+          type="warning"
           loading={deleting}
         />
       </div>

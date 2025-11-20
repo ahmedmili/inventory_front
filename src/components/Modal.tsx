@@ -97,7 +97,7 @@ export default function Modal({
   };
 
   const getModalClasses = () => {
-    const baseClasses = `relative bg-white rounded-lg shadow-xl w-full ${sizeClasses[size]} transform transition-all ${durationClass}`;
+    const baseClasses = `relative bg-white rounded-xl shadow-2xl w-full ${sizeClasses[size]} transform transition-all ${durationClass} border border-gray-100`;
     
     if (animation === 'none') {
       return `${baseClasses} ${isAnimating ? 'opacity-100' : 'opacity-0'}`;
@@ -138,28 +138,28 @@ export default function Modal({
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-black ${getBackdropClasses()}`}
+        className={`fixed inset-0 bg-black/60 backdrop-blur-sm ${getBackdropClasses()}`}
         onClick={onClose}
         aria-hidden="true"
       />
 
       {/* Modal */}
-      <div className="flex min-h-full items-center justify-center p-4">
+      <div className="flex min-h-full items-center justify-center p-4 sm:p-6">
         <div
           className={getModalClasses()}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-            <h3 className="text-xl font-semibold text-gray-900">{title}</h3>
+          <div className="flex items-center justify-between px-6 py-5 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200/60 rounded-t-lg">
+            <h3 className="text-xl font-semibold text-gray-900 tracking-tight">{title}</h3>
             {showCloseButton && (
               <button
                 onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg p-1.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
                 aria-label="Close modal"
               >
                 <svg
-                  className="w-6 h-6"
+                  className="w-5 h-5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -167,7 +167,7 @@ export default function Modal({
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
+                    strokeWidth={2.5}
                     d="M6 18L18 6M6 6l12 12"
                   />
                 </svg>
@@ -176,7 +176,7 @@ export default function Modal({
           </div>
 
           {/* Content */}
-          <div className="px-6 py-4 max-h-[calc(100vh-200px)] overflow-y-auto">
+          <div className="px-6 py-6 max-h-[calc(100vh-220px)] overflow-y-auto bg-white rounded-b-lg">
             {children}
           </div>
         </div>
