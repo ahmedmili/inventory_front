@@ -1,17 +1,20 @@
 'use client';
 
 import Notifications from './Notifications';
-
-interface User {
-  firstName?: string;
-  lastName?: string;
-  role?: string;
-}
+import { User } from '@/lib/auth';
 
 interface TopHeaderProps {
   onMenuClick: () => void;
   user: User | null;
 }
+
+const getRoleLabel = (role: User['role']) => {
+  if (!role) return '';
+  if (typeof role === 'string') {
+    return role;
+  }
+  return role.name || role.code || '';
+};
 
 export default function TopHeader({ onMenuClick, user }: TopHeaderProps) {
   return (
@@ -33,7 +36,7 @@ export default function TopHeader({ onMenuClick, user }: TopHeaderProps) {
             {user?.firstName} {user?.lastName}
           </span>
           <span className="text-gray-400">•</span>
-          <span className="text-gray-500">{user?.role}</span>
+          <span className="text-gray-500">{getRoleLabel(user?.role ?? null)}</span>
         </div>
       </div>
     </header>

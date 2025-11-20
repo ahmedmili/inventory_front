@@ -4,17 +4,10 @@ import { useEffect, useState } from 'react';
 import { apiClient } from '@/lib/api';
 import Layout from '@/components/Layout';
 import Link from 'next/link';
-
-interface Supplier {
-  id: string;
-  name: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-}
+import { SupplierSummary, extractCollection } from '@/types/api';
 
 export default function SuppliersPage() {
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [suppliers, setSuppliers] = useState<SupplierSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -24,11 +17,7 @@ export default function SuppliersPage() {
   const loadSuppliers = async () => {
     try {
       const response = await apiClient.get('/suppliers');
-      // Handle both cases: direct array or object with data property
-      const suppliersData = Array.isArray(response.data) 
-        ? response.data 
-        : response.data?.data || [];
-      setSuppliers(suppliersData);
+      setSuppliers(extractCollection<SupplierSummary>(response.data));
     } catch (error) {
       console.error('Failed to load suppliers:', error);
       setSuppliers([]); // Ensure suppliers is always an array

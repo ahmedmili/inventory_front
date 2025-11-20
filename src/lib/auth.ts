@@ -1,12 +1,32 @@
 import Cookies from 'js-cookie';
 import { apiClient } from './api';
 
+export interface Permission {
+  id: string;
+  code: string;
+  description?: string | null;
+}
+
+export interface RolePermission {
+  id: string;
+  permission: Permission;
+}
+
+export interface Role {
+  id: string;
+  name: string;
+  code: string;
+  description?: string | null;
+  isActive: boolean;
+  permissions?: RolePermission[];
+}
+
 export interface User {
   id: string;
   email: string;
   firstName: string;
   lastName: string;
-  role: 'ADMIN' | 'MANAGER' | 'STOCK_KEEPER' | 'EMPLOYEE';
+  role?: Role | string | null;
 }
 
 export interface AuthResponse {

@@ -1,20 +1,42 @@
 'use client';
 
-interface User {
-  firstName?: string;
-  lastName?: string;
-  role?: string;
-}
+import { User } from '@/lib/auth';
 
 interface SidebarFooterProps {
   user: User | null;
   onLogout: () => void;
+  isMinimized?: boolean;
 }
 
-export default function SidebarFooter({ user, onLogout }: SidebarFooterProps) {
+function getRoleLabel(role: User['role']) {
+  if (!role) return '';
+  if (typeof role === 'string') {
+    return role;
+  }
+  return role.name || role.code || '';
+}
+
+export default function SidebarFooter({ user, onLogout, isMinimized = false }: SidebarFooterProps) {
   const initials = user?.firstName?.[0] && user?.lastName?.[0] 
     ? `${user.firstName[0]}${user.lastName[0]}` 
     : 'U';
+  const roleLabel = getRoleLabel(user?.role ?? null);
+
+  if (isMinimized) {
+    return (
+      <div className="px-2 py-4 border-t border-gray-200">
+        <button
+          onClick={onLogout}
+          className="w-full flex items-center justify-center p-2 text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+          title="Déconnexion"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="px-4 py-4 border-t border-gray-200">
@@ -30,7 +52,7 @@ export default function SidebarFooter({ user, onLogout }: SidebarFooterProps) {
           <p className="text-sm font-medium text-gray-900 truncate">
             {user?.firstName} {user?.lastName}
           </p>
-          <p className="text-xs text-gray-500 truncate">{user?.role}</p>
+          <p className="text-xs text-gray-500 truncate">{roleLabel}</p>
         </div>
       </div>
       <button

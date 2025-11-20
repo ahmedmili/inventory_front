@@ -9,6 +9,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/contexts/ToastContext';
 import ImageUpload from '@/components/ImageUpload';
+import {
+  CategoryOption,
+  SupplierSummary,
+  extractCollection,
+} from '@/types/api';
 
 const productSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -33,8 +38,8 @@ export default function EditProductPage() {
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState('');
-  const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
-  const [suppliers, setSuppliers] = useState<Array<{ id: string; name: string }>>([]);
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
+  const [suppliers, setSuppliers] = useState<SupplierSummary[]>([]);
 
   const {
     register,
@@ -64,8 +69,8 @@ export default function EditProductPage() {
         apiClient.get('/suppliers'),
       ]);
       
-      setCategories(categoriesRes.data);
-      setSuppliers(suppliersRes.data);
+      setCategories(extractCollection<CategoryOption>(categoriesRes.data));
+      setSuppliers(extractCollection<SupplierSummary>(suppliersRes.data));
       
       const product = productRes.data;
       // Handle images - can be JSON array or null

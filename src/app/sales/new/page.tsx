@@ -7,6 +7,11 @@ import Layout from '@/components/Layout';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import {
+  CustomerSummary,
+  ProductSummary,
+  extractCollection,
+} from '@/types/api';
 
 const salesOrderSchema = z.object({
   customerId: z.string().min(1, 'Customer is required'),
@@ -27,8 +32,8 @@ export default function NewSalesOrderPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [customers, setCustomers] = useState<Array<{ id: string; name: string }>>([]);
-  const [products, setProducts] = useState<Array<{ id: string; name: string; sku: string; salePrice: number }>>([]);
+  const [customers, setCustomers] = useState<CustomerSummary[]>([]);
+  const [products, setProducts] = useState<ProductSummary[]>([]);
 
   const {
     register,
@@ -59,8 +64,15 @@ export default function NewSalesOrderPage() {
         apiClient.get('/customers'),
         apiClient.get('/products'),
       ]);
-      setCustomers(customersRes.data);
-      setProducts(productsRes.data);
+      setCustomers(extractCollection<CustomerSummary>(customersRes.data));
+      const productOptions = extractCollection<ProductSummary>(productsRes.data).map(
+        (product) => ({
+          ...product,
+          purchasePrice: Number(product.purchasePrice),
+          salePrice: Number(product.salePrice),
+        }),
+      );
+      setProducts(productOptions);
     } catch (error) {
       console.error('Failed to load options:', error);
     }
@@ -69,7 +81,7 @@ export default function NewSalesOrderPage() {
   const handleProductChange = (index: number, productId: string) => {
     const product = products.find((p) => p.id === productId);
     if (product) {
-      setValue(`lines.${index}.unitPrice`, product.salePrice);
+      setValue(`lines.${index}.unitPrice`, Number(product.salePrice));
     }
   };
 

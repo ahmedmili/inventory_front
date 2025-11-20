@@ -13,17 +13,32 @@ interface LayoutProps {
   children: React.ReactNode;
 }
 
+const SIDEBAR_MINIMIZED_KEY = 'sidebar-minimized';
+
 export default function Layout({ children }: LayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, loading, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(SIDEBAR_MINIMIZED_KEY);
+      return saved === 'true';
+    }
+    return false;
+  });
 
   useEffect(() => {
     if (!loading && !user && pathname !== '/login') {
       router.push('/login');
     }
   }, [user, loading, pathname, router]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(SIDEBAR_MINIMIZED_KEY, String(isMinimized));
+    }
+  }, [isMinimized]);
 
   const handleLogout = async () => {
     await logout();
@@ -36,6 +51,10 @@ export default function Layout({ children }: LayoutProps) {
 
   const handleSidebarToggle = () => {
     setSidebarOpen((prev) => !prev);
+  };
+
+  const handleToggleMinimize = () => {
+    setIsMinimized((prev) => !prev);
   };
 
   if (pathname === '/login') {
@@ -53,6 +72,8 @@ export default function Layout({ children }: LayoutProps) {
         onClose={handleSidebarClose}
         user={user}
         onLogout={handleLogout}
+        isMinimized={isMinimized}
+        onToggleMinimize={handleToggleMinimize}
       />
 
       <SidebarOverlay isOpen={sidebarOpen} onClose={handleSidebarClose} />

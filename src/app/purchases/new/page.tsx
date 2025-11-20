@@ -7,10 +7,15 @@ import Layout from '@/components/Layout';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import {
+  ProductSummary,
+  SupplierSummary,
+  extractCollection,
+} from '@/types/api';
 
 const purchaseOrderSchema = z.object({
   supplierId: z.string().min(1, 'Supplier is required'),
-  expectedDate: z.string().optional(),
+  expectedDate: z.string().min(1, 'Expected date is required'),
   lines: z
     .array(
       z.object({
@@ -28,8 +33,8 @@ export default function NewPurchaseOrderPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [suppliers, setSuppliers] = useState<Array<{ id: string; name: string }>>([]);
-  const [products, setProducts] = useState<Array<{ id: string; name: string; sku: string }>>([]);
+  const [suppliers, setSuppliers] = useState<SupplierSummary[]>([]);
+  const [products, setProducts] = useState<ProductSummary[]>([]);
 
   const {
     register,
@@ -40,6 +45,7 @@ export default function NewPurchaseOrderPage() {
   } = useForm<PurchaseOrderFormData>({
     resolver: zodResolver(purchaseOrderSchema),
     defaultValues: {
+      expectedDate: '',
       lines: [{ productId: '', quantityOrdered: 1, unitPrice: 0 }],
     },
   });
@@ -59,8 +65,15 @@ export default function NewPurchaseOrderPage() {
         apiClient.get('/suppliers'),
         apiClient.get('/products'),
       ]);
-      setSuppliers(suppliersRes.data);
-      setProducts(productsRes.data);
+      setSuppliers(extractCollection<SupplierSummary>(suppliersRes.data));
+      const productOptions = extractCollection<ProductSummary>(productsRes.data).map(
+        (product) => ({
+          ...product,
+          purchasePrice: Number(product.purchasePrice),
+          salePrice: Number(product.salePrice),
+        }),
+      );
+      setProducts(productOptions);
     } catch (error) {
       console.error('Failed to load options:', error);
     }
@@ -125,13 +138,16 @@ export default function NewPurchaseOrderPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Expected Date
+                  Expected Date *
                 </label>
                 <input
                   type="date"
                   {...register('expectedDate')}
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                 />
+                {errors.expectedDate && (
+                  <p className="mt-1 text-sm text-red-600">{errors.expectedDate.message}</p>
+                )}
               </div>
             </div>
 
