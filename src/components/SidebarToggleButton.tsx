@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useMedia } from '@/hooks/useMedia';
 
 interface SidebarToggleButtonProps {
   isMinimized: boolean;
@@ -15,22 +15,16 @@ export default function SidebarToggleButton({
   onToggleMinimize,
   onToggleOpen,
 }: SidebarToggleButtonProps) {
-  const [isDesktop, setIsDesktop] = useState(false);
-
-  useEffect(() => {
-    const checkDesktop = () => {
-      setIsDesktop(window.innerWidth >= 1024);
-    };
-    
-    checkDesktop();
-    window.addEventListener('resize', checkDesktop);
-    return () => window.removeEventListener('resize', checkDesktop);
-  }, []);
+  const { isDesktop } = useMedia();
 
   const handleClick = () => {
-    // On both desktop and mobile, toggle minimize/expand
-    // If sidebar is minimized, expand it; otherwise minimize it
-    onToggleMinimize();
+    if (isDesktop) {
+      // On desktop: toggle minimize/expand
+      onToggleMinimize();
+    } else {
+      // On mobile/tablet: toggle sidebar open/close
+      onToggleOpen();
+    }
   };
 
   // Determine button position and icon rotation
@@ -61,13 +55,17 @@ export default function SidebarToggleButton({
   };
 
   const getAriaLabel = () => {
-    return isMinimized ? "Agrandir la sidebar" : "Minimiser la sidebar";
+    if (isDesktop) {
+      return isMinimized ? "Agrandir la sidebar" : "Minimiser la sidebar";
+    } else {
+      return isOpen ? "Fermer la sidebar" : "Ouvrir la sidebar";
+    }
   };
 
   return (
     <button
       onClick={handleClick}
-      className={`fixed top-4 z-50 w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-white rounded-lg shadow-md transition-all duration-300 bg-white border border-gray-200 ${getButtonPosition()} ${isMinimized ? 'lg:z-30' : ''}`}
+      className={`fixed top-4 z-50 w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-white active:bg-gray-50 rounded-lg shadow-md transition-all duration-300 bg-white border border-gray-200 touch-manipulation ${getButtonPosition()} ${isMinimized ? 'lg:z-30' : ''}`}
       aria-label={getAriaLabel()}
       title={getAriaLabel()}
     >

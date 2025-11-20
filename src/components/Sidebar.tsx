@@ -34,6 +34,7 @@ export default function Sidebar({
         lg:translate-x-0 lg:relative lg:z-auto lg:h-screen
         ${isMinimized ? 'translate-x-0' : (isOpen ? 'translate-x-0' : '-translate-x-full')}
         flex flex-col h-screen
+        md:shadow-2xl
       `}
       style={{ maxWidth: isMinimized ? '5rem' : '16rem' }}
     >

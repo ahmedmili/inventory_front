@@ -13,7 +13,7 @@ export default function SidebarHeader({
 }: SidebarHeaderProps) {
 
   return (
-    <div className={`relative flex items-center border-b border-gray-100 justify-center ${isMinimized ? 'px-3 py-4 pt-12' : 'px-5 py-4'}`}>
+    <div className={`relative flex items-center border-b border-gray-100 justify-center ${isMinimized ? 'px-2 sm:px-3 py-3 sm:py-4 pt-12 sm:pt-16' : 'px-3 sm:px-5 py-3 sm:py-4'}`}>
       {!isMinimized ? (
         <>
             {/* Logo */}

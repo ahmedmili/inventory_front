@@ -8,7 +8,7 @@ interface MainContentProps {
 export default function MainContent({ children, className = '' }: MainContentProps) {
   return (
     <main className={`flex-1 overflow-y-auto ${className}`}>
-      <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto py-4 sm:py-6 px-3 sm:px-4 md:px-6 lg:px-8">
         {children}
       </div>
     </main>

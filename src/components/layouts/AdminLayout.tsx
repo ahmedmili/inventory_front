@@ -11,6 +11,7 @@ import LoadingScreen from '../LoadingScreen';
 import SidebarToggleButton from '../SidebarToggleButton';
 import { localStorageService } from '@/lib/local-storage';
 import { getUserRoleCode } from '@/lib/permissions';
+import { useMedia } from '@/hooks/useMedia';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -22,14 +23,31 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, loading, logout } = useAuth();
+  const { isDesktop } = useMedia();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(() => {
+    if (typeof window === 'undefined') return false;
     const saved = localStorageService.getItem(SIDEBAR_MINIMIZED_KEY);
+    const isDesktopWidth = window.innerWidth >= 1024;
+    // On mobile/tablet, start with sidebar closed (not minimized)
     if (saved === null) {
-      return typeof window !== 'undefined' && window.innerWidth >= 1024;
+      return isDesktopWidth;
+    }
+    // On mobile/tablet, don't use minimized state
+    if (!isDesktopWidth) {
+      return false;
     }
     return saved === 'true';
   });
+
+  // Handle window resize to adjust sidebar state
+  useEffect(() => {
+    if (!isDesktop) {
+      // On mobile/tablet, close sidebar and don't minimize
+      setSidebarOpen(false);
+      setIsMinimized(false);
+    }
+  }, [isDesktop]);
 
   useEffect(() => {
     if (!loading) {
@@ -67,13 +85,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   };
 
   const handleToggleMinimize = () => {
-    setIsMinimized((prev) => {
-      const newMinimized = !prev;
-      if (typeof window !== 'undefined' && window.innerWidth < 1024 && !newMinimized) {
-        setSidebarOpen(true);
-      }
-      return newMinimized;
-    });
+    if (isDesktop) {
+      // On desktop: toggle minimize state
+      setIsMinimized((prev) => !prev);
+    } else {
+      // On mobile/tablet: toggle sidebar open/close
+      setSidebarOpen((prev) => !prev);
+    }
   };
 
   if (loading) {
@@ -96,7 +114,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         onToggleOpen={handleSidebarToggle}
       />
 
-      <SidebarOverlay isOpen={sidebarOpen && !isMinimized} onClose={handleSidebarClose} />
+      <SidebarOverlay isOpen={sidebarOpen} onClose={handleSidebarClose} />
 
       <SidebarToggleButton
         isMinimized={isMinimized}
@@ -105,7 +123,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         onToggleOpen={handleSidebarToggle}
       />
 
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 w-full">
         <AdminTopHeader user={user} />
         <MainContent>{children}</MainContent>
       </div>
