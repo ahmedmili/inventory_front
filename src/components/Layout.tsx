@@ -10,6 +10,7 @@ import MainContent from './MainContent';
 import LoadingScreen from './LoadingScreen';
 import SidebarToggleButton from './SidebarToggleButton';
 import { localStorageService } from '@/lib/local-storage';
+import { useMedia } from '@/hooks/useMedia';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -21,6 +22,7 @@ export default function Layout({ children }: LayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, loading, logout } = useAuth();
+  const { isDesktop } = useMedia();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(() => {
     const saved = localStorageService.getItem(SIDEBAR_MINIMIZED_KEY);
@@ -95,7 +97,12 @@ export default function Layout({ children }: LayoutProps) {
         onToggleOpen={handleSidebarToggle}
       />
 
-      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 'lg:ml-0'ized ? 'lg:ml-20' : 'lg:ml-64'}`}>
+      <div 
+        className="flex-1 flex flex-col min-w-0 w-full transition-all duration-300 lg:ml-0"
+        style={{
+          marginLeft: isDesktop && (isMinimized ? '5rem' : '16rem')
+        }}
+      >
         <TopHeader user={user} />
         <MainContent>{children}</MainContent>
       </div>

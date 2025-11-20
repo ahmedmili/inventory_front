@@ -290,7 +290,8 @@ export default function ProductsPage() {
         requirePermissions: ['products.read'],
       }}
     >
-      <div className="px-4 py-6 sm:px-0">
+        <div className="w-full">
+          <div className="px-4 py-6 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -395,8 +396,9 @@ export default function ProductsPage() {
           type="warning"
           loading={deleting}
         />
-      </div>
-    </RouteGuard>
-  );
-}
+          </div>
+        </div>
+      </RouteGuard>
+    );
+  }
 

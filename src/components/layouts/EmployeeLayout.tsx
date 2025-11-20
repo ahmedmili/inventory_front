@@ -122,7 +122,12 @@ export default function EmployeeLayout({ children }: EmployeeLayoutProps) {
         onToggleOpen={handleSidebarToggle}
       />
 
-      <div className="flex-1 flex flex-col min-w-0 w-full">
+      <div 
+        className="flex-1 flex flex-col min-w-0 w-full transition-all duration-300 lg:ml-0"
+        style={{
+          marginLeft: isDesktop && (isMinimized ? '5rem' : '16rem')
+        }}
+      >
         <EmployeeTopHeader user={user} />
         <MainContent>{children}</MainContent>
       </div>
