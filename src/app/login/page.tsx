@@ -83,7 +83,7 @@ export default function LoginPage() {
             />
           </div>
           <h2 className="text-4xl font-bold text-gray-900 tracking-tight">
-            Gestion de Stock Pro
+          SAUTER
           </h2>
           <p className="mt-3 text-base text-gray-600">
             Sign in to your account to continue
@@ -284,7 +284,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="text-center text-sm text-gray-500">
-          © {new Date().getFullYear()} Gestion de Stock Pro. All rights reserved.
+          © {new Date().getFullYear()} SAUTER. All rights reserved.
         </p>
       </div>
     </div>
