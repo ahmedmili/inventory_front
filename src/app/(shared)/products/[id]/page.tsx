@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { hasPermission } from '@/lib/permissions';
 import ProductFormModal from '@/components/products/ProductFormModal';
 import StockMovementModal from '@/components/products/StockMovementModal';
+import ReservationCartModal from '@/components/reservations/ReservationCartModal';
 import { useState, useEffect } from 'react';
 
 // Stock Movements History Component
@@ -212,8 +213,11 @@ export default function ProductDetailPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDisposeModalOpen, setIsDisposeModalOpen] = useState(false);
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
+  const [isReservationModalOpen, setIsReservationModalOpen] = useState(false);
   const [movementRefreshKey, setMovementRefreshKey] = useState(0);
   const canEdit = hasPermission(user, 'products.update');
+  const canManageStock = hasPermission(user, 'stock.create');
+  const canCreateReservation = hasPermission(user, 'reservations.create');
 
   const handleEditSuccess = () => {
     setIsEditModalOpen(false);
@@ -290,24 +294,39 @@ export default function ProductDetailPage() {
               Retour à la liste
             </Link>
             <div className="flex items-center gap-3 flex-wrap">
-              <button
-                onClick={() => setIsDisposeModalOpen(true)}
-                className="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 font-medium transition-colors shadow-sm hover:shadow-md"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Disposer
-              </button>
-              <button
-                onClick={() => setIsWithdrawModalOpen(true)}
-                className="inline-flex items-center gap-2 bg-red-600 text-white px-4 py-2.5 rounded-lg hover:bg-red-700 font-medium transition-colors shadow-sm hover:shadow-md"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                </svg>
-                Retirer
-              </button>
+              {canManageStock && (
+                <>
+                  <button
+                    onClick={() => setIsDisposeModalOpen(true)}
+                    className="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 font-medium transition-colors shadow-sm hover:shadow-md"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Disposer
+                  </button>
+                  <button
+                    onClick={() => setIsWithdrawModalOpen(true)}
+                    className="inline-flex items-center gap-2 bg-red-600 text-white px-4 py-2.5 rounded-lg hover:bg-red-700 font-medium transition-colors shadow-sm hover:shadow-md"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                    </svg>
+                    Retirer
+                  </button>
+                </>
+              )}
+              {canCreateReservation && (
+                <button
+                  onClick={() => setIsReservationModalOpen(true)}
+                  className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-lg hover:bg-indigo-700 font-medium transition-colors shadow-sm hover:shadow-md"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  Réserver
+                </button>
+              )}
               {canEdit && (
                 <button
                   onClick={() => setIsEditModalOpen(true)}
@@ -603,6 +622,18 @@ export default function ProductDetailPage() {
               defaultWarehouseId={product.warehouseStock?.[0]?.warehouseId}
             />
           </>
+        )}
+        {canCreateReservation && (
+          <ReservationCartModal
+            isOpen={isReservationModalOpen}
+            onClose={() => setIsReservationModalOpen(false)}
+            initialProductId={id}
+            onSuccess={() => {
+              if (mutate) {
+                mutate();
+              }
+            }}
+          />
         )}
         </div>
       </div>

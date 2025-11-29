@@ -11,6 +11,7 @@ import {
   WarehouseIcon,
   ReportIcon,
   DashboardIcon,
+  ReservationIcon,
 } from './icons';
 
 export interface NavigationItem {
@@ -132,6 +133,13 @@ export const navigationItems: NavigationItem[] = [
         requirePermissions: ['customers.read'],
       },
     ],
+  },
+  {
+    name: 'Réservations',
+    href: '/reservations',
+    icon: <ReservationIcon />,
+    requirePermissions: ['reservations.read', 'reservations.create'],
+    requireAllPermissions: false, // Show if user has ANY reservation permission
   },
   {
     name: 'Rapports',

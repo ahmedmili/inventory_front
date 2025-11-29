@@ -15,6 +15,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { hasPermission } from '@/lib/permissions';
 import ConfirmModal from '@/components/ConfirmModal';
+import ReservationCartModal from '@/components/reservations/ReservationCartModal';
 
 interface Product {
   id: string;
@@ -57,6 +58,11 @@ export default function ProductsPage() {
   const limit = 20;
   const { mutate: deleteProduct, loading: deleting } = useApiMutation();
   const canDelete = hasPermission(user, 'products.delete');
+  const canCreate = hasPermission(user, 'products.create');
+  const canUpdate = hasPermission(user, 'products.update');
+  const canCreateReservation = hasPermission(user, 'reservations.create');
+  const [isReservationModalOpen, setIsReservationModalOpen] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
 
   const searchParams = useMemo(() => {
     const params = new URLSearchParams();
@@ -223,16 +229,33 @@ export default function ProductsPage() {
           >
             <EyeIcon />
           </Link>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleOpenEditModal(product.id);
-            }}
-            className="inline-flex items-center justify-center p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
-            title="Modifier"
-          >
-            <EditIcon />
-          </button>
+          {canCreateReservation && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedProductId(product.id);
+                setIsReservationModalOpen(true);
+              }}
+              className="inline-flex items-center justify-center p-2 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 rounded-lg transition-colors"
+              title="Réserver"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </button>
+          )}
+          {canUpdate && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleOpenEditModal(product.id);
+              }}
+              className="inline-flex items-center justify-center p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+              title="Modifier"
+            >
+              <EditIcon />
+            </button>
+          )}
           {canDelete && (
             <button
               onClick={(e) => {
@@ -303,13 +326,15 @@ export default function ProductsPage() {
                 </p>
               )}
             </div>
-            <button
-              onClick={handleOpenCreateModal}
-              className="inline-flex items-center gap-2 bg-primary-600 text-white px-4 py-2.5 rounded-lg hover:bg-primary-700 font-medium transition-colors shadow-sm hover:shadow-md"
-            >
-              <PlusIcon />
-              Ajouter un produit
-            </button>
+            {canCreate && (
+              <button
+                onClick={handleOpenCreateModal}
+                className="inline-flex items-center gap-2 bg-primary-600 text-white px-4 py-2.5 rounded-lg hover:bg-primary-700 font-medium transition-colors shadow-sm hover:shadow-md"
+              >
+                <PlusIcon />
+                Ajouter un produit
+              </button>
+            )}
           </div>
         </div>
 
@@ -396,6 +421,23 @@ export default function ProductsPage() {
           type="warning"
           loading={deleting}
         />
+
+        {/* Reservation Cart Modal */}
+        {canCreateReservation && (
+          <ReservationCartModal
+            isOpen={isReservationModalOpen}
+            onClose={() => {
+              setIsReservationModalOpen(false);
+              setSelectedProductId(null);
+            }}
+            initialProductId={selectedProductId || undefined}
+            onSuccess={() => {
+              if (mutate) {
+                mutate();
+              }
+            }}
+          />
+        )}
           </div>
         </div>
       </RouteGuard>
