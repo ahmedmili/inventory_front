@@ -71,7 +71,7 @@ export default function LoginPage() {
       <div className="max-w-md w-full space-y-8">
         {/* Logo and Header */}
         <div className="text-center">
-          <div className="flex justify-center mb-6">
+          {/* <div className="flex justify-center mb-6">
             <Image
               src="/logo/app_logo.jpeg"
               alt="SAUTER Logo"
@@ -81,7 +81,7 @@ export default function LoginPage() {
               className="h-auto"
               unoptimized
             />
-          </div>
+          </div> */}
           <h2 className="text-4xl font-bold text-gray-900 tracking-tight">
           SAUTER
           </h2>
