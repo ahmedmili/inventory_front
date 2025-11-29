@@ -33,6 +33,8 @@ export const navigationItems: NavigationItem[] = [
     href: '/dashboard',
     exact: true,
     requireAuth: true,
+    requireRoles: ['ADMIN'],
+
     icon: <DashboardIcon />,
   },
   {
@@ -78,12 +80,14 @@ export const navigationItems: NavigationItem[] = [
         name: 'Catégories',
         href: '/categories',
         icon: <ChevronRight />,
+        requireRoles: ['ADMIN'],
         requirePermissions: ['categories.read'],
       },
       {
         name: 'Fournisseurs',
         href: '/suppliers',
         icon: <BuildingIcon />,
+        requireRoles: ['ADMIN'],
         requirePermissions: ['suppliers.read'],
       },
     ],
@@ -104,12 +108,14 @@ export const navigationItems: NavigationItem[] = [
         name: 'Achats',
         href: '/purchases',
         icon: <CartIcon />,
+        requireRoles: ['ADMIN'],
         requirePermissions: ['purchases.read'],
       },
       {
         name: 'Ventes',
         href: '/sales',
         icon: <SalesIcon />,
+        requireRoles: ['ADMIN'],
         requirePermissions: ['sales.read'],
       },
     ],
@@ -117,6 +123,7 @@ export const navigationItems: NavigationItem[] = [
   {
     name: 'Logistique',
     icon: <WarehouseIcon />,
+    requireRoles: ['ADMIN'],
     requirePermissions: ['warehouses.read', 'customers.read'],
     requireAllPermissions: false,
     children: [
