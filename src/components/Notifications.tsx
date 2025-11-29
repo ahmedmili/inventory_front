@@ -23,7 +23,7 @@ export default function Notifications() {
 
   const handleMarkAsRead = async (id: string) => {
     try {
-      await markAsRead(`/notifications/${id}/read`, 'PUT', {});
+      await markAsRead(`/notifications/${id}/read`, 'POST', {});
       mutateNotifications(); // Refresh notifications
       mutateCount(); // Refresh unread count
     } catch (error) {
@@ -33,7 +33,7 @@ export default function Notifications() {
 
   const handleMarkAllAsRead = async () => {
     try {
-      await markAsRead('/notifications/read-all', 'PUT', {});
+      await markAsRead('/notifications/read-all', 'POST', {});
       mutateNotifications(); // Refresh notifications
       mutateCount(); // Refresh unread count
       toast.success('All notifications marked as read');

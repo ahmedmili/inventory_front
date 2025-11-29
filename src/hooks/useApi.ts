@@ -49,13 +49,15 @@ export function useApiMutation<TData = any, TVariables = any>() {
       let response;
       switch (method) {
         case 'POST':
-          response = await apiClient.post<TData>(url, data);
+          response = await apiClient.post<TData>(url, data || {});
           break;
         case 'PUT':
-          response = await apiClient.put<TData>(url, data);
+          // For PUT requests, always send data (even if empty object)
+          // Some servers/CORS configs require a body for PUT requests
+          response = await apiClient.put<TData>(url, data !== undefined ? data : {});
           break;
         case 'PATCH':
-          response = await apiClient.patch<TData>(url, data);
+          response = await apiClient.patch<TData>(url, data || {});
           break;
         case 'DELETE':
           response = await apiClient.delete<TData>(url);
@@ -65,6 +67,17 @@ export function useApiMutation<TData = any, TVariables = any>() {
     } catch (err) {
       const axiosError = err as AxiosError;
       setError(axiosError);
+      
+      // Log CORS errors for debugging
+      if (!axiosError.response && typeof window !== 'undefined') {
+        console.error('Network/CORS Error:', {
+          url,
+          method,
+          error: axiosError.message,
+          code: axiosError.code,
+        });
+      }
+      
       throw axiosError;
     } finally {
       setLoading(false);

@@ -33,6 +33,25 @@ class ApiClient {
       async (error: AxiosError) => {
         const originalRequest = error.config as any;
 
+        // Handle CORS errors (no response means network/CORS error)
+        if (!error.response) {
+          const isCorsError = error.message?.includes('CORS') || 
+                             error.message?.includes('Network Error') ||
+                             error.code === 'ERR_NETWORK';
+          
+          if (isCorsError && typeof window !== 'undefined') {
+            console.error('CORS Error:', {
+              message: error.message,
+              url: originalRequest?.url,
+              method: originalRequest?.method,
+              baseURL: API_URL,
+            });
+          }
+          
+          // Don't retry CORS errors
+          return Promise.reject(error);
+        }
+
         // Handle 401 Unauthorized - Try to refresh token
         if (error.response?.status === 401 && !originalRequest._retry) {
           originalRequest._retry = true;
@@ -43,6 +62,7 @@ class ApiClient {
               const response = await axios.post(
                 `${API_URL}/auth/refresh`,
                 { refreshToken },
+                { withCredentials: true },
               );
               const { accessToken, refreshToken: newRefreshToken } = response.data;
               localStorageService.setItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN, accessToken);
