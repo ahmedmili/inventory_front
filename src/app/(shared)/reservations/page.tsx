@@ -8,6 +8,7 @@ import { hasPermission } from '@/lib/permissions';
 import { apiClient } from '@/lib/api';
 import { SkeletonLoader } from '@/components/SkeletonLoader';
 import { useToast } from '@/contexts/ToastContext';
+import Pagination from '@/components/Pagination';
 
 interface ReservationItem {
   id: string;
@@ -51,6 +52,36 @@ interface ReservationGroup {
   };
 }
 
+interface ReservationsResponse {
+  data: ReservationGroup[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}
+
+interface Project {
+  id: string;
+  name: string;
+}
+
+interface Product {
+  id: string;
+  name: string;
+  sku?: string;
+}
+
+interface User {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
 export default function ReservationsPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
@@ -58,9 +89,28 @@ export default function ReservationsPage() {
   const [reservations, setReservations] = useState<ReservationGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [projectFilter, setProjectFilter] = useState<string>('all');
+  const [productFilter, setProductFilter] = useState<string>('all');
+  const [userFilter, setUserFilter] = useState<string>('all');
+  const [page, setPage] = useState(1);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const [paginationMeta, setPaginationMeta] = useState<ReservationsResponse['meta'] | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loadingOptions, setLoadingOptions] = useState(false);
+  
+  // Autocomplete states
+  const [projectSearch, setProjectSearch] = useState('');
+  const [productSearch, setProductSearch] = useState('');
+  const [userSearch, setUserSearch] = useState('');
+  const [showProjectSuggestions, setShowProjectSuggestions] = useState(false);
+  const [showProductSuggestions, setShowProductSuggestions] = useState(false);
+  const [showUserSuggestions, setShowUserSuggestions] = useState(false);
+  const limit = 20;
   const canCreate = hasPermission(user, 'reservations.create');
   const canCancel = hasPermission(user, 'reservations.cancel');
+  const isAdmin = user?.role?.code === 'ADMIN' || user?.role?.code === 'MANAGER';
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -68,21 +118,127 @@ export default function ReservationsPage() {
       return;
     }
     if (user) {
+      loadOptions();
       loadReservations();
     }
-  }, [user, authLoading, statusFilter]);
+  }, [user, authLoading]);
+
+  useEffect(() => {
+    if (user) {
+      setPage(1); // Reset to first page when filters change
+      loadReservations();
+    }
+  }, [statusFilter, projectFilter, productFilter, userFilter]);
+
+  // Reset search fields when filters are cleared
+  useEffect(() => {
+    if (projectFilter === 'all') {
+      setProjectSearch('');
+    }
+  }, [projectFilter]);
+
+  useEffect(() => {
+    if (productFilter === 'all') {
+      setProductSearch('');
+    }
+  }, [productFilter]);
+
+  useEffect(() => {
+    if (userFilter === 'all') {
+      setUserSearch('');
+    }
+  }, [userFilter]);
+
+  // Filter suggestions based on search
+  const filteredProjects = projects.filter(p =>
+    p.name.toLowerCase().includes(projectSearch.toLowerCase())
+  ).slice(0, 10);
+
+  const filteredProducts = products.filter(p =>
+    p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+    (p.sku && p.sku.toLowerCase().includes(productSearch.toLowerCase()))
+  ).slice(0, 10);
+
+  const filteredUsers = users.filter(u =>
+    u.firstName.toLowerCase().includes(userSearch.toLowerCase()) ||
+    u.lastName.toLowerCase().includes(userSearch.toLowerCase()) ||
+    u.email.toLowerCase().includes(userSearch.toLowerCase())
+  ).slice(0, 10);
+
+  // Get selected item names for display
+  const selectedProject = projects.find(p => p.id === projectFilter);
+  const selectedProduct = products.find(p => p.id === productFilter);
+  const selectedUser = users.find(u => u.id === userFilter);
+
+  useEffect(() => {
+    if (user) {
+      loadReservations();
+    }
+  }, [page]);
+
+  const loadOptions = async () => {
+    try {
+      setLoadingOptions(true);
+      const requests: Promise<any>[] = [
+        apiClient.get('/projects?status=ACTIVE'),
+        apiClient.get('/products?limit=1000'),
+      ];
+
+      // Only admins need users list
+      if (isAdmin) {
+        requests.push(apiClient.get('/users?limit=1000'));
+      }
+
+      const responses = await Promise.all(requests);
+      const [projectsRes, productsRes, usersRes] = responses;
+
+      setProjects(projectsRes.data?.data || projectsRes.data || []);
+      setProducts(productsRes.data?.data || productsRes.data || []);
+      
+      if (isAdmin && usersRes) {
+        setUsers(usersRes.data?.data || usersRes.data || []);
+      }
+    } catch (error: any) {
+      console.error('Failed to load filter options:', error);
+    } finally {
+      setLoadingOptions(false);
+    }
+  };
 
   const loadReservations = async () => {
     try {
       setLoading(true);
-      const status = statusFilter === 'all' ? undefined : statusFilter;
-      const response = await apiClient.get('/reservations/my', {
-        params: { 
-          ...(status ? { status } : {}),
-          grouped: 'true',
-        },
-      });
-      setReservations(response.data || []);
+      const params: any = {
+        grouped: 'true',
+        page: page.toString(),
+        limit: limit.toString(),
+      };
+
+      if (statusFilter !== 'all') {
+        params.status = statusFilter;
+      }
+      if (projectFilter !== 'all') {
+        params.projectId = projectFilter;
+      }
+      if (productFilter !== 'all') {
+        params.productId = productFilter;
+      }
+      if (isAdmin && userFilter !== 'all') {
+        params.userId = userFilter;
+      }
+
+      // Admins can see all reservations, others see only their own
+      const endpoint = isAdmin ? '/reservations' : '/reservations/my';
+      const response = await apiClient.get<ReservationsResponse>(endpoint, { params });
+      
+      if (response.data?.data) {
+        setReservations(response.data.data);
+        setPaginationMeta(response.data.meta);
+      } else {
+        // Fallback for old response format (array)
+        setReservations(response.data || []);
+        setPaginationMeta(null);
+      }
     } catch (error: any) {
       console.error('Failed to load reservations:', error);
       toast.error('Erreur lors du chargement des réservations');
@@ -199,10 +355,10 @@ export default function ReservationsPage() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Mes Réservations
+            {isAdmin ? 'Toutes les Réservations' : 'Mes Réservations'}
           </h1>
           <p className="text-gray-600">
-            Gérez vos réservations de produits
+            {isAdmin ? 'Gérez toutes les réservations de produits' : 'Gérez vos réservations de produits'}
           </p>
         </div>
         {canCreate && (
@@ -221,24 +377,212 @@ export default function ReservationsPage() {
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow p-4 mb-6">
-        <div className="flex items-center gap-4">
-          <label className="text-sm font-medium text-gray-700">Statut:</label>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="all">Tous</option>
-            <option value="RESERVED">Réservé</option>
-            <option value="FULFILLED">Rempli</option>
-            <option value="RELEASED">Libéré</option>
-            <option value="CANCELLED">Annulé</option>
-          </select>
+        <div className={`grid grid-cols-1 md:grid-cols-2 ${isAdmin ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-4`}>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Statut</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">Tous</option>
+              <option value="RESERVED">Réservé</option>
+              <option value="FULFILLED">Rempli</option>
+              <option value="RELEASED">Libéré</option>
+              <option value="CANCELLED">Annulé</option>
+            </select>
+          </div>
+
+          {/* Project Autocomplete - Available for all users */}
+          <div className="relative">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Projet</label>
+            <div className="relative">
+              <input
+                type="text"
+                value={selectedProject ? selectedProject.name : projectSearch}
+                onChange={(e) => {
+                  setProjectSearch(e.target.value);
+                  setProjectFilter('all');
+                  setShowProjectSuggestions(true);
+                }}
+                onFocus={() => setShowProjectSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowProjectSuggestions(false), 200)}
+                placeholder="Rechercher un projet..."
+                disabled={loadingOptions}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+              {projectFilter !== 'all' && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setProjectFilter('all');
+                    setProjectSearch('');
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  title="Effacer"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+              {showProjectSuggestions && filteredProjects.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                  {filteredProjects.map((project) => (
+                    <button
+                      key={project.id}
+                      type="button"
+                      onClick={() => {
+                        setProjectFilter(project.id);
+                        setProjectSearch(project.name);
+                        setShowProjectSuggestions(false);
+                      }}
+                      className="w-full text-left px-4 py-2 hover:bg-blue-50 focus:bg-blue-50 focus:outline-none text-sm"
+                    >
+                      {project.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Product Autocomplete - Available for all users */}
+          <div className="relative">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Produit</label>
+            <div className="relative">
+              <input
+                type="text"
+                value={selectedProduct ? `${selectedProduct.name}${selectedProduct.sku ? ` (${selectedProduct.sku})` : ''}` : productSearch}
+                onChange={(e) => {
+                  setProductSearch(e.target.value);
+                  setProductFilter('all');
+                  setShowProductSuggestions(true);
+                }}
+                onFocus={() => setShowProductSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowProductSuggestions(false), 200)}
+                placeholder="Rechercher un produit..."
+                disabled={loadingOptions}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+              {productFilter !== 'all' && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setProductFilter('all');
+                    setProductSearch('');
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  title="Effacer"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+              {showProductSuggestions && filteredProducts.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                  {filteredProducts.map((product) => (
+                    <button
+                      key={product.id}
+                      type="button"
+                      onClick={() => {
+                        setProductFilter(product.id);
+                        setProductSearch(`${product.name}${product.sku ? ` (${product.sku})` : ''}`);
+                        setShowProductSuggestions(false);
+                      }}
+                      className="w-full text-left px-4 py-2 hover:bg-blue-50 focus:bg-blue-50 focus:outline-none text-sm"
+                    >
+                      {product.name} {product.sku && <span className="text-gray-500">({product.sku})</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* User Autocomplete - Only for admins */}
+          {isAdmin && (
+            <div className="relative">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Utilisateur</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={selectedUser ? `${selectedUser.firstName} ${selectedUser.lastName} (${selectedUser.email})` : userSearch}
+                  onChange={(e) => {
+                    setUserSearch(e.target.value);
+                    setUserFilter('all');
+                    setShowUserSuggestions(true);
+                  }}
+                  onFocus={() => setShowUserSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowUserSuggestions(false), 200)}
+                  placeholder="Rechercher un utilisateur..."
+                  disabled={loadingOptions}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+                {userFilter !== 'all' && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setUserFilter('all');
+                      setUserSearch('');
+                    }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    title="Effacer"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+                {showUserSuggestions && filteredUsers.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                    {filteredUsers.map((u) => (
+                      <button
+                        key={u.id}
+                        type="button"
+                        onClick={() => {
+                          setUserFilter(u.id);
+                          setUserSearch(`${u.firstName} ${u.lastName} (${u.email})`);
+                          setShowUserSuggestions(false);
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-blue-50 focus:bg-blue-50 focus:outline-none text-sm"
+                      >
+                        <div className="font-medium">{u.firstName} {u.lastName}</div>
+                        <div className="text-xs text-gray-500">{u.email}</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
+
+        {/* Clear Filters Button */}
+        {(statusFilter !== 'all' || projectFilter !== 'all' || productFilter !== 'all' || userFilter !== 'all') && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <button
+              onClick={() => {
+                setStatusFilter('all');
+                setProjectFilter('all');
+                setProductFilter('all');
+                setUserFilter('all');
+                setProjectSearch('');
+                setProductSearch('');
+                setUserSearch('');
+              }}
+              className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+              title="Réinitialiser tous les filtres"
+            >
+              Réinitialiser les filtres
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Reservations List */}
-      <div className="space-y-4">
+      <div className="space-y-4 mb-6">
         {reservations.length === 0 ? (
           <div className="bg-white rounded-lg shadow text-center py-12">
             <svg
@@ -301,6 +645,14 @@ export default function ReservationsPage() {
                             <span>{group.totalItems} produit{group.totalItems > 1 ? 's' : ''}</span>
                             <span>•</span>
                             <span>Créé le {formatDate(group.createdAt)}</span>
+                            {isAdmin && group.user && (
+                              <>
+                                <span>•</span>
+                                <span>
+                                  Par: {group.user.firstName} {group.user.lastName} ({group.user.email})
+                                </span>
+                              </>
+                            )}
                             {group.project && (
                               <>
                                 <span>•</span>
@@ -471,6 +823,22 @@ export default function ReservationsPage() {
           })
         )}
       </div>
+
+      {/* Pagination */}
+      {paginationMeta && paginationMeta.totalPages > 1 && (
+        <div className="mt-6">
+          <Pagination
+            currentPage={paginationMeta.page}
+            totalPages={paginationMeta.totalPages}
+            hasNext={paginationMeta.hasNext}
+            hasPrev={paginationMeta.hasPrev}
+            onPageChange={(newPage) => {
+              setPage(newPage);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }
