@@ -514,6 +514,7 @@ export default function NewReservationPage() {
                   <Link
                     href="/reservations"
                     className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+                    title="Annuler et retourner à la liste des réservations"
                   >
                     Annuler
                   </Link>
@@ -521,6 +522,7 @@ export default function NewReservationPage() {
                     type="submit"
                     disabled={loading || cart.length === 0}
                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={cart.length === 0 ? 'Ajoutez au moins un produit au panier' : 'Créer la réservation avec les produits du panier'}
                   >
                     {loading ? 'Création...' : `Créer la Réservation (${cart.length} produit${cart.length > 1 ? 's' : ''})`}
                   </button>

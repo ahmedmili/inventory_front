@@ -157,6 +157,7 @@ export default function Modal({
                 onClick={onClose}
                 className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg p-1.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
                 aria-label="Close modal"
+                title="Fermer"
               >
                 <svg
                   className="w-5 h-5"

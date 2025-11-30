@@ -43,12 +43,12 @@ export const navigationItems: NavigationItem[] = [
     href: '/users',
     requirePermissions: ['users.read'],
     children: [
-      {
-        name: 'Vue globale',
-        href: '/users',
-        icon: <ChevronRight />,
-        requirePermissions: ['users.read'],
-      },
+      // {
+      //   name: 'Vue globale',
+      //   href: '/users',
+      //   icon: <ChevronRight />,
+      //   requirePermissions: ['users.read'],
+      // },
       {
         name: 'Administrateurs',
         href: '/users/admins',
@@ -76,19 +76,26 @@ export const navigationItems: NavigationItem[] = [
         icon: <BoxIcon />,
         requirePermissions: ['products.read'],
       },
-      {
-        name: 'Catégories',
-        href: '/categories',
-        icon: <ChevronRight />,
-        requireRoles: ['ADMIN'],
-        requirePermissions: ['categories.read'],
-      },
+      // {
+      //   name: 'Catégories',
+      //   href: '/categories',
+      //   icon: <ChevronRight />,
+      //   requireRoles: ['ADMIN'],
+      //   requirePermissions: ['categories.read'],
+      // },
       {
         name: 'Fournisseurs',
         href: '/suppliers',
         icon: <BuildingIcon />,
         requireRoles: ['ADMIN'],
         requirePermissions: ['suppliers.read'],
+      },
+      {
+        name: 'Clients',
+        href: '/customers',
+        icon: <UsersIcon />,
+        requireRoles: ['ADMIN'],
+        requirePermissions: ['customers.read'],
       },
     ],
   },
@@ -104,43 +111,38 @@ export const navigationItems: NavigationItem[] = [
         icon: <ArrowsIcon />,
         requirePermissions: ['stock.read'],
       },
-      {
-        name: 'Achats',
-        href: '/purchases',
-        icon: <CartIcon />,
-        requireRoles: ['ADMIN'],
-        requirePermissions: ['purchases.read'],
-      },
-      {
-        name: 'Ventes',
-        href: '/sales',
-        icon: <SalesIcon />,
-        requireRoles: ['ADMIN'],
-        requirePermissions: ['sales.read'],
-      },
+      // {
+      //   name: 'Achats',
+      //   href: '/purchases',
+      //   icon: <CartIcon />,
+      //   requireRoles: ['ADMIN'],
+      //   requirePermissions: ['purchases.read'],
+      // },
+      // {
+      //   name: 'Ventes',
+      //   href: '/sales',
+      //   icon: <SalesIcon />,
+      //   requireRoles: ['ADMIN'],
+      //   requirePermissions: ['sales.read'],
+      // },
     ],
   },
-  {
-    name: 'Logistique',
-    icon: <WarehouseIcon />,
-    requireRoles: ['ADMIN'],
-    requirePermissions: ['warehouses.read', 'customers.read'],
-    requireAllPermissions: false,
-    children: [
-      {
-        name: 'Entrepôts',
-        href: '/warehouses',
-        icon: <WarehouseIcon />,
-        requirePermissions: ['warehouses.read'],
-      },
-      {
-        name: 'Clients',
-        href: '/customers',
-        icon: <UsersIcon />,
-        requirePermissions: ['customers.read'],
-      },
-    ],
-  },
+  // {
+  //   name: 'Logistique',
+  //   icon: <WarehouseIcon />,
+  //   requireRoles: ['ADMIN'],
+  //   requirePermissions: ['warehouses.read', 'customers.read'],
+  //   requireAllPermissions: false,
+  //   children: [
+  //     {
+  //       name: 'Entrepôts',
+  //       href: '/warehouses',
+  //       icon: <WarehouseIcon />,
+  //       requirePermissions: ['warehouses.read'],
+  //     },
+    
+  //   ],
+  // },
   {
     name: 'Réservations',
     href: '/reservations',
@@ -153,6 +155,13 @@ export const navigationItems: NavigationItem[] = [
     href: '/reports',
     icon: <ReportIcon />,
     requirePermissions: ['reports.read'],
+  },
+  {
+    name: 'Rôles & Permissions',
+    href: '/roles',
+    icon: <UsersIcon />,
+    requireRoles: ['ADMIN'],
+    requirePermissions: ['roles.manage'],
   },
 ];
 

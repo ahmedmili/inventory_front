@@ -209,6 +209,7 @@ export default function ReservationsPage() {
           <Link
             href="/reservations/new"
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
+            title="Créer une nouvelle réservation"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -325,6 +326,7 @@ export default function ReservationsPage() {
                         <button
                           onClick={() => toggleGroup(group.groupId)}
                           className="text-gray-600 hover:text-gray-900 inline-flex items-center gap-1 px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                          title={isExpanded ? 'Masquer les détails' : 'Voir les détails des produits'}
                         >
                           {isExpanded ? (
                             <>
@@ -363,6 +365,7 @@ export default function ReservationsPage() {
                             }
                           }}
                           className="text-red-600 hover:text-red-900 px-3 py-2 border border-red-300 rounded-md hover:bg-red-50 transition-colors"
+                          title="Libérer toutes les réservations de ce groupe"
                         >
                           Libérer tout
                         </button>
@@ -405,6 +408,7 @@ export default function ReservationsPage() {
                               <button
                                 onClick={() => handleRelease(item.id)}
                                 className="text-red-600 hover:text-red-900 text-sm px-3 py-1 border border-red-300 rounded-md hover:bg-red-50 transition-colors"
+                                title="Libérer cette réservation"
                               >
                                 Libérer
                               </button>
@@ -444,6 +448,7 @@ export default function ReservationsPage() {
                           <button
                             onClick={() => handleRelease(item.id)}
                             className="text-red-600 hover:text-red-900 text-sm px-3 py-1 border border-red-300 rounded-md hover:bg-red-50 transition-colors"
+                            title="Libérer cette réservation"
                           >
                             Libérer
                           </button>

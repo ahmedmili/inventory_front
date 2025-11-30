@@ -73,6 +73,7 @@ export default function Notifications() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 text-gray-600 hover:text-gray-900 focus:outline-none"
+        title="Voir les notifications"
       >
         <svg
           className="h-6 w-6"
@@ -110,6 +111,7 @@ export default function Notifications() {
                 <button
                   onClick={handleMarkAllAsRead}
                   className="text-sm text-primary-600 hover:text-primary-900"
+                  title="Marquer toutes les notifications comme lues"
                 >
                   Mark all as read
                 </button>

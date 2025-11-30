@@ -101,18 +101,18 @@ export default function ReportsPage() {
                   {stats?.lowStock || 0}
                 </span>
               </div>
-              <div className="flex justify-between items-center">
+              {/* <div className="flex justify-between items-center">
                 <span className="text-gray-600">Sales Orders</span>
                 <span className="text-2xl font-bold text-green-600">
                   {stats?.sales || 0}
                 </span>
-              </div>
-              <div className="flex justify-between items-center">
+              </div> */}
+              {/* <div className="flex justify-between items-center">
                 <span className="text-gray-600">Purchase Orders</span>
                 <span className="text-2xl font-bold text-blue-600">
                   {stats?.purchases || 0}
                 </span>
-              </div>
+              </div> */}
             </div>
           </div>
 

@@ -408,6 +408,7 @@ export default function ProductFormModal({
               onClick={handleClose}
               disabled={loading || loadingProduct}
               className="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+              title="Annuler la création/modification"
             >
               Annuler
             </button>
@@ -415,6 +416,7 @@ export default function ProductFormModal({
               type="submit"
               disabled={loading || loadingProduct}
               className="px-5 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all duration-200 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+              title={isEditMode ? 'Enregistrer les modifications' : 'Créer le produit'}
             >
               {loading
                 ? isEditMode

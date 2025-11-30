@@ -82,6 +82,7 @@ export default function ConfirmModal({
             onClick={onClose}
             disabled={loading}
             className="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+            title="Annuler l'action"
           >
             {cancelText}
           </button>
@@ -94,6 +95,7 @@ export default function ConfirmModal({
               type === 'warning' ? 'focus:ring-yellow-500' :
               'focus:ring-blue-500'
             }`}
+            title={type === 'danger' ? 'Confirmer la suppression' : 'Confirmer l\'action'}
           >
             {loading ? (
               <span className="flex items-center">

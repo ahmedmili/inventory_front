@@ -381,6 +381,7 @@ export default function AdminsPage() {
         <button
           onClick={() => setInviteModalOpen(true)}
           className="inline-flex items-center justify-center rounded-lg bg-primary-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+          title="Inviter un nouvel administrateur ou manager"
         >
           + Inviter un administrateur
         </button>
@@ -551,6 +552,7 @@ export default function AdminsPage() {
               type="button"
               onClick={handleInviteModalClose}
               className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              title="Annuler la création"
             >
               Annuler
             </button>
@@ -558,6 +560,7 @@ export default function AdminsPage() {
               type="submit"
               disabled={inviteLoading || actionUserId === 'create'}
               className="inline-flex items-center justify-center rounded-lg bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 disabled:opacity-60"
+              title="Créer le compte administrateur"
             >
               {inviteLoading ? (
                 <span className="flex items-center gap-2">

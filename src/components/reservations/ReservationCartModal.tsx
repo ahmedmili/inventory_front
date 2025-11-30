@@ -359,6 +359,13 @@ export default function ReservationCartModal({
             onClick={handleAddToCart}
             disabled={loadingOptions || !formData.productId || !formData.warehouseId}
             className="mt-4 w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            title={
+              !formData.productId
+                ? 'Sélectionnez un produit'
+                : !formData.warehouseId
+                ? 'Sélectionnez un entrepôt'
+                : 'Ajouter ce produit au panier de réservation'
+            }
           >
             Ajouter au Panier
           </button>
@@ -400,6 +407,7 @@ export default function ReservationCartModal({
                           onClick={() => handleUpdateQuantity(index, item.quantity - 1)}
                           disabled={item.quantity <= 1}
                           className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Diminuer la quantité"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
@@ -410,6 +418,11 @@ export default function ReservationCartModal({
                           onClick={() => handleUpdateQuantity(index, item.quantity + 1)}
                           disabled={item.quantity >= item.availableStock}
                           className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          title={
+                            item.quantity >= item.availableStock
+                              ? `Stock maximum disponible: ${item.availableStock}`
+                              : 'Augmenter la quantité'
+                          }
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -500,6 +513,7 @@ export default function ReservationCartModal({
           <button
             onClick={handleClose}
             className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+            title={cart.length > 0 ? 'Fermer le panier' : 'Annuler et fermer'}
           >
             {cart.length > 0 ? 'Fermer' : 'Annuler'}
           </button>
@@ -508,6 +522,7 @@ export default function ReservationCartModal({
               onClick={handleSubmit}
               disabled={loading}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Créer la réservation avec les produits du panier"
             >
               {loading ? 'Création...' : `Créer la Réservation (${cart.length} produit${cart.length > 1 ? 's' : ''})`}
             </button>
