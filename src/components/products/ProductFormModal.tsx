@@ -22,6 +22,11 @@ const productSchema = z.object({
   supplierId: z.string().optional(), // Fournisseur (optional)
   salePrice: z.number().min(0, 'Le prix doit être positif'), // Prix (required)
   minStock: z.number().int().min(0, 'Le seuil doit être non négatif'), // Seuil (required)
+  initialQuantity: z
+    .number()
+    .int()
+    .min(0, 'La quantité doit être non négative')
+    .optional(), // Quantité initiale pour l'entrepôt principal (creation only)
   // Commented out fields - can be restored later
   // barcode: z.string().optional(),
   // categoryId: z.string().optional(),
@@ -107,6 +112,7 @@ export default function ProductFormModal({
         supplierId: '',
         salePrice: 0,
         minStock: 0,
+        initialQuantity: 0,
         // Commented out fields - can be restored later
         // barcode: '',
         // categoryId: '',
@@ -175,6 +181,9 @@ export default function ProductFormModal({
         description: data.description || undefined,
         salePrice: data.salePrice,
         minStock: data.minStock,
+        initialQuantity: !isEditMode
+          ? (typeof data.initialQuantity === 'number' ? data.initialQuantity : 0)
+          : undefined,
         // Commented out fields - can be restored later
         // categoryId: data.categoryId || undefined,
         // barcode: data.barcode || undefined,
@@ -353,6 +362,30 @@ export default function ProductFormModal({
                 Quantité minimale en stock avant alerte
               </p>
             </div>
+
+            {/* Quantité initiale - uniquement en création */}
+            {!isEditMode && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Quantité initiale (entrepôt principal)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  {...register('initialQuantity', { valueAsNumber: true })}
+                  placeholder="0"
+                  className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-4 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                />
+                {errors.initialQuantity && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.initialQuantity.message}
+                  </p>
+                )}
+                <p className="mt-1 text-xs text-gray-500">
+                  Sera créé automatiquement dans l&apos;entrepôt principal (code MAIN)
+                </p>
+              </div>
+            )}
 
             {/* Commented out fields - can be restored later */}
             {/* Catégorie - Optional */}

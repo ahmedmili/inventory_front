@@ -25,6 +25,11 @@ interface Product {
   salePrice: number | string; // Prix
   minStock: number; // Seuil
   supplier?: { name: string }; // Fournisseur
+  warehouseStock?: Array<{
+    id: string;
+    quantity: number;
+    warehouseId: string;
+  }>;
   // Commented out fields - can be restored later
   // barcode: string;
   // purchasePrice: number | string;
@@ -201,13 +206,36 @@ export default function ProductsPage() {
       ),
     },
     {
+      key: 'stock',
+      label: 'Stock',
+      sortable: false,
+      className: 'text-right',
+      render: (product) => {
+        const totalStock = product.warehouseStock?.reduce((sum, stock) => sum + stock.quantity, 0) || 0;
+        const isLowStock = totalStock <= product.minStock;
+        return (
+          <div className="text-right">
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+              isLowStock 
+                ? 'bg-red-100 text-red-800' 
+                : totalStock > product.minStock * 1.5
+                ? 'bg-green-100 text-green-800'
+                : 'bg-yellow-100 text-yellow-800'
+            }`}>
+              {totalStock}
+            </span>
+          </div>
+        );
+      },
+    },
+    {
       key: 'minStock',
       label: 'Seuil',
       sortable: true,
       className: 'text-right',
       render: (product) => (
         <div className="text-right">
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
             {product.minStock}
           </span>
         </div>
