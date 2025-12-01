@@ -44,6 +44,16 @@ interface CreateRoleForm {
   isActive: boolean;
 }
 
+// Suggestions de codes de rôles (utilisés pour l'autocomplete)
+const ROLE_CODE_SUGGESTIONS = [
+  'ADMIN',
+  'MANAGER',
+  'EMPLOYEE',
+  'STOCK_KEEPER',
+  'PROJECT_MANAGER',
+  'VIEWER',
+];
+
 const dateFormatter = new Intl.DateTimeFormat('fr-FR', {
   day: '2-digit',
   month: 'short',
@@ -75,6 +85,8 @@ export default function RolesPage() {
     register: registerCreate,
     handleSubmit: handleSubmitCreate,
     reset: resetCreate,
+    watch: watchCreate,
+    setValue: setCreateValue,
     formState: { errors: errorsCreate },
   } = useForm<CreateRoleForm>({
     defaultValues: {
@@ -89,8 +101,33 @@ export default function RolesPage() {
     register: registerEdit,
     handleSubmit: handleSubmitEdit,
     reset: resetEdit,
+    watch: watchEdit,
+    setValue: setEditValue,
     formState: { errors: errorsEdit },
   } = useForm<CreateRoleForm>();
+
+  // États pour l'autocomplete du code de rôle
+  const [showCreateCodeSuggestions, setShowCreateCodeSuggestions] = useState(false);
+  const [showEditCodeSuggestions, setShowEditCodeSuggestions] = useState(false);
+
+  const createCodeValue = (watchCreate('code') || '').toString();
+  const editCodeValue = (watchEdit('code') || '').toString();
+
+  const filteredRoleCodeSuggestionsCreate = useMemo(
+    () =>
+      ROLE_CODE_SUGGESTIONS.filter((code) =>
+        code.toLowerCase().includes(createCodeValue.toLowerCase()),
+      ),
+    [createCodeValue],
+  );
+
+  const filteredRoleCodeSuggestionsEdit = useMemo(
+    () =>
+      ROLE_CODE_SUGGESTIONS.filter((code) =>
+        code.toLowerCase().includes(editCodeValue.toLowerCase()),
+      ),
+    [editCodeValue],
+  );
 
   const sortedRoles = useMemo(() => {
     const data = [...roles];
@@ -416,18 +453,39 @@ export default function RolesPage() {
               <label className="block text-sm font-medium text-gray-700">
                 Code du rôle *
               </label>
-              <input
-                {...registerCreate('code', {
-                  required: 'Le code est requis',
-                  pattern: {
-                    value: /^[A-Z_]+$/,
-                    message: 'Le code doit être en majuscules avec des underscores',
-                  },
-                })}
-                type="text"
-                placeholder="EXEMPLE_ROLE"
-                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
-              />
+              <div className="relative">
+                <input
+                  {...registerCreate('code', {
+                    required: 'Le code est requis',
+                    pattern: {
+                      value: /^[A-Z_]+$/,
+                      message: 'Le code doit être en majuscules avec des underscores',
+                    },
+                  })}
+                  type="text"
+                  placeholder="EXEMPLE_ROLE"
+                  onFocus={() => setShowCreateCodeSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowCreateCodeSuggestions(false), 200)}
+                  className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                />
+                {showCreateCodeSuggestions && filteredRoleCodeSuggestionsCreate.length > 0 && (
+                  <div className="absolute z-10 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-52 overflow-auto">
+                    {filteredRoleCodeSuggestionsCreate.map((code) => (
+                      <button
+                        key={code}
+                        type="button"
+                        onClick={() => {
+                          setCreateValue('code', code);
+                          setShowCreateCodeSuggestions(false);
+                        }}
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-primary-50"
+                      >
+                        {code}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
               {errorsCreate.code && (
                 <p className="mt-1 text-xs text-red-600">{errorsCreate.code.message}</p>
               )}
@@ -505,17 +563,38 @@ export default function RolesPage() {
               <label className="block text-sm font-medium text-gray-700">
                 Code du rôle *
               </label>
-              <input
-                {...registerEdit('code', {
-                  required: 'Le code est requis',
-                  pattern: {
-                    value: /^[A-Z_]+$/,
-                    message: 'Le code doit être en majuscules avec des underscores',
-                  },
-                })}
-                type="text"
-                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
-              />
+              <div className="relative">
+                <input
+                  {...registerEdit('code', {
+                    required: 'Le code est requis',
+                    pattern: {
+                      value: /^[A-Z_]+$/,
+                      message: 'Le code doit être en majuscules avec des underscores',
+                    },
+                  })}
+                  type="text"
+                  onFocus={() => setShowEditCodeSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowEditCodeSuggestions(false), 200)}
+                  className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                />
+                {showEditCodeSuggestions && filteredRoleCodeSuggestionsEdit.length > 0 && (
+                  <div className="absolute z-10 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-52 overflow-auto">
+                    {filteredRoleCodeSuggestionsEdit.map((code) => (
+                      <button
+                        key={code}
+                        type="button"
+                        onClick={() => {
+                          setEditValue('code', code);
+                          setShowEditCodeSuggestions(false);
+                        }}
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-primary-50"
+                      >
+                        {code}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
               {errorsEdit.code && (
                 <p className="mt-1 text-xs text-red-600">{errorsEdit.code.message}</p>
               )}

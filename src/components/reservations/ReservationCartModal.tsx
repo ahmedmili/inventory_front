@@ -23,6 +23,7 @@ interface Product {
 interface Warehouse {
   id: string;
   name: string;
+  code?: string;
 }
 
 interface Project {
@@ -112,8 +113,18 @@ export default function ReservationCartModal({
       );
 
       setProducts(productsWithStock);
-      setWarehouses(warehousesRes.data?.data || warehousesRes.data || []);
+      const warehousesData: Warehouse[] = warehousesRes.data?.data || warehousesRes.data || [];
+      setWarehouses(warehousesData);
       setProjects(projectsRes.data?.data || projectsRes.data || []);
+
+      // Définir l'entrepôt principal (code MAIN) comme valeur par défaut si aucun entrepôt sélectionné
+      const mainWarehouse = warehousesData.find(w => w.code === 'MAIN');
+      if (mainWarehouse) {
+        setFormData(prev => ({
+          ...prev,
+          warehouseId: prev.warehouseId || mainWarehouse.id,
+        }));
+      }
     } catch (error: any) {
       console.error('Failed to load options:', error);
       toast.error('Erreur lors du chargement des options');
@@ -184,10 +195,12 @@ export default function ReservationCartModal({
     }
 
     // Reset form (keep project, expiresAt, notes)
+    const mainWarehouse = warehouses.find(w => w.code === 'MAIN');
+
     setFormData(prev => ({
       ...prev,
       productId: '',
-      warehouseId: '',
+      warehouseId: mainWarehouse ? mainWarehouse.id : '',
       quantity: 1,
     }));
 

@@ -5,6 +5,8 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { ToastProvider } from '@/contexts/ToastContext';
 import ToastContainer from '@/components/ToastContainer';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { LoadingProvider } from '@/contexts/LoadingContext';
+import GlobalLoader from '@/components/GlobalLoader';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -27,8 +29,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
       >
         <AuthProvider>
           <ToastProvider>
-            {children}
-            <ToastContainer />
+            <LoadingProvider>
+              {children}
+              <ToastContainer />
+              <GlobalLoader />
+            </LoadingProvider>
           </ToastProvider>
         </AuthProvider>
       </SWRConfig>
