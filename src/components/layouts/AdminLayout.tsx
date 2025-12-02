@@ -12,6 +12,7 @@ import SidebarToggleButton from '../SidebarToggleButton';
 import { localStorageService } from '@/lib/local-storage';
 import { getUserRoleCode } from '@/lib/permissions';
 import { useMedia } from '@/hooks/useMedia';
+import { useStockAlerts } from '@/hooks/useStockAlerts';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -39,6 +40,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     }
     return saved === 'true';
   });
+
+  // Active les alertes de stock temps réel pour les admins / managers
+  useStockAlerts();
 
   // Handle window resize to adjust sidebar state
   useEffect(() => {

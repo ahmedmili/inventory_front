@@ -331,14 +331,24 @@ export default function ProductDetailPage() {
                 </button>
               )}
               {canEdit && (
-                <button
-                  onClick={() => setIsEditModalOpen(true)}
-                  className="inline-flex items-center gap-2 bg-primary-600 text-white px-4 py-2.5 rounded-lg hover:bg-primary-700 font-medium transition-colors shadow-sm hover:shadow-md"
-                  title="Modifier les informations du produit"
-                >
-                  <EditIcon className="w-5 h-5" />
-                  Modifier
-                </button>
+                <>
+                  <Link
+                    href={`/products/${id}/edit`}
+                    className="inline-flex items-center gap-2 bg-primary-600 text-white px-4 py-2.5 rounded-lg hover:bg-primary-700 font-medium transition-colors shadow-sm hover:shadow-md"
+                    title="Modifier les informations du produit"
+                  >
+                    <EditIcon className="w-5 h-5" />
+                    Modifier
+                  </Link>
+                  <button
+                    onClick={() => setIsEditModalOpen(true)}
+                    className="inline-flex items-center gap-2 bg-gray-600 text-white px-4 py-2.5 rounded-lg hover:bg-gray-700 font-medium transition-colors shadow-sm hover:shadow-md"
+                    title="Modifier rapidement (modal)"
+                  >
+                    <EditIcon className="w-5 h-5" />
+                    Modifier (Modal)
+                  </button>
+                </>
               )}
             </div>
           </div>

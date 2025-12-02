@@ -1,12 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useApi } from '@/hooks/useApi';
 import RouteGuard from '@/components/guards/RouteGuard';
 import { format } from 'date-fns';
 import Table, { Column } from '@/components/Table';
 import { SearchIcon, CloseIcon } from '@/components/icons';
 import Link from 'next/link';
+import { apiClient } from '@/lib/api';
+import { useToast } from '@/contexts/ToastContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { hasPermission } from '@/lib/permissions';
+import ManualStockAdjustmentModal from '@/components/stock/ManualStockAdjustmentModal';
+import StockTransferModal from '@/components/stock/StockTransferModal';
+import { extractCollection } from '@/types/api';
 
 interface StockMovement {
   id: string;
@@ -33,13 +40,52 @@ interface StockMovement {
   createdAt: string;
 }
 
+interface Warehouse {
+  id: string;
+  name: string;
+  code: string;
+}
+
 export default function MovementsPage() {
+  const { user } = useAuth();
+  const toast = useToast();
   const [filter, setFilter] = useState<'all' | 'IN' | 'OUT' | 'TRANSFER' | 'ADJUSTMENT'>('all');
   const [search, setSearch] = useState('');
+  const [warehouseFilter, setWarehouseFilter] = useState<string>('all');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState(false);
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+
+  const canCreateStock = hasPermission(user, 'stock.create');
+  const canTransferStock = hasPermission(user, 'warehouses.transfer');
+
+  useEffect(() => {
+    loadWarehouses();
+  }, []);
+
+  const loadWarehouses = async () => {
+    try {
+      const response = await apiClient.get('/warehouses');
+      setWarehouses(extractCollection<Warehouse>(response.data));
+    } catch (error) {
+      console.error('Failed to load warehouses:', error);
+    }
+  };
 
   const queryParams = new URLSearchParams();
   if (filter !== 'all') {
     queryParams.set('type', filter);
+  }
+  if (warehouseFilter !== 'all') {
+    queryParams.set('warehouseId', warehouseFilter);
+  }
+  if (startDate) {
+    queryParams.set('startDate', startDate);
+  }
+  if (endDate) {
+    queryParams.set('endDate', endDate);
   }
 
   const { data: movements, loading, error, mutate } = useApi<StockMovement[]>(
@@ -241,49 +287,141 @@ export default function MovementsPage() {
                 </p>
               )}
             </div>
+            <div className="flex gap-3">
+              {canCreateStock && (
+                <button
+                  onClick={() => setIsAdjustmentModalOpen(true)}
+                  className="inline-flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 font-medium transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Ajustement manuel
+                </button>
+              )}
+              {canTransferStock && (
+                <button
+                  onClick={() => setIsTransferModalOpen(true)}
+                  className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                  </svg>
+                  Transfert
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="mb-6 flex flex-col sm:flex-row gap-4">
-          {/* Search */}
-          <div className="flex-1 relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <SearchIcon className="h-5 w-5 text-gray-400" />
+        <div className="mb-6 space-y-4">
+          {/* First Row: Search and Type */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            {/* Search */}
+            <div className="flex-1 relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <SearchIcon className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Rechercher par produit, entrepôt, utilisateur..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch('')}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                >
+                  <CloseIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                </button>
+              )}
             </div>
-            <input
-              type="text"
-              placeholder="Rechercher par produit, entrepôt, utilisateur..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-            />
-            {search && (
-              <button
-                onClick={() => setSearch('')}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+
+            {/* Type Filter */}
+            <div>
+              <select
+                value={filter}
+                onChange={(e) => {
+                  setFilter(e.target.value as any);
+                  mutate?.();
+                }}
+                className="block w-full sm:w-auto px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all bg-white"
               >
-                <CloseIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-              </button>
-            )}
+                <option value="all">Tous les types</option>
+                <option value="IN">Dispose (IN)</option>
+                <option value="OUT">Withdraw (OUT)</option>
+                <option value="TRANSFER">Transfer</option>
+                <option value="ADJUSTMENT">Adjustment</option>
+              </select>
+            </div>
           </div>
 
-          {/* Type Filter */}
-          <div>
-            <select
-              value={filter}
-              onChange={(e) => {
-                setFilter(e.target.value as any);
-                mutate?.();
-              }}
-              className="block w-full sm:w-auto px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all bg-white"
-            >
-              <option value="all">Tous les types</option>
-              <option value="IN">Dispose (IN)</option>
-              <option value="OUT">Withdraw (OUT)</option>
-              <option value="TRANSFER">Transfer</option>
-              <option value="ADJUSTMENT">Adjustment</option>
-            </select>
+          {/* Second Row: Warehouse, Date Range */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            {/* Warehouse Filter */}
+            <div className="flex-1">
+              <select
+                value={warehouseFilter}
+                onChange={(e) => {
+                  setWarehouseFilter(e.target.value);
+                  mutate?.();
+                }}
+                className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all bg-white"
+              >
+                <option value="all">Tous les entrepôts</option>
+                {warehouses.map((warehouse) => (
+                  <option key={warehouse.id} value={warehouse.id}>
+                    {warehouse.name} ({warehouse.code})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Date Range */}
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <label className="block text-xs text-gray-500 mb-1">Date début</label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => {
+                    setStartDate(e.target.value);
+                    mutate?.();
+                  }}
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="block text-xs text-gray-500 mb-1">Date fin</label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => {
+                    setEndDate(e.target.value);
+                    mutate?.();
+                  }}
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                />
+              </div>
+              {(startDate || endDate) && (
+                <div className="flex items-end">
+                  <button
+                    onClick={() => {
+                      setStartDate('');
+                      setEndDate('');
+                      mutate?.();
+                    }}
+                    className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900"
+                    title="Effacer les dates"
+                  >
+                    <CloseIcon className="h-5 w-5" />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -301,6 +439,26 @@ export default function MovementsPage() {
               emptyMessage="Aucun mouvement de stock trouvé"
             />
           </>
+        )}
+
+        {/* Modals */}
+        {canCreateStock && (
+          <ManualStockAdjustmentModal
+            isOpen={isAdjustmentModalOpen}
+            onClose={() => setIsAdjustmentModalOpen(false)}
+            onSuccess={() => {
+              mutate?.();
+            }}
+          />
+        )}
+        {canTransferStock && (
+          <StockTransferModal
+            isOpen={isTransferModalOpen}
+            onClose={() => setIsTransferModalOpen(false)}
+            onSuccess={() => {
+              mutate?.();
+            }}
+          />
         )}
       </div>
     </RouteGuard>
