@@ -144,6 +144,12 @@ export const navigationItems: NavigationItem[] = [
   //   ],
   // },
   {
+    name: 'Projets',
+    href: '/projects',
+    icon: <FolderIcon />,
+    requirePermissions: ['projects.read'],
+  },
+  {
     name: 'Réservations',
     href: '/reservations',
     icon: <ReservationIcon />,
