@@ -4,11 +4,12 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { hasPermission } from '@/lib/permissions';
+import { hasPermission, getUserRoleCode } from '@/lib/permissions';
 import { apiClient } from '@/lib/api';
 import { SkeletonLoader } from '@/components/SkeletonLoader';
 import { useToast } from '@/contexts/ToastContext';
 import Pagination from '@/components/Pagination';
+import { useReservationsRealtime } from '@/hooks/useReservationsRealtime';
 
 interface ReservationItem {
   id: string;
@@ -110,7 +111,8 @@ export default function ReservationsPage() {
   const limit = 20;
   const canCreate = hasPermission(user, 'reservations.create');
   const canCancel = hasPermission(user, 'reservations.cancel');
-  const isAdmin = user?.role?.code === 'ADMIN' || user?.role?.code === 'MANAGER';
+  const userRoleCode = getUserRoleCode(user);
+  const isAdmin = userRoleCode === 'ADMIN' || userRoleCode === 'MANAGER';
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -129,6 +131,18 @@ export default function ReservationsPage() {
       loadReservations();
     }
   }, [statusFilter, projectFilter, productFilter, userFilter]);
+
+  // Écouter les événements temps réel des réservations
+  useReservationsRealtime(
+    () => {
+      // Rafraîchir la liste quand une nouvelle réservation est créée
+      loadReservations();
+    },
+    () => {
+      // Rafraîchir la liste quand une réservation est mise à jour
+      loadReservations();
+    }
+  );
 
   // Reset search fields when filters are cleared
   useEffect(() => {
@@ -229,14 +243,19 @@ export default function ReservationsPage() {
 
       // Admins can see all reservations, others see only their own
       const endpoint = isAdmin ? '/reservations' : '/reservations/my';
-      const response = await apiClient.get<ReservationsResponse>(endpoint, { params });
+      const response = await apiClient.get<ReservationsResponse | ReservationGroup[]>(endpoint, { params });
       
-      if (response.data?.data) {
+      // Check if response is the new format (object with data and meta) or old format (array)
+      if (response.data && 'data' in response.data && Array.isArray(response.data.data)) {
+        // New format: { data: ReservationGroup[], meta: {...} }
         setReservations(response.data.data);
         setPaginationMeta(response.data.meta);
+      } else if (Array.isArray(response.data)) {
+        // Old format: ReservationGroup[]
+        setReservations(response.data);
+        setPaginationMeta(null);
       } else {
-        // Fallback for old response format (array)
-        setReservations(response.data || []);
+        setReservations([]);
         setPaginationMeta(null);
       }
     } catch (error: any) {

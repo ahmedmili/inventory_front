@@ -16,6 +16,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { hasPermission } from '@/lib/permissions';
 import ConfirmModal from '@/components/ConfirmModal';
 import ReservationCartModal from '@/components/reservations/ReservationCartModal';
+import { useProductsRealtime } from '@/hooks/useProductsRealtime';
 
 interface Product {
   id: string;
@@ -82,6 +83,12 @@ export default function ProductsPage() {
   }, [page, search, limit, sortBy, sortOrder]);
 
   const { data, loading, error, mutate } = useApi<ProductsResponse>(`/products?${searchParams}`);
+
+  // Écouter les mises à jour de stock en temps réel
+  useProductsRealtime(() => {
+    // Rafraîchir la liste des produits quand le stock est mis à jour
+    mutate();
+  });
 
   const handleSearch = (value: string) => {
     setSearch(value);

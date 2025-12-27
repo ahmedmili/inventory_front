@@ -26,9 +26,13 @@ export function getRealtimeSocket(): Socket {
   socket = io(API_URL, {
     transports: ['websocket', 'polling'],
     withCredentials: true,
+    reconnection: true,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    reconnectionAttempts: Infinity,
     auth: token
       ? {
-          token: `Bearer ${token}`,
+          token: token, // Le backend attend juste le token, pas "Bearer"
         }
       : undefined,
   });

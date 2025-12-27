@@ -13,6 +13,7 @@ import ProductFormModal from '@/components/products/ProductFormModal';
 import StockMovementModal from '@/components/products/StockMovementModal';
 import ReservationCartModal from '@/components/reservations/ReservationCartModal';
 import { useState, useEffect } from 'react';
+import { useProductsRealtime } from '@/hooks/useProductsRealtime';
 
 // Stock Movements History Component
 function ProductMovementsHistory({ productId }: { productId: string }) {
@@ -218,6 +219,15 @@ export default function ProductDetailPage() {
   const canEdit = hasPermission(user, 'products.update');
   const canManageStock = hasPermission(user, 'stock.create');
   const canCreateReservation = hasPermission(user, 'reservations.create');
+
+  // Écouter les mises à jour de stock en temps réel pour ce produit
+  useProductsRealtime((payload) => {
+    // Rafraîchir seulement si c'est ce produit qui a été mis à jour
+    if (payload.productId === id && mutate) {
+      mutate();
+      setMovementRefreshKey((prev) => prev + 1);
+    }
+  });
 
   const handleEditSuccess = () => {
     setIsEditModalOpen(false);

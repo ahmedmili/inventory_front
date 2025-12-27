@@ -5,6 +5,7 @@ import { useApi } from '@/hooks/useApi';
 import { useApiMutation } from '@/hooks/useApi';
 import { useToast } from '@/contexts/ToastContext';
 import { format } from 'date-fns';
+import { useNotificationsRealtime } from '@/hooks/useNotificationsRealtime';
 
 interface Notification {
   id: string;
@@ -20,6 +21,13 @@ export default function Notifications() {
   const { data: unreadCount, mutate: mutateCount } = useApi<{ count: number }>('/notifications/unread/count');
   const { mutate: markAsRead } = useApiMutation();
   const toast = useToast();
+
+  // Écouter les nouvelles notifications en temps réel
+  useNotificationsRealtime(() => {
+    // Rafraîchir la liste et le compteur quand une nouvelle notification arrive
+    mutateNotifications();
+    mutateCount();
+  });
 
   const handleMarkAsRead = async (id: string) => {
     try {

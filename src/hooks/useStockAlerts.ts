@@ -14,8 +14,10 @@ interface StockAlertPayload {
 /**
  * Hook simple qui écoute les alertes de stock temps réel et affiche un toast.
  * Peut être utilisé dans le layout admin ou sur les pages produits/réservations.
+ * 
+ * @param onAlert - Callback optionnel appelé quand une alerte est reçue
  */
-export function useStockAlerts() {
+export function useStockAlerts(onAlert?: (payload: StockAlertPayload) => void) {
   const { subscribe } = useRealtime();
   const toast = useToast();
 
@@ -23,15 +25,24 @@ export function useStockAlerts() {
     // Nom de l'événement aligné avec RealtimeEvent.STOCK_ALERT côté backend
     const unsubscribe = subscribe('stock.alert', (payload: StockAlertPayload) => {
       const label = payload.sku ? `${payload.name} (${payload.sku})` : payload.name;
-      toast.warning?.(
-        `Alerte stock sur ${label}`,
-      );
+      
+      // Afficher le toast selon le type d'alerte
+      if (payload.type === 'OUT_OF_STOCK') {
+        toast.error?.(`Stock épuisé: ${label}`);
+      } else {
+        toast.warning?.(`Alerte stock: ${label}`);
+      }
+
+      // Callback personnalisé
+      if (onAlert) {
+        onAlert(payload);
+      }
     });
 
     return () => {
       unsubscribe();
     };
-  }, [subscribe, toast]);
+  }, [subscribe, toast, onAlert]);
 }
 
 
