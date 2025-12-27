@@ -4,6 +4,8 @@ import { SWRConfig } from 'swr';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ToastProvider } from '@/contexts/ToastContext';
 import ToastContainer from '@/components/toast/ToastContainer';
+import { ModalProvider } from '@/contexts/ModalContext';
+import ModalContainer from '@/components/modal/ModalContainer';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { LoadingProvider } from '@/contexts/LoadingContext';
 import { RealtimeProvider } from '@/contexts/RealtimeContext';
@@ -30,13 +32,16 @@ export function Providers({ children }: { children: React.ReactNode }) {
       >
         <AuthProvider>
           <ToastProvider>
-            <LoadingProvider>
-              <RealtimeProvider>
-                {children}
-                <ToastContainer />
-                <GlobalLoader />
-              </RealtimeProvider>
-            </LoadingProvider>
+            <ModalProvider>
+              <LoadingProvider>
+                <RealtimeProvider>
+                  {children}
+                  <ToastContainer />
+                  <ModalContainer />
+                  <GlobalLoader />
+                </RealtimeProvider>
+              </LoadingProvider>
+            </ModalProvider>
           </ToastProvider>
         </AuthProvider>
       </SWRConfig>

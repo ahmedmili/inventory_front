@@ -10,8 +10,10 @@ Un système de notifications toast complet, dynamique et hautement personnalisab
 ✅ **Barre de progression** : Affichage visuel du temps restant  
 ✅ **Pause au survol** : La notification se met en pause quand la souris passe dessus  
 ✅ **Actions personnalisées** : Boutons d'action dans les notifications  
-✅ **Contenu personnalisé** : Support pour ReactNode (HTML, composants, etc.)  
+✅ **Contenu personnalisé** : Support pour ReactNode (HTML, composants, images, etc.)  
 ✅ **Icônes personnalisées** : Icônes par défaut ou personnalisées  
+✅ **Images** : Support complet pour afficher des images dans les notifications  
+✅ **HTML dynamique** : Support pour contenu HTML personnalisé via ReactNode  
 ✅ **Durée configurable** : Durée personnalisée ou permanente (duration: 0)  
 ✅ **Mise à jour dynamique** : Possibilité de mettre à jour une notification existante  
 ✅ **Mode sombre** : Support automatique du dark mode  
@@ -160,6 +162,52 @@ toast.success(
   }
 );
 ```
+
+### Toast avec Image
+
+Le système supporte nativement les images via `ReactNode` :
+
+```tsx
+import Image from 'next/image';
+
+toast.success({
+  title: 'Produit ajouté',
+  message: (
+    <div className="flex items-center gap-3">
+      <Image
+        src="/product.jpg"
+        alt="Product"
+        width={48}
+        height={48}
+        className="rounded-lg object-cover"
+      />
+      <div>
+        <p className="font-semibold">Produit ABC</p>
+        <p className="text-sm text-gray-600">Ajouté avec succès</p>
+      </div>
+    </div>
+  ),
+  duration: 5000,
+});
+```
+
+### Toast avec HTML Dynamique
+
+Pour du HTML brut, utilisez `dangerouslySetInnerHTML` dans un composant :
+
+```tsx
+toast.info({
+  title: 'Notification HTML',
+  message: (
+    <div 
+      dangerouslySetInnerHTML={{ __html: '<p>Contenu <strong>HTML</strong> personnalisé</p>' }}
+      className="prose prose-sm"
+    />
+  ),
+});
+```
+
+> 📚 **Voir [EXAMPLES.md](./EXAMPLES.md) pour plus d'exemples avancés** avec images, avatars, notifications temps réel, etc.
 
 ### Notification permanente
 
