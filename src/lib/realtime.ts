@@ -131,7 +131,37 @@ export function disconnectRealtime() {
     socket.disconnect();
     socket = null;
     subscriptions.clear();
+    isConnecting = false;
   }
+}
+
+/**
+ * Reconnecte le WebSocket avec un nouveau token
+ * Utile après un refresh de token
+ * Préserve les abonnements existants
+ */
+export function reconnectRealtimeWithNewToken() {
+  console.log('[Realtime] Reconnecting with new token...');
+  const oldSocket = socket;
+  
+  // Sauvegarder les abonnements existants (ils seront automatiquement réappliqués via onAny)
+  const existingSubscriptions = new Map(subscriptions);
+  
+  // Déconnecter l'ancien socket
+  if (oldSocket) {
+    oldSocket.removeAllListeners();
+    oldSocket.disconnect();
+  }
+  
+  // Réinitialiser les variables
+  socket = null;
+  isConnecting = false;
+  
+  // Créer un nouveau socket avec le nouveau token
+  const newSocket = getRealtimeSocket();
+  
+  console.log('[Realtime] WebSocket reconnected with new token, subscriptions preserved');
+  return newSocket;
 }
 
 

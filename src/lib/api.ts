@@ -70,6 +70,22 @@ class ApiClient {
                 localStorageService.setItem(LOCAL_STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken);
               }
               originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+              
+              // Reconnecter le WebSocket avec le nouveau token
+              if (typeof window !== 'undefined') {
+                // Émettre un événement personnalisé pour notifier le RealtimeContext
+                window.dispatchEvent(new Event('token-refreshed'));
+                
+                // Utiliser un petit délai pour éviter les imports circulaires
+                setTimeout(() => {
+                  import('./realtime').then(({ reconnectRealtimeWithNewToken }) => {
+                    reconnectRealtimeWithNewToken();
+                  }).catch((err) => {
+                    console.warn('[API] Failed to reconnect WebSocket after token refresh:', err);
+                  });
+                }, 100);
+              }
+              
               return this.client(originalRequest);
             }
           } catch (refreshError) {

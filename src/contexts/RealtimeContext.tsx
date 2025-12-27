@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
-import { getRealtimeSocket, subscribeRealtime, disconnectRealtime } from '@/lib/realtime';
+import { getRealtimeSocket, subscribeRealtime, disconnectRealtime, reconnectRealtimeWithNewToken } from '@/lib/realtime';
 import { LOCAL_STORAGE_KEYS, localStorageService } from '@/lib/local-storage';
 
 interface RealtimeContextValue {
@@ -43,9 +43,29 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     socket.on('connect', handleConnect);
     socket.on('disconnect', handleDisconnect);
 
+    // Écouter les changements de token dans le localStorage pour reconnecter automatiquement
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === LOCAL_STORAGE_KEYS.ACCESS_TOKEN && e.newValue && e.newValue !== e.oldValue) {
+        console.log('[RealtimeContext] Token updated, reconnecting WebSocket...');
+        reconnectRealtimeWithNewToken();
+      }
+    };
+
+    // Écouter les événements de storage (pour les changements depuis d'autres onglets)
+    window.addEventListener('storage', handleStorageChange);
+
+    // Écouter les événements personnalisés pour les changements dans le même onglet
+    const handleTokenRefresh = () => {
+      console.log('[RealtimeContext] Token refresh event received, reconnecting WebSocket...');
+      reconnectRealtimeWithNewToken();
+    };
+    window.addEventListener('token-refreshed', handleTokenRefresh);
+
     return () => {
       socket.off('connect', handleConnect);
       socket.off('disconnect', handleDisconnect);
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('token-refreshed', handleTokenRefresh);
       // On ne déconnecte pas complètement ici pour permettre le partage global
     };
   }, []);
