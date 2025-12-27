@@ -21,17 +21,21 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     // Ne connecter que si on a un token
     const token = localStorageService.getItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN);
     if (!token) {
+      console.warn('[RealtimeContext] No token available, skipping WebSocket connection');
       return;
     }
 
+    console.log('[RealtimeContext] Initializing WebSocket connection with token');
     const socket = getRealtimeSocket();
 
     const handleConnect = () => {
+      console.log('[Realtime] ✅ Connected to server, socket ID:', socket.id);
       setIsConnected(true);
       setSocketId(socket.id);
     };
 
     const handleDisconnect = () => {
+      console.warn('[Realtime] ❌ Disconnected from server');
       setIsConnected(false);
       setSocketId(undefined);
     };

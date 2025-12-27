@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApi } from '@/hooks/useApi';
 import { SkeletonLoader } from '@/components/SkeletonLoader';
+import UsersListRealtime from '@/components/users/UsersListRealtime';
+import { usePresenceNotifications } from '@/hooks/usePresenceNotifications';
 
 interface DashboardStats {
   products: number;
@@ -67,6 +69,9 @@ export default function AdminDashboard() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { data: stats, loading: statsLoading } = useApi<DashboardStats>('/reports/dashboard');
+  
+  // Activer les notifications de présence (toasts)
+  usePresenceNotifications();
 
   if (authLoading || statsLoading) {
     return (
@@ -302,6 +307,15 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+
+      {/* Users List with Real-time Status */}
+      <div className="mb-8">
+        <UsersListRealtime
+          endpoint="/users"
+          title="Utilisateurs et Statut en Temps Réel"
+          showRole={true}
+        />
+      </div>
     </div>
   );
 }
