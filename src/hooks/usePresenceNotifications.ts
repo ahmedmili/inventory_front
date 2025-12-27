@@ -36,7 +36,16 @@ export function usePresenceNotifications() {
 
       const userName = payload.userName || 'Un utilisateur';
       const role = payload.userRole ? ` (${payload.userRole})` : '';
-      toast.info?.(`${userName}${role} est maintenant en ligne`);
+      
+      toast.showToast({
+        type: 'info',
+        title: 'Utilisateur Connecté',
+        message: `${userName}${role} est maintenant en ligne`,
+        duration: 3000,
+        position: 'bottom-right',
+        showProgressBar: false,
+        pauseOnHover: false,
+      });
     });
 
     // Écouter les déconnexions
@@ -46,7 +55,15 @@ export function usePresenceNotifications() {
         return;
       }
 
-      toast.info?.('Un utilisateur s\'est déconnecté');
+      toast.showToast({
+        type: 'info',
+        title: 'Utilisateur Déconnecté',
+        message: 'Un utilisateur s\'est déconnecté',
+        duration: 3000,
+        position: 'bottom-right',
+        showProgressBar: false,
+        pauseOnHover: false,
+      });
     });
 
     return () => {

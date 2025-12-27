@@ -24,43 +24,96 @@ export function useNotificationsRealtime(
 
   useEffect(() => {
     const unsubscribe = subscribe('notification.created', (payload: NotificationEventPayload) => {
-      // Afficher une notification toast selon le type
-      const getMessage = () => {
+      // Configuration du toast selon le type de notification
+      const getToastConfig = () => {
+        const productName = payload.data?.name || 'Produit';
+        const sku = payload.data?.sku ? ` (${payload.data.sku})` : '';
+
         switch (payload.type) {
           case 'LOW_STOCK':
-            return `Stock faible: ${payload.data?.name || 'Produit'}`;
+            return {
+              type: 'warning' as const,
+              title: 'Alerte Stock Faible',
+              message: `Le stock de ${productName}${sku} est faible`,
+              duration: 5000,
+              position: 'top-right' as const,
+              actions: [
+                {
+                  label: 'Voir le produit',
+                  onClick: () => {
+                    if (payload.data?.productId) {
+                      window.location.href = `/products/${payload.data.productId}`;
+                    }
+                  },
+                  style: 'primary' as const,
+                },
+              ],
+            };
           case 'OUT_OF_STOCK':
-            return `Stock épuisé: ${payload.data?.name || 'Produit'}`;
+            return {
+              type: 'error' as const,
+              title: 'Stock Épuisé',
+              message: `Le stock de ${productName}${sku} est épuisé`,
+              duration: 7000,
+              position: 'top-right' as const,
+              actions: [
+                {
+                  label: 'Voir le produit',
+                  onClick: () => {
+                    if (payload.data?.productId) {
+                      window.location.href = `/products/${payload.data.productId}`;
+                    }
+                  },
+                  style: 'primary' as const,
+                },
+              ],
+            };
           case 'EXPIRY_ALERT':
-            return `Produit expirant bientôt: ${payload.data?.name || 'Produit'}`;
+            return {
+              type: 'warning' as const,
+              title: 'Alerte Expiration',
+              message: `Le produit ${productName}${sku} expire bientôt`,
+              duration: 6000,
+              position: 'top-right' as const,
+              actions: [
+                {
+                  label: 'Voir le produit',
+                  onClick: () => {
+                    if (payload.data?.productId) {
+                      window.location.href = `/products/${payload.data.productId}`;
+                    }
+                  },
+                  style: 'primary' as const,
+                },
+              ],
+            };
+          case 'SYSTEM':
+            return {
+              type: 'info' as const,
+              title: 'Notification Système',
+              message: payload.data?.message || 'Nouvelle notification système',
+              duration: 4000,
+              position: 'top-right' as const,
+            };
           default:
-            return 'Nouvelle notification';
+            return {
+              type: 'info' as const,
+              title: 'Nouvelle Notification',
+              message: 'Vous avez reçu une nouvelle notification',
+              duration: 4000,
+              position: 'top-right' as const,
+            };
         }
       };
 
-      const getToastType = () => {
-        switch (payload.type) {
-          case 'LOW_STOCK':
-            return 'warning';
-          case 'OUT_OF_STOCK':
-            return 'error';
-          case 'EXPIRY_ALERT':
-            return 'warning';
-          default:
-            return 'info';
-        }
-      };
-
-      const message = getMessage();
-      const type = getToastType();
-
-      if (type === 'error') {
-        toast.error?.(message);
-      } else if (type === 'warning') {
-        toast.warning?.(message);
-      } else {
-        toast.info?.(message);
-      }
+      const config = getToastConfig();
+      toast.showToast({
+        ...config,
+        onClick: () => {
+          // Rediriger vers la page des notifications
+          window.location.href = '/notifications';
+        },
+      });
 
       // Callback personnalisé pour rafraîchir les données
       if (onNotificationCreated) {

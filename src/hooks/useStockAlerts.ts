@@ -26,11 +26,47 @@ export function useStockAlerts(onAlert?: (payload: StockAlertPayload) => void) {
     const unsubscribe = subscribe('stock.alert', (payload: StockAlertPayload) => {
       const label = payload.sku ? `${payload.name} (${payload.sku})` : payload.name;
       
-      // Afficher le toast selon le type d'alerte
+      // Afficher le toast selon le type d'alerte avec des options avancées
       if (payload.type === 'OUT_OF_STOCK') {
-        toast.error?.(`Stock épuisé: ${label}`);
+        toast.showToast({
+          type: 'error',
+          title: 'Stock Épuisé',
+          message: `Le produit ${label} n'est plus en stock`,
+          duration: 7000,
+          position: 'top-right',
+          actions: [
+            {
+              label: 'Voir le produit',
+              onClick: () => {
+                window.location.href = `/products/${payload.productId}`;
+              },
+              style: 'primary',
+            },
+          ],
+          onClick: () => {
+            window.location.href = `/products/${payload.productId}`;
+          },
+        });
       } else {
-        toast.warning?.(`Alerte stock: ${label}`);
+        toast.showToast({
+          type: 'warning',
+          title: 'Alerte Stock',
+          message: `Stock faible pour ${label}`,
+          duration: 5000,
+          position: 'top-right',
+          actions: [
+            {
+              label: 'Voir le produit',
+              onClick: () => {
+                window.location.href = `/products/${payload.productId}`;
+              },
+              style: 'primary',
+            },
+          ],
+          onClick: () => {
+            window.location.href = `/products/${payload.productId}`;
+          },
+        });
       }
 
       // Callback personnalisé

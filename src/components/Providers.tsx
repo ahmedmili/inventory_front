@@ -3,7 +3,7 @@
 import { SWRConfig } from 'swr';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ToastProvider } from '@/contexts/ToastContext';
-import ToastContainer from '@/components/ToastContainer';
+import ToastContainer from '@/components/toast/ToastContainer';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { LoadingProvider } from '@/contexts/LoadingContext';
 import { RealtimeProvider } from '@/contexts/RealtimeContext';

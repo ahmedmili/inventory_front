@@ -26,8 +26,33 @@ export function useProductsRealtime(
 
   useEffect(() => {
     const unsubscribe = subscribe('stock.updated', (payload: StockUpdatePayload) => {
-      // Optionnel: afficher une notification discrète
-      // toast.info?.(`Stock mis à jour: ${payload.productName}`);
+      // Optionnel: afficher une notification discrète avec le nouveau système
+      // Décommentez pour activer les notifications de mise à jour de stock
+      /*
+      const quantityChange = payload.quantity - payload.previousQuantity;
+      const changeLabel = quantityChange > 0 
+        ? `+${quantityChange}` 
+        : `${quantityChange}`;
+      
+      toast.showToast({
+        type: 'info',
+        title: 'Stock Mis à Jour',
+        message: `${payload.productName}${payload.warehouseName ? ` (${payload.warehouseName})` : ''} - Stock: ${changeLabel}`,
+        duration: 3000,
+        position: 'bottom-right',
+        showProgressBar: false,
+        pauseOnHover: false,
+        actions: [
+          {
+            label: 'Voir le produit',
+            onClick: () => {
+              window.location.href = `/products/${payload.productId}`;
+            },
+            style: 'secondary',
+          },
+        ],
+      });
+      */
       
       // Callback personnalisé pour rafraîchir les données
       if (onStockUpdated) {

@@ -35,7 +35,7 @@ export default function Notifications() {
       mutateNotifications(); // Refresh notifications
       mutateCount(); // Refresh unread count
     } catch (error) {
-      toast.error('Failed to mark notification as read');
+      toast.error('Échec du marquage de la notification comme lue');
     }
   };
 
@@ -44,9 +44,11 @@ export default function Notifications() {
       await markAsRead('/notifications/read-all', 'POST', {});
       mutateNotifications(); // Refresh notifications
       mutateCount(); // Refresh unread count
-      toast.success('All notifications marked as read');
+      toast.success('Toutes les notifications ont été marquées comme lues', {
+        duration: 3000,
+      });
     } catch (error) {
-      toast.error('Failed to mark all as read');
+      toast.error('Échec du marquage de toutes les notifications comme lues');
     }
   };
 
