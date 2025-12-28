@@ -117,9 +117,9 @@ export default function Table<T extends { id: string }>({
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              {columns.map((column) => (
+              {columns.map((column, index) => (
                 <th
-                  key={column.key}
+                  key={`${column.key}-${index}`}
                   scope="col"
                   className={`
                     px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider
@@ -146,9 +146,9 @@ export default function Table<T extends { id: string }>({
                   ${rowClassName?.(item) || ''}
                 `}
               >
-                {columns.map((column) => (
+                {columns.map((column, index) => (
                   <td
-                    key={column.key}
+                    key={`${column.key}-${index}`}
                     className={`px-6 py-4 whitespace-nowrap text-sm text-gray-900 ${column.className || ''}`}
                   >
                     {column.render ? column.render(item) : (item as any)[column.key]}

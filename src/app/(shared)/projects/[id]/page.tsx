@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useApi, useApiMutation } from '@/hooks/useApi';
+import { apiClient } from '@/lib/api';
 import RouteGuard from '@/components/guards/RouteGuard';
 import { useToast } from '@/contexts/ToastContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -247,8 +248,13 @@ export default function ProjectDetailPage() {
                             title: 'Retirer le membre',
                             content: `Êtes-vous sûr de vouloir retirer ${member.user.firstName} ${member.user.lastName} du projet ?`,
                             onConfirm: async () => {
-                              // TODO: Implement remove member
-                              toast.info('Fonctionnalité à venir');
+                              try {
+                                await apiClient.delete(`/projects/${id}/members/${member.user.id}`);
+                                toast.success('Membre retiré avec succès');
+                                mutate();
+                              } catch (error: any) {
+                                toast.error(error.response?.data?.message || 'Erreur lors du retrait du membre');
+                              }
                             },
                           });
                         }}
@@ -337,8 +343,13 @@ export default function ProjectDetailPage() {
                                 title: 'Retirer le produit',
                                 content: `Êtes-vous sûr de vouloir retirer ${item.product.name} du projet ?`,
                                 onConfirm: async () => {
-                                  // TODO: Implement remove product
-                                  toast.info('Fonctionnalité à venir');
+                                  try {
+                                    await apiClient.delete(`/projects/${id}/products/${item.product.id}`);
+                                    toast.success('Produit retiré avec succès');
+                                    mutate();
+                                  } catch (error: any) {
+                                    toast.error(error.response?.data?.message || 'Erreur lors du retrait du produit');
+                                  }
                                 },
                               });
                             }}

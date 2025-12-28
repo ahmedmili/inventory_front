@@ -12,6 +12,7 @@ import {
   ReportIcon,
   DashboardIcon,
   ReservationIcon,
+  BellIcon,
 } from './icons';
 
 export interface NavigationItem {
@@ -155,6 +156,12 @@ export const navigationItems: NavigationItem[] = [
     icon: <ReservationIcon />,
     requirePermissions: ['reservations.read', 'reservations.create'],
     requireAllPermissions: false, // Show if user has ANY reservation permission
+  },
+  {
+    name: 'Notifications',
+    href: '/notifications',
+    icon: <BellIcon />,
+    requirePermissions: ['notifications.read'],
   },
   {
     name: 'Rapports',

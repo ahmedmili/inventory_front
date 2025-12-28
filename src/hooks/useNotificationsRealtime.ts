@@ -69,6 +69,7 @@ export function useNotificationsRealtime(
               ],
             };
           case 'EXPIRY_ALERT':
+          case 'EXPIRATION':
             return {
               type: 'warning' as const,
               title: 'Alerte Expiration',
@@ -81,6 +82,82 @@ export function useNotificationsRealtime(
                   onClick: () => {
                     if (payload.data?.productId) {
                       window.location.href = `/products/${payload.data.productId}`;
+                    }
+                  },
+                  style: 'primary' as const,
+                },
+              ],
+            };
+          case 'PURCHASE_ORDER_RECEIVED':
+            return {
+              type: 'success' as const,
+              title: 'Commande d\'Achat Reçue',
+              message: `La commande ${payload.data?.number || 'N/A'} a été reçue`,
+              duration: 5000,
+              position: 'top-right' as const,
+              actions: [
+                {
+                  label: 'Voir la commande',
+                  onClick: () => {
+                    if (payload.data?.purchaseOrderId) {
+                      window.location.href = `/purchases/${payload.data.purchaseOrderId}`;
+                    }
+                  },
+                  style: 'primary' as const,
+                },
+              ],
+            };
+          case 'PURCHASE_ORDER_VALIDATED':
+            return {
+              type: 'success' as const,
+              title: 'Commande d\'Achat Validée',
+              message: `La commande ${payload.data?.number || 'N/A'} a été validée`,
+              duration: 5000,
+              position: 'top-right' as const,
+              actions: [
+                {
+                  label: 'Voir la commande',
+                  onClick: () => {
+                    if (payload.data?.purchaseOrderId) {
+                      window.location.href = `/purchases/${payload.data.purchaseOrderId}`;
+                    }
+                  },
+                  style: 'primary' as const,
+                },
+              ],
+            };
+          case 'SALES_ORDER_DELIVERED':
+            return {
+              type: 'success' as const,
+              title: 'Commande de Vente Livrée',
+              message: `La commande ${payload.data?.number || 'N/A'} a été livrée`,
+              duration: 5000,
+              position: 'top-right' as const,
+              actions: [
+                {
+                  label: 'Voir la commande',
+                  onClick: () => {
+                    if (payload.data?.salesOrderId) {
+                      window.location.href = `/sales/${payload.data.salesOrderId}`;
+                    }
+                  },
+                  style: 'primary' as const,
+                },
+              ],
+            };
+          case 'SALES_ORDER_CONFIRMED':
+            return {
+              type: 'info' as const,
+              title: 'Commande de Vente Confirmée',
+              message: `La commande ${payload.data?.number || 'N/A'} a été confirmée`,
+              duration: 5000,
+              position: 'top-right' as const,
+              actions: [
+                {
+                  label: 'Voir la commande',
+                  onClick: () => {
+                    if (payload.data?.salesOrderId) {
+                      window.location.href = `/sales/${payload.data.salesOrderId}`;
                     }
                   },
                   style: 'primary' as const,

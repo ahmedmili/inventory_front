@@ -9,6 +9,7 @@ export { default as BuildingIcon } from './BuildingIcon';
 export { default as WarehouseIcon } from './WarehouseIcon';
 export { default as ReportIcon } from './ReportIcon';
 export { default as DashboardIcon } from './DashboardIcon';
+export { default as BellIcon } from './BellIcon';
 export { default as EyeIcon } from './EyeIcon';
 export { default as EditIcon } from './EditIcon';
 export { default as PlusIcon } from './PlusIcon';

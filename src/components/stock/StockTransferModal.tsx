@@ -134,11 +134,12 @@ export default function StockTransferModal({
 
     setLoading(true);
     try {
-      await apiClient.post('/warehouses/transfer', {
+      await apiClient.post('/stock-movements/transfer', {
         productId: data.productId,
         fromWarehouseId: data.fromWarehouseId,
         toWarehouseId: data.toWarehouseId,
         quantity: data.quantity,
+        reason: 'TRANSFER',
       });
       toast.success('Transfert de stock créé avec succès!');
       onClose();
