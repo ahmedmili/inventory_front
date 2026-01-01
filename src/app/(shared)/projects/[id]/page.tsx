@@ -113,7 +113,7 @@ export default function ProjectDetailPage() {
 
   if (loading) {
     return (
-      <RouteGuard requiredPermissions={['projects.read']}>
+      <RouteGuard requirements={{ requirePermissions: ['projects.read'] }}>
         <div className="p-6">
           <div className="text-center py-8 text-gray-500">Chargement...</div>
         </div>
@@ -123,7 +123,7 @@ export default function ProjectDetailPage() {
 
   if (error || !project) {
     return (
-      <RouteGuard requiredPermissions={['projects.read']}>
+      <RouteGuard requirements={{ requirePermissions: ['projects.read'] }}>
         <div className="p-6">
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <p className="text-red-800">Projet introuvable</p>
@@ -134,7 +134,7 @@ export default function ProjectDetailPage() {
   }
 
   return (
-    <RouteGuard requiredPermissions={['projects.read']}>
+    <RouteGuard requirements={{ requirePermissions: ['projects.read'] }}>
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -249,7 +249,7 @@ export default function ProjectDetailPage() {
                             content: `Êtes-vous sûr de vouloir retirer ${member.user.firstName} ${member.user.lastName} du projet ?`,
                             onConfirm: async () => {
                               try {
-                                await apiClient.delete(`/projects/${id}/members/${member.user.id}`);
+                                await apiClient.delete(`/projects/${projectId}/members/${member.user.id}`);
                                 toast.success('Membre retiré avec succès');
                                 mutate();
                               } catch (error: any) {
@@ -344,7 +344,7 @@ export default function ProjectDetailPage() {
                                 content: `Êtes-vous sûr de vouloir retirer ${item.product.name} du projet ?`,
                                 onConfirm: async () => {
                                   try {
-                                    await apiClient.delete(`/projects/${id}/products/${item.product.id}`);
+                                    await apiClient.delete(`/projects/${projectId}/products/${item.product.id}`);
                                     toast.success('Produit retiré avec succès');
                                     mutate();
                                   } catch (error: any) {
