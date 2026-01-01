@@ -294,7 +294,7 @@ export default function ReservationCartModal({
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Réservation de Produits" size="large">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Réservation de Produits" size="lg">
       <div className="space-y-6">
         {/* Add Product Form */}
         <div className="bg-gray-50 rounded-lg p-4">
