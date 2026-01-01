@@ -477,7 +477,7 @@ export default function RolesPage() {
 
   const handleToggleRoleStatus = async (role: Role) => {
     try {
-      await sendAction(`/roles/${role.id}/toggle-status`, 'PATCH');
+      await sendAction(`/roles/${role.id}/toggle-status`, 'POST');
       toast.success(`Rôle ${role.isActive ? 'désactivé' : 'activé'} avec succès`);
       refreshRoles();
     } catch (error: any) {
@@ -487,7 +487,7 @@ export default function RolesPage() {
 
   const handleTogglePermissionStatus = async (permission: Permission) => {
     try {
-      await sendAction(`/roles/permissions/${permission.id}/toggle-status`, 'PATCH');
+      await sendAction(`/roles/permissions/${permission.id}/toggle-status`, 'POST');
       toast.success(`Permission ${permission.isActive ? 'désactivée' : 'activée'} avec succès`);
       refreshPermissions();
     } catch (error: any) {
@@ -541,7 +541,10 @@ export default function RolesPage() {
       render: (role) => (
         <div className="flex items-center gap-2">
           <button
-            onClick={() => handleToggleRoleStatus(role)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleToggleRoleStatus(role);
+            }}
             disabled={actionLoading}
             className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
               role.isActive ? 'bg-primary-600' : 'bg-gray-200'
@@ -661,7 +664,7 @@ export default function RolesPage() {
         </div>
       ),
     },
-  ], []);
+  ], [handleToggleRoleStatus, handleOpenPermissionsModal, handleOpenUsersModal, handleOpenEditModal, handleOpenDeleteModal, actionLoading, canManage]);
 
   if (!canManage) {
     return (
@@ -681,7 +684,10 @@ export default function RolesPage() {
       render: (permission) => (
         <div className="flex items-center gap-2">
           <button
-            onClick={() => handleTogglePermissionStatus(permission)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleTogglePermissionStatus(permission);
+            }}
             disabled={actionLoading}
             className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
               permission.isActive ? 'bg-primary-600' : 'bg-gray-200'
@@ -786,7 +792,7 @@ export default function RolesPage() {
         </div>
       ),
     },
-  ], []);
+  ], [handleTogglePermissionStatus, handleOpenEditPermissionModal, handleOpenDeletePermissionModal, actionLoading]);
 
   // Filtrer les permissions
   const filteredPermissions = useMemo(() => {

@@ -57,9 +57,14 @@ export function useApiMutation<TData = any, TVariables = any>() {
           response = await apiClient.put<TData>(url, data !== undefined ? data : {});
           break;
         case 'PATCH':
-          // For PATCH requests, always send data (even if empty object)
-          // Some servers/CORS configs require a body for PATCH requests
-          response = await apiClient.patch<TData>(url, data !== undefined ? data : {});
+          // For PATCH requests, send data if provided, otherwise send empty object
+          // Empty object is required for some CORS configurations
+          if (data !== undefined) {
+            response = await apiClient.patch<TData>(url, data);
+          } else {
+            // Send empty object explicitly for toggle operations
+            response = await apiClient.patch<TData>(url, {});
+          }
           break;
         case 'DELETE':
           response = await apiClient.delete<TData>(url);

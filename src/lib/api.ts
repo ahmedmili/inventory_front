@@ -22,6 +22,27 @@ class ApiClient {
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
+        
+        // Ensure Content-Type is set for PATCH/PUT requests with body
+        if ((config.method === 'patch' || config.method === 'put') && config.data) {
+          if (!config.headers['Content-Type']) {
+            config.headers['Content-Type'] = 'application/json';
+          }
+        }
+        
+        // Log PATCH requests in development for debugging
+        if (typeof window !== 'undefined' && config.method === 'patch') {
+          console.log('[API] PATCH Request:', {
+            url: config.url,
+            hasData: !!config.data,
+            data: config.data,
+            headers: {
+              'Content-Type': config.headers['Content-Type'],
+              'Authorization': config.headers.Authorization ? 'Bearer ***' : 'none',
+            },
+          });
+        }
+        
         return config;
       },
       (error) => Promise.reject(error),
