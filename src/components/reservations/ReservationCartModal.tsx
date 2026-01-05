@@ -15,7 +15,7 @@ interface Product {
   sku?: string;
   warehouseStock?: Array<{
     warehouseId: string;
-    warehouse: { id: string; name: string };
+    warehouse: { id: string; name: string; code?: string };
     quantity: number;
   }>;
 }
@@ -98,21 +98,10 @@ export default function ReservationCartModal({
         apiClient.get('/projects?status=ACTIVE'),
       ]);
 
+      // Les produits incluent déjà warehouseStock avec les informations de l'entrepôt
       const productsData = productsRes.data?.data || productsRes.data || [];
+      setProducts(productsData);
       
-      // Load stock for each product
-      const productsWithStock = await Promise.all(
-        productsData.slice(0, 50).map(async (product: Product) => {
-          try {
-            const productDetail = await apiClient.get(`/products/${product.id}`);
-            return productDetail.data;
-          } catch {
-            return product;
-          }
-        })
-      );
-
-      setProducts(productsWithStock);
       const warehousesData: Warehouse[] = warehousesRes.data?.data || warehousesRes.data || [];
       setWarehouses(warehousesData);
       setProjects(projectsRes.data?.data || projectsRes.data || []);

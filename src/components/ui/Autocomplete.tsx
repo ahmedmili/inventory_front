@@ -115,7 +115,7 @@ export default function Autocomplete({
           onFocus={handleInputFocus}
           placeholder={placeholder}
           disabled={disabled}
-          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all bg-white disabled:bg-gray-100 disabled:cursor-not-allowed text-sm"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-white disabled:bg-gray-100 disabled:cursor-not-allowed text-sm"
           readOnly={!isOpen}
         />
         <div className="absolute inset-y-0 right-0 flex items-center pr-2 gap-1">
@@ -177,7 +177,7 @@ export default function Autocomplete({
                   onClick={() => handleSelect(option.value)}
                   className={`px-4 py-2 cursor-pointer transition-colors text-sm ${
                     value === option.value
-                      ? 'bg-primary-50 text-primary-900 font-medium'
+                      ? 'bg-blue-50 text-blue-900 font-medium'
                       : highlightedIndex === index
                       ? 'bg-gray-100'
                       : 'hover:bg-gray-50'

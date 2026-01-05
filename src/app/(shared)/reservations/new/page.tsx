@@ -9,6 +9,7 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
 import { SkeletonLoader } from '@/components/SkeletonLoader';
 import RouteGuard from '@/components/guards/RouteGuard';
+import Autocomplete, { AutocompleteOption } from '@/components/ui/Autocomplete';
 
 interface Product {
   id: string;
@@ -16,7 +17,7 @@ interface Product {
   sku?: string;
   warehouseStock?: Array<{
     warehouseId: string;
-    warehouse: { id: string; name: string };
+    warehouse: { id: string; name: string; code?: string };
     quantity: number;
   }>;
 }
@@ -94,21 +95,10 @@ export default function NewReservationPage() {
         apiClient.get('/projects?status=ACTIVE'),
       ]);
 
+      // Les produits incluent déjà warehouseStock avec les informations de l'entrepôt
       const productsData = productsRes.data?.data || productsRes.data || [];
+      setProducts(productsData);
       
-      // Load stock for each product
-      const productsWithStock = await Promise.all(
-        productsData.map(async (product: Product) => {
-          try {
-            const productDetail = await apiClient.get(`/products/${product.id}`);
-            return productDetail.data;
-          } catch {
-            return product;
-          }
-        })
-      );
-
-      setProducts(productsWithStock);
       const warehousesData: Warehouse[] = warehousesRes.data?.data || warehousesRes.data || [];
       setWarehouses(warehousesData);
       setProjects(projectsRes.data?.data || projectsRes.data || []);
@@ -321,20 +311,16 @@ export default function NewReservationPage() {
                   <label htmlFor="productId" className="block text-sm font-medium text-gray-700 mb-2">
                     Produit <span className="text-red-500">*</span>
                   </label>
-                  <select
-                    id="productId"
-                    required
+                  <Autocomplete
+                    options={products.map((product) => ({
+                      value: product.id,
+                      label: `${product.name}${product.sku ? ` (${product.sku})` : ''}`,
+                    }))}
                     value={formData.productId}
-                    onChange={(e) => setFormData({ ...formData, productId: e.target.value })}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Sélectionner un produit</option>
-                    {products.map((product) => (
-                      <option key={product.id} value={product.id}>
-                        {product.name} {product.sku && `(${product.sku})`}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(value) => setFormData({ ...formData, productId: value })}
+                    placeholder="Rechercher un produit..."
+                    className="w-full"
+                  />
                 </div>
 
                 {/* Warehouse Selection */}
@@ -342,20 +328,16 @@ export default function NewReservationPage() {
                   <label htmlFor="warehouseId" className="block text-sm font-medium text-gray-700 mb-2">
                     Entrepôt <span className="text-red-500">*</span>
                   </label>
-                  <select
-                    id="warehouseId"
-                    required
+                  <Autocomplete
+                    options={warehouses.map((warehouse) => ({
+                      value: warehouse.id,
+                      label: warehouse.name,
+                    }))}
                     value={formData.warehouseId}
-                    onChange={(e) => setFormData({ ...formData, warehouseId: e.target.value })}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Sélectionner un entrepôt</option>
-                    {warehouses.map((warehouse) => (
-                      <option key={warehouse.id} value={warehouse.id}>
-                        {warehouse.name}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(value) => setFormData({ ...formData, warehouseId: value })}
+                    placeholder="Rechercher un entrepôt..."
+                    className="w-full"
+                  />
                   {formData.productId && formData.warehouseId && (
                     <p className="mt-1 text-sm text-gray-500">
                       Stock disponible: {getAvailableStock(formData.productId, formData.warehouseId)}
@@ -474,19 +456,20 @@ export default function NewReservationPage() {
                   <label htmlFor="projectId" className="block text-sm font-medium text-gray-700 mb-2">
                     Projet (optionnel)
                   </label>
-                  <select
-                    id="projectId"
+                  <Autocomplete
+                    options={[
+                      { value: '', label: 'Aucun projet' },
+                      ...projects.map((project) => ({
+                        value: project.id,
+                        label: project.name,
+                      })),
+                    ]}
                     value={formData.projectId}
-                    onChange={(e) => setFormData({ ...formData, projectId: e.target.value })}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Aucun projet</option>
-                    {projects.map((project) => (
-                      <option key={project.id} value={project.id}>
-                        {project.name}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(value) => setFormData({ ...formData, projectId: value })}
+                    placeholder="Rechercher un projet..."
+                    className="w-full"
+                    allowClear={true}
+                  />
                 </div>
 
                 {/* Expiration Date (Optional) */}
