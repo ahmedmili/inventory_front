@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApi } from '@/hooks/useApi';
 // Layout is handled by (shared)/layout.tsx
@@ -54,7 +54,8 @@ export default function ProductsPage() {
   const toast = useToast();
   const { user } = useAuth();
   const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState(''); // Input value (no debounce)
+  const [search, setSearch] = useState(''); // Debounced search value
   const [sortBy, setSortBy] = useState<string>('createdAt');
   const [sortOrder, setSortOrder] = useState<SortDirection>('desc');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -84,6 +85,16 @@ export default function ProductsPage() {
 
   const { data, loading, error, mutate } = useApi<ProductsResponse>(`/products?${searchParams}`);
 
+  // Debounce search input - wait 500ms after user stops typing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(searchInput);
+      setPage(1); // Reset to first page on search
+    }, 500); // 500ms debounce delay
+
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
   // Écouter les mises à jour de stock en temps réel
   useProductsRealtime(() => {
     // Rafraîchir la liste des produits quand le stock est mis à jour
@@ -91,8 +102,7 @@ export default function ProductsPage() {
   });
 
   const handleSearch = (value: string) => {
-    setSearch(value);
-    setPage(1); // Reset to first page on search
+    setSearchInput(value); // Update input immediately (no debounce)
   };
 
   const handleOpenCreateModal = () => {
@@ -383,12 +393,13 @@ export default function ProductsPage() {
             <input
               type="text"
               placeholder="Rechercher par nom ou référence..."
-              value={search}
+              value={searchInput}
               onChange={(e) => handleSearch(e.target.value)}
               className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
             />
-            {search && (
+            {searchInput && (
               <button
+                type="button"
                 onClick={() => handleSearch('')}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center"
               >

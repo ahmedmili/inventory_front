@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
 import Modal from '../Modal';
+import Autocomplete from '../ui/Autocomplete';
 // Commented out - can be restored later
 // import ImageUpload from '../ImageUpload';
 import {
@@ -90,6 +91,9 @@ export default function ProductFormModal({
     //   images: [],
     // },
   });
+
+  // Watch supplierId for Autocomplete
+  const supplierId = watch('supplierId');
 
   // Commented out - can be restored later
   // const images = watch('images') || [];
@@ -269,22 +273,27 @@ export default function ProductFormModal({
               )}
             </div>
 
-            {/* Fournisseur - Optional */}
+            {/* Fournisseur - Optional with Autocomplete */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Fournisseur
               </label>
-              <select
-                {...register('supplierId')}
-                className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-4 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all bg-white"
-              >
-                <option value="">Sélectionner un fournisseur</option>
-                {suppliers.map((supplier) => (
-                  <option key={supplier.id} value={supplier.id}>
-                    {supplier.name}
-                  </option>
-                ))}
-              </select>
+              <Autocomplete
+                options={[
+                  { value: '', label: 'Aucun fournisseur' },
+                  ...suppliers.map((supplier) => ({
+                    value: supplier.id,
+                    label: supplier.name,
+                  })),
+                ]}
+                value={supplierId || ''}
+                onChange={(value) => {
+                  setValue('supplierId', value === '' ? undefined : value, { shouldValidate: true });
+                }}
+                placeholder="Rechercher un fournisseur..."
+                className="w-full"
+                allowClear={true}
+              />
             </div>
 
             {/* Référence (SKU) - Optional */}
