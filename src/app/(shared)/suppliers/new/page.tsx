@@ -10,7 +10,15 @@ import { z } from 'zod';
 
 const supplierSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  email: z.string().email().optional().or(z.literal('')),
+  // Email is optional - if provided, must be valid email format
+  email: z
+    .union([
+      z.string().email('Invalid email format'),
+      z.literal(''),
+      z.undefined(),
+    ])
+    .optional(),
+  // Phone and address are completely optional
   phone: z.string().optional(),
   address: z.string().optional(),
 });
@@ -35,7 +43,15 @@ export default function NewSupplierPage() {
     setError('');
 
     try {
-      await apiClient.post('/suppliers', data);
+      // Clean up data: convert empty strings to undefined for optional fields
+      const payload = {
+        name: data.name,
+        email: data.email && data.email.trim() !== '' ? data.email.trim() : undefined,
+        phone: data.phone && data.phone.trim() !== '' ? data.phone.trim() : undefined,
+        address: data.address && data.address.trim() !== '' ? data.address.trim() : undefined,
+      };
+      
+      await apiClient.post('/suppliers', payload);
       router.push('/suppliers');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to create supplier');
