@@ -76,8 +76,10 @@ export default function ReceivePurchaseOrderPage() {
         quantityOrdered: line.quantityOrdered,
       }));
 
+      // COMMENTED: Multiple warehouses - always use MAIN
+      const mainWarehouse = warehouses.find((w: any) => w.code === 'MAIN') || warehouses[0];
       reset({
-        warehouseId: warehouses[0]?.id || '',
+        warehouseId: mainWarehouse?.id || '',
         lines: initialLines,
       });
     }
@@ -85,8 +87,10 @@ export default function ReceivePurchaseOrderPage() {
 
   const loadWarehouses = async () => {
     try {
+      // COMMENTED: Multiple warehouses - using only MAIN warehouse
       const response = await apiClient.get('/warehouses');
-      setWarehouses(response.data);
+      const warehousesData = response.data?.data || response.data || [];
+      setWarehouses(warehousesData);
     } catch (error) {
       console.error('Failed to load warehouses:', error);
     } finally {
@@ -98,8 +102,12 @@ export default function ReceivePurchaseOrderPage() {
     setError('');
 
     try {
+      // COMMENTED: Multiple warehouses - always use MAIN
+      const mainWarehouse = warehouses.find((w: any) => w.code === 'MAIN') || warehouses[0];
+      const warehouseId = mainWarehouse?.id || data.warehouseId;
+      
       const payload = {
-        warehouseId: data.warehouseId,
+        warehouseId: warehouseId, // Always use MAIN
         lines: data.lines.map((line) => ({
           lineId: line.lineId,
           productId: line.productId,
@@ -170,25 +178,8 @@ export default function ReceivePurchaseOrderPage() {
           )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Warehouse *
-              </label>
-              <select
-                {...register('warehouseId')}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-              >
-                <option value="">Select warehouse</option>
-                {warehouses.map((warehouse) => (
-                  <option key={warehouse.id} value={warehouse.id}>
-                    {warehouse.name}
-                  </option>
-                ))}
-              </select>
-              {errors.warehouseId && (
-                <p className="mt-1 text-sm text-red-600">{errors.warehouseId.message}</p>
-              )}
-            </div>
+            {/* COMMENTED: Warehouse Selection - Using only MAIN warehouse (hidden from user) */}
+            {/* Warehouse selection removed - using MAIN warehouse automatically */}
 
             <div>
               <h3 className="text-lg font-medium mb-4">Order Lines</h3>

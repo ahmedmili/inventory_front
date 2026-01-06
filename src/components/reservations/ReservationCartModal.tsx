@@ -94,7 +94,8 @@ export default function ReservationCartModal({
       setLoadingOptions(true);
       const [productsRes, warehousesRes, projectsRes] = await Promise.all([
         apiClient.get('/products?limit=1000'),
-        apiClient.get('/warehouses'),
+        // COMMENTED: Multiple warehouses - using only MAIN warehouse
+        apiClient.get('/warehouses'), // Still loading to get MAIN warehouse ID
         apiClient.get('/projects?status=ACTIVE'),
       ]);
 
@@ -103,16 +104,19 @@ export default function ReservationCartModal({
       setProducts(productsData);
       
       const warehousesData: Warehouse[] = warehousesRes.data?.data || warehousesRes.data || [];
+      // COMMENTED: Multiple warehouses - storing but not using for selection
       setWarehouses(warehousesData);
       setProjects(projectsRes.data?.data || projectsRes.data || []);
 
-      // Définir l'entrepôt principal (code MAIN) comme valeur par défaut si aucun entrepôt sélectionné
+      // Set MAIN warehouse automatically (hidden from user)
       const mainWarehouse = warehousesData.find(w => w.code === 'MAIN');
       if (mainWarehouse) {
         setFormData(prev => ({
           ...prev,
-          warehouseId: prev.warehouseId || mainWarehouse.id,
+          warehouseId: mainWarehouse.id, // Always use MAIN warehouse silently
         }));
+      } else {
+        toast.error('Erreur de configuration. Veuillez contacter l\'administrateur.');
       }
     } catch (error: any) {
       console.error('Failed to load options:', error);
@@ -139,10 +143,16 @@ export default function ReservationCartModal({
     }
 
     const product = products.find(p => p.id === formData.productId);
-    const warehouse = warehouses.find(w => w.id === formData.warehouseId);
     
-    if (!product || !warehouse) {
-      toast.error('Produit ou entrepôt introuvable');
+    if (!product) {
+      toast.error('Produit introuvable');
+      return;
+    }
+    
+    // Get warehouse silently (MAIN) - hidden from user
+    const warehouse = warehouses.find(w => w.id === formData.warehouseId) || warehouses.find(w => w.code === 'MAIN');
+    if (!warehouse) {
+      toast.error('Erreur de configuration');
       return;
     }
 
@@ -183,13 +193,13 @@ export default function ReservationCartModal({
       }]);
     }
 
-    // Reset form (keep project, expiresAt, notes)
+    // Reset form (keep project, expiresAt, notes) - Always keep MAIN warehouse
     const mainWarehouse = warehouses.find(w => w.code === 'MAIN');
 
     setFormData(prev => ({
       ...prev,
       productId: '',
-      warehouseId: mainWarehouse ? mainWarehouse.id : '',
+      warehouseId: mainWarehouse ? mainWarehouse.id : prev.warehouseId, // Keep MAIN warehouse
       quantity: 1,
     }));
 
@@ -312,32 +322,17 @@ export default function ReservationCartModal({
               </select>
             </div>
 
-            {/* Warehouse Selection */}
-            <div>
-              <label htmlFor="warehouseId" className="block text-sm font-medium text-gray-700 mb-2">
-                Entrepôt <span className="text-red-500">*</span>
-              </label>
-              <select
-                id="warehouseId"
-                required
-                value={formData.warehouseId}
-                onChange={(e) => setFormData({ ...formData, warehouseId: e.target.value })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                disabled={loadingOptions}
-              >
-                <option value="">Sélectionner un entrepôt</option>
-                {warehouses.map((warehouse) => (
-                  <option key={warehouse.id} value={warehouse.id}>
-                    {warehouse.name}
-                  </option>
-                ))}
-              </select>
-              {formData.productId && formData.warehouseId && (
-                <p className="mt-1 text-sm text-gray-500">
-                  Stock: {getAvailableStock(formData.productId, formData.warehouseId)}
+            {/* COMMENTED: Warehouse Selection - Using only MAIN warehouse (hidden from user) */}
+            {/* Warehouse selection removed - using MAIN warehouse automatically */}
+            
+            {/* Display stock info only (no warehouse mention) */}
+            {formData.productId && formData.warehouseId && (
+              <div>
+                <p className="text-sm text-gray-500">
+                  Stock disponible: {getAvailableStock(formData.productId, formData.warehouseId)}
                 </p>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Quantity */}
             <div>
@@ -359,13 +354,11 @@ export default function ReservationCartModal({
 
           <button
             onClick={handleAddToCart}
-            disabled={loadingOptions || !formData.productId || !formData.warehouseId}
+            disabled={loadingOptions || !formData.productId}
             className="mt-4 w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             title={
               !formData.productId
                 ? 'Sélectionnez un produit'
-                : !formData.warehouseId
-                ? 'Sélectionnez un entrepôt'
                 : 'Ajouter ce produit au panier de réservation'
             }
           >
@@ -396,9 +389,7 @@ export default function ReservationCartModal({
                       {item.productSku && (
                         <p className="text-sm text-gray-500">SKU: {item.productSku}</p>
                       )}
-                      <p className="text-sm text-gray-600 mt-1">
-                        Entrepôt: {item.warehouseName}
-                      </p>
+                      {/* Warehouse name removed from display */}
                       <p className="text-sm text-gray-500 mt-1">
                         Stock disponible: {item.availableStock}
                       </p>

@@ -91,13 +91,13 @@ export const navigationItems: NavigationItem[] = [
         requireRoles: ['ADMIN'],
         requirePermissions: ['suppliers.read'],
       },
-      {
-        name: 'Clients',
-        href: '/customers',
-        icon: <UsersIcon />,
-        requireRoles: ['ADMIN'],
-        requirePermissions: ['customers.read'],
-      },
+      // {
+      //   name: 'Clients',
+      //   href: '/customers',
+      //   icon: <UsersIcon />,
+      //   requireRoles: ['ADMIN'],
+      //   requirePermissions: ['customers.read'],
+      // },
     ],
   },
   {

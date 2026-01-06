@@ -15,6 +15,8 @@ interface AutocompleteProps {
   className?: string;
   disabled?: boolean;
   allowClear?: boolean;
+  onCreateNew?: (searchTerm: string) => void;
+  createNewLabel?: string;
 }
 
 export default function Autocomplete({
@@ -25,6 +27,8 @@ export default function Autocomplete({
   className = '',
   disabled = false,
   allowClear = true,
+  onCreateNew,
+  createNewLabel = 'Créer...',
 }: AutocompleteProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -66,9 +70,13 @@ export default function Autocomplete({
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
         setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : 0));
-      } else if (e.key === 'Enter' && highlightedIndex >= 0) {
+      } else if (e.key === 'Enter') {
         e.preventDefault();
-        handleSelect(filteredOptions[highlightedIndex].value);
+        if (highlightedIndex >= 0 && highlightedIndex < filteredOptions.length) {
+          handleSelect(filteredOptions[highlightedIndex].value);
+        } else if (filteredOptions.length === 0 && searchTerm && onCreateNew) {
+          onCreateNew(searchTerm);
+        }
       } else if (e.key === 'Escape') {
         setIsOpen(false);
         setSearchTerm('');
@@ -78,7 +86,7 @@ export default function Autocomplete({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, highlightedIndex, filteredOptions]);
+  }, [isOpen, highlightedIndex, filteredOptions, searchTerm, onCreateNew]);
 
   const handleSelect = (selectedValue: string) => {
     onChange(selectedValue);
@@ -188,6 +196,27 @@ export default function Autocomplete({
                 </li>
               ))}
             </ul>
+          ) : searchTerm && onCreateNew ? (
+            <div className="py-1">
+              <div className="px-4 py-2 text-sm text-gray-500 text-center mb-1">
+                Aucun résultat trouvé
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  onCreateNew(searchTerm);
+                  setIsOpen(false);
+                  setSearchTerm('');
+                }}
+                className="w-full px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 transition-colors font-medium flex items-center justify-center gap-2"
+                onMouseEnter={() => setHighlightedIndex(-1)}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                {createNewLabel} "{searchTerm}"
+              </button>
+            </div>
           ) : (
             <div className="px-4 py-2 text-sm text-gray-500 text-center">
               Aucun résultat trouvé

@@ -77,23 +77,33 @@ export default function ManualStockAdjustmentModal({
       if (initialProductId) {
         setValue('productId', initialProductId);
       }
-      if (initialWarehouseId) {
-        setValue('warehouseId', initialWarehouseId);
-      }
+      // COMMENTED: Multiple warehouses - always use MAIN
+      // if (initialWarehouseId) {
+      //   setValue('warehouseId', initialWarehouseId);
+      // }
     } else {
       reset();
     }
-  }, [isOpen, initialProductId, initialWarehouseId, setValue, reset]);
+  }, [isOpen, initialProductId, setValue, reset]);
 
   const loadOptions = async () => {
     setLoadingOptions(true);
     try {
       const [productsRes, warehousesRes] = await Promise.all([
         apiClient.get('/products'),
-        apiClient.get('/warehouses'),
+        // COMMENTED: Multiple warehouses - using only MAIN warehouse
+        apiClient.get('/warehouses'), // Still loading to get MAIN warehouse ID
       ]);
       setProducts(extractCollection<Product>(productsRes.data));
-      setWarehouses(extractCollection<Warehouse>(warehousesRes.data));
+      // COMMENTED: Multiple warehouses - storing but not using for selection
+      const warehousesData = extractCollection<Warehouse>(warehousesRes.data);
+      setWarehouses(warehousesData);
+      
+      // Set MAIN warehouse as default
+      const mainWarehouse = warehousesData.find(w => w.code === 'MAIN');
+      if (mainWarehouse && !initialWarehouseId) {
+        setValue('warehouseId', mainWarehouse.id);
+      }
     } catch (error) {
       console.error('Failed to load options:', error);
       toast.error('Échec du chargement des options');
@@ -105,9 +115,19 @@ export default function ManualStockAdjustmentModal({
   const onSubmit = async (data: AdjustmentFormData) => {
     setLoading(true);
     try {
+      // COMMENTED: Multiple warehouses - always use MAIN warehouse
+      const mainWarehouse = warehouses.find(w => w.code === 'MAIN');
+      const warehouseId = mainWarehouse?.id || data.warehouseId;
+      
+      if (!warehouseId) {
+        toast.error('L\'entrepôt principal (MAIN) est introuvable.');
+        setLoading(false);
+        return;
+      }
+      
       await apiClient.post('/stock-movements', {
         productId: data.productId,
-        warehouseId: data.warehouseId,
+        warehouseId: warehouseId, // Always use MAIN
         type: data.type,
         quantity: data.quantity,
         reason: data.reason || undefined,
@@ -159,27 +179,8 @@ export default function ManualStockAdjustmentModal({
           )}
         </div>
 
-        {/* Warehouse Selection */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Entrepôt <span className="text-red-500">*</span>
-          </label>
-          <select
-            {...register('warehouseId')}
-            disabled={loadingOptions}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-          >
-            <option value="">Sélectionner un entrepôt</option>
-            {warehouses.map((warehouse) => (
-              <option key={warehouse.id} value={warehouse.id}>
-                {warehouse.name} ({warehouse.code})
-              </option>
-            ))}
-          </select>
-          {errors.warehouseId && (
-            <p className="mt-1 text-sm text-red-600">{errors.warehouseId.message}</p>
-          )}
-        </div>
+        {/* COMMENTED: Warehouse Selection - Using only MAIN warehouse (hidden from user) */}
+        {/* Warehouse selection removed - using MAIN warehouse automatically */}
 
         {/* Movement Type */}
         <div>

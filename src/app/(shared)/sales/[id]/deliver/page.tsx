@@ -53,16 +53,20 @@ export default function DeliverSalesOrderPage() {
 
   useEffect(() => {
     if (warehouses.length > 0) {
+      // COMMENTED: Multiple warehouses - always use MAIN
+      const mainWarehouse = warehouses.find((w: any) => w.code === 'MAIN') || warehouses[0];
       reset({
-        warehouseId: warehouses[0]?.id || '',
+        warehouseId: mainWarehouse?.id || '',
       });
     }
   }, [warehouses, reset]);
 
   const loadWarehouses = async () => {
     try {
+      // COMMENTED: Multiple warehouses - using only MAIN warehouse
       const response = await apiClient.get('/warehouses');
-      setWarehouses(response.data);
+      const warehousesData = response.data?.data || response.data || [];
+      setWarehouses(warehousesData);
     } catch (error) {
       console.error('Failed to load warehouses:', error);
     } finally {
@@ -74,7 +78,11 @@ export default function DeliverSalesOrderPage() {
     setError('');
 
     try {
-      await mutate(`/sales/${id}/deliver`, 'POST', data);
+      // COMMENTED: Multiple warehouses - always use MAIN
+      const mainWarehouse = warehouses.find((w: any) => w.code === 'MAIN') || warehouses[0];
+      const warehouseId = mainWarehouse?.id || data.warehouseId;
+      
+      await mutate(`/sales/${id}/deliver`, 'POST', { warehouseId }); // Always use MAIN
       router.push(`/sales/${id}`);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to deliver sales order');
@@ -158,28 +166,8 @@ export default function DeliverSalesOrderPage() {
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Warehouse *
-              </label>
-              <select
-                {...register('warehouseId')}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-              >
-                <option value="">Select warehouse</option>
-                {warehouses.map((warehouse) => (
-                  <option key={warehouse.id} value={warehouse.id}>
-                    {warehouse.name}
-                  </option>
-                ))}
-              </select>
-              {errors.warehouseId && (
-                <p className="mt-1 text-sm text-red-600">{errors.warehouseId.message}</p>
-              )}
-              <p className="mt-1 text-sm text-gray-500">
-                Select the warehouse from which to deliver the products
-              </p>
-            </div>
+            {/* COMMENTED: Warehouse Selection - Using only MAIN warehouse (hidden from user) */}
+            {/* Warehouse selection removed - using MAIN warehouse automatically */}
 
             <div className="flex justify-end space-x-3">
               <button

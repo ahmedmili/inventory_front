@@ -54,8 +54,9 @@ interface Product {
 interface ProductFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess?: () => void;
+  onSuccess?: (createdProductId?: string) => void;
   productId?: string | null; // If provided, we're editing
+  initialData?: { name?: string; sku?: string }; // Initial data for new product
 }
 
 export default function ProductFormModal({
@@ -63,6 +64,7 @@ export default function ProductFormModal({
   onClose,
   onSuccess,
   productId,
+  initialData,
 }: ProductFormModalProps) {
   const toast = useToast();
   const [loading, setLoading] = useState(false);
@@ -104,10 +106,10 @@ export default function ProductFormModal({
     if (isOpen && productId) {
       loadProduct();
     } else if (isOpen && !productId) {
-      // Reset form for new product
+      // Reset form for new product with initial data if provided
       reset({
-        name: '',
-        sku: '',
+        name: initialData?.name || '',
+        sku: initialData?.sku || '',
         description: '',
         supplierId: '',
         salePrice: 0,
@@ -191,17 +193,20 @@ export default function ProductFormModal({
         // images: data.images && data.images.length > 0 ? data.images : undefined,
       };
 
+      let createdProductId: string | undefined;
       if (isEditMode && productId) {
         await apiClient.put(`/products/${productId}`, payload);
         toast.success('Produit mis à jour avec succès!');
       } else {
-        await apiClient.post('/products', payload);
+        const response = await apiClient.post<Product>('/products', payload);
+        createdProductId = response.data.id;
         toast.success('Produit créé avec succès!');
       }
 
       onClose();
       if (onSuccess) {
-        onSuccess();
+        // Passer l'ID du produit créé si disponible
+        onSuccess(createdProductId);
       }
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 

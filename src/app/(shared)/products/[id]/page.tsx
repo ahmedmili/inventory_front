@@ -83,9 +83,7 @@ function ProductMovementsHistory({ productId }: { productId: string }) {
                     {getTypeLabel(movement.type)}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-900">
-                      {movement.warehouse?.name || 'Entrepôt inconnu'}
-                    </div>
+                    {/* Warehouse name removed from display */}
                     <div className="text-xs text-gray-500 mt-0.5">
                       {format(new Date(movement.createdAt), 'dd MMM yyyy à HH:mm')}
                     </div>
@@ -513,44 +511,8 @@ export default function ProductDetailPage() {
           {/* Right Column - Sidebar (4 columns) */}
           <div className="lg:col-span-4">
             <div className="lg:sticky lg:top-6 space-y-6">
-              {/* Stock by Warehouse */}
-              {product.warehouseStock && product.warehouseStock.length > 0 && (
-                <div className="bg-white shadow-sm rounded-xl overflow-hidden border border-gray-200">
-                  <div className="px-6 py-4 bg-gradient-to-r from-gray-50 via-white to-gray-50 border-b border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-900">Stock par entrepôt</h3>
-                  </div>
-                  <div className="px-6 py-5">
-                    <div className="space-y-3">
-                      {product.warehouseStock.map((stock) => (
-                        <div
-                          key={stock.id}
-                          className="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-200"
-                        >
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-900 truncate">
-                              {stock.warehouse?.name || `Entrepôt ${stock.warehouseId.slice(0, 8)}`}
-                            </p>
-                            {stock.warehouse?.code && (
-                              <p className="text-xs text-gray-500 mt-0.5">{stock.warehouse.code}</p>
-                            )}
-                          </div>
-                          <div className="ml-3 flex-shrink-0">
-                            <span
-                              className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-semibold border ${
-                                stock.quantity <= product.minStock
-                                  ? 'bg-red-100 text-red-800 border-red-200'
-                                  : 'bg-green-100 text-green-800 border-green-200'
-                              }`}
-                            >
-                              {stock.quantity}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
+              {/* COMMENTED: Stock by Warehouse - Removed from view (using MAIN warehouse silently) */}
+              {/* Stock display removed - warehouse information hidden from user */}
 
               {/* Quick Stats */}
               <div className="bg-white shadow-sm rounded-xl overflow-hidden border border-gray-200">

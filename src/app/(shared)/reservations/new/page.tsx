@@ -10,6 +10,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { SkeletonLoader } from '@/components/SkeletonLoader';
 import RouteGuard from '@/components/guards/RouteGuard';
 import Autocomplete, { AutocompleteOption } from '@/components/ui/Autocomplete';
+import ProductFormModal from '@/components/products/ProductFormModal';
 
 interface Product {
   id: string;
@@ -54,6 +55,8 @@ export default function NewReservationPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(true);
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [showProductModal, setShowProductModal] = useState(false);
+  const [newProductData, setNewProductData] = useState<{ name?: string; sku?: string } | null>(null);
 
   // Get productId from URL query params
   const productIdFromUrl = searchParams?.get('productId') || '';
@@ -91,7 +94,9 @@ export default function NewReservationPage() {
       setLoadingOptions(true);
       const [productsRes, warehousesRes, projectsRes] = await Promise.all([
         apiClient.get('/products?limit=1000'),
-        apiClient.get('/warehouses'),
+        // COMMENTED: Multiple warehouses - using only MAIN warehouse
+        // apiClient.get('/warehouses'),
+        apiClient.get('/warehouses'), // Still loading to get MAIN warehouse ID
         apiClient.get('/projects?status=ACTIVE'),
       ]);
 
@@ -100,16 +105,19 @@ export default function NewReservationPage() {
       setProducts(productsData);
       
       const warehousesData: Warehouse[] = warehousesRes.data?.data || warehousesRes.data || [];
+      // COMMENTED: Multiple warehouses - storing but not using for selection
       setWarehouses(warehousesData);
       setProjects(projectsRes.data?.data || projectsRes.data || []);
 
-      // Définir l'entrepôt principal (code MAIN) comme valeur par défaut si aucun entrepôt sélectionné
+      // Set MAIN warehouse automatically (hidden from user)
       const mainWarehouse = warehousesData.find(w => w.code === 'MAIN');
       if (mainWarehouse) {
         setFormData(prev => ({
           ...prev,
-          warehouseId: prev.warehouseId || mainWarehouse.id,
+          warehouseId: mainWarehouse.id, // Always use MAIN warehouse silently
         }));
+      } else {
+        toast.error('Erreur de configuration. Veuillez contacter l\'administrateur.');
       }
     } catch (error: any) {
       console.error('Failed to load options:', error);
@@ -129,6 +137,64 @@ export default function NewReservationPage() {
     return stock?.quantity || 0;
   };
 
+  const handleCreateProduct = (searchTerm: string) => {
+    // Extraire le nom et le SKU si possible (format: "Nom (SKU)")
+    const skuMatch = searchTerm.match(/\(([^)]+)\)$/);
+    const name = skuMatch ? searchTerm.replace(/\s*\([^)]+\)$/, '').trim() : searchTerm.trim();
+    const sku = skuMatch ? skuMatch[1] : undefined;
+    
+    setNewProductData({ name, sku });
+    setShowProductModal(true);
+  };
+
+  const handleProductCreated = async (createdProductId?: string) => {
+    const savedProductData = { ...newProductData };
+    setShowProductModal(false);
+    setNewProductData(null);
+    
+    // Recharger les produits
+    try {
+      const productsRes = await apiClient.get('/products?limit=1000');
+      const productsData = productsRes.data?.data || productsRes.data || [];
+      setProducts(productsData);
+      
+      // Sélectionner le produit créé
+      let productToSelect: Product | undefined;
+      
+      if (createdProductId) {
+        // Utiliser l'ID directement
+        productToSelect = productsData.find((p: Product) => p.id === createdProductId);
+      } else if (savedProductData) {
+        // Chercher par nom ou SKU
+        productToSelect = productsData.find(
+          (p: Product) => 
+            p.name.toLowerCase() === savedProductData.name?.toLowerCase() ||
+            (savedProductData.sku && p.sku?.toLowerCase() === savedProductData.sku.toLowerCase())
+        );
+      }
+      
+      if (productToSelect) {
+        // Trouver l'entrepôt principal - ONLY MAIN
+        const mainWarehouse = warehouses.find(w => w.code === 'MAIN');
+        
+        setFormData(prev => ({ 
+          ...prev, 
+          productId: productToSelect!.id,
+          // Always use MAIN warehouse
+          warehouseId: mainWarehouse?.id || prev.warehouseId || '',
+          // S'assurer que la quantité est au moins à 1
+          quantity: prev.quantity || 1,
+        }));
+        toast.success('Produit créé et sélectionné ! Vous pouvez maintenant l\'ajouter au panier.');
+      } else {
+        toast.success('Produit créé avec succès ! Veuillez le sélectionner dans la liste.');
+      }
+    } catch (error: any) {
+      console.error('Failed to reload products:', error);
+      toast.error('Produit créé mais erreur lors du rechargement. Veuillez actualiser la page.');
+    }
+  };
+
   const handleAddToCart = () => {
     if (!formData.productId || !formData.warehouseId || formData.quantity < 1) {
       toast.error('Veuillez remplir tous les champs requis');
@@ -136,10 +202,16 @@ export default function NewReservationPage() {
     }
 
     const product = products.find(p => p.id === formData.productId);
-    const warehouse = warehouses.find(w => w.id === formData.warehouseId);
     
-    if (!product || !warehouse) {
-      toast.error('Produit ou entrepôt introuvable');
+    if (!product) {
+      toast.error('Produit introuvable');
+      return;
+    }
+    
+    // Get warehouse silently (MAIN) - hidden from user
+    const warehouse = warehouses.find(w => w.id === formData.warehouseId) || warehouses.find(w => w.code === 'MAIN');
+    if (!warehouse) {
+      toast.error('Erreur de configuration');
       return;
     }
 
@@ -180,13 +252,13 @@ export default function NewReservationPage() {
       }]);
     }
 
-    // Reset form
+    // Reset form - Always keep MAIN warehouse
     const mainWarehouse = warehouses.find(w => w.code === 'MAIN');
 
     setFormData(prev => ({
       ...prev,
       productId: '',
-      warehouseId: mainWarehouse ? mainWarehouse.id : '',
+      warehouseId: mainWarehouse ? mainWarehouse.id : prev.warehouseId, // Keep MAIN warehouse
       quantity: 1,
     }));
 
@@ -320,30 +392,22 @@ export default function NewReservationPage() {
                     onChange={(value) => setFormData({ ...formData, productId: value })}
                     placeholder="Rechercher un produit..."
                     className="w-full"
+                    onCreateNew={handleCreateProduct}
+                    createNewLabel="Créer le produit"
                   />
                 </div>
 
-                {/* Warehouse Selection */}
-                <div>
-                  <label htmlFor="warehouseId" className="block text-sm font-medium text-gray-700 mb-2">
-                    Entrepôt <span className="text-red-500">*</span>
-                  </label>
-                  <Autocomplete
-                    options={warehouses.map((warehouse) => ({
-                      value: warehouse.id,
-                      label: warehouse.name,
-                    }))}
-                    value={formData.warehouseId}
-                    onChange={(value) => setFormData({ ...formData, warehouseId: value })}
-                    placeholder="Rechercher un entrepôt..."
-                    className="w-full"
-                  />
-                  {formData.productId && formData.warehouseId && (
-                    <p className="mt-1 text-sm text-gray-500">
+                {/* COMMENTED: Warehouse Selection - Using only MAIN warehouse (hidden from user) */}
+                {/* Warehouse selection removed - using MAIN warehouse automatically */}
+                
+                {/* Display stock info only (no warehouse mention) */}
+                {formData.productId && formData.warehouseId && (
+                  <div>
+                    <p className="text-sm text-gray-500">
                       Stock disponible: {getAvailableStock(formData.productId, formData.warehouseId)}
                     </p>
-                  )}
-                </div>
+                  </div>
+                )}
 
                 {/* Quantity */}
                 <div>
@@ -398,9 +462,7 @@ export default function NewReservationPage() {
                           {item.productSku && (
                             <p className="text-sm text-gray-500">SKU: {item.productSku}</p>
                           )}
-                          <p className="text-sm text-gray-600 mt-1">
-                            Entrepôt: {item.warehouseName}
-                          </p>
+                          {/* Warehouse name removed from display */}
                           <p className="text-sm text-gray-500 mt-1">
                             Stock disponible: {item.availableStock}
                           </p>
@@ -528,6 +590,18 @@ export default function NewReservationPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal de création de produit */}
+      <ProductFormModal
+        isOpen={showProductModal}
+        onClose={() => {
+          setShowProductModal(false);
+          setNewProductData(null);
+        }}
+        onSuccess={handleProductCreated}
+        productId={null}
+        initialData={newProductData || undefined}
+      />
     </RouteGuard>
   );
 }

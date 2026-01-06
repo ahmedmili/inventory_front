@@ -771,8 +771,7 @@ export default function ReservationsPage() {
                               </div>
                               <div className="mt-2 flex items-center gap-4 text-sm text-gray-600">
                                 <span>Quantité: {item.quantity}</span>
-                                <span>•</span>
-                                <span>Entrepôt: {item.warehouse.name}</span>
+                                {/* Warehouse name removed from display */}
                               </div>
                             </div>
                             {canCancel && item.status === 'RESERVED' && (
@@ -805,8 +804,7 @@ export default function ReservationsPage() {
                           </div>
                           <div className="mt-1 flex items-center gap-4 text-sm text-gray-600">
                             <span>Quantité: {item.quantity}</span>
-                            <span>•</span>
-                            <span>Entrepôt: {item.warehouse.name}</span>
+                            {/* Warehouse name removed from display */}
                             {item.expiresAt && (
                               <>
                                 <span>•</span>

@@ -38,11 +38,13 @@ export default function StockMovementModal({
   defaultWarehouseId,
 }: StockMovementModalProps) {
   const toast = useToast();
+  // COMMENTED: Multiple warehouses - using only MAIN warehouse
   const { data: warehouses } = useApi<Warehouse[]>('/warehouses');
   const { mutate: createMovement, loading } = useApiMutation();
   
-  // Get the first warehouse or use default
-  const warehouseId = defaultWarehouseId || warehouses?.[0]?.id;
+  // Get MAIN warehouse or use default
+  const mainWarehouse = warehouses?.find(w => w.code === 'MAIN');
+  const warehouseId = defaultWarehouseId || mainWarehouse?.id || warehouses?.[0]?.id;
   const {
     register,
     handleSubmit,
@@ -57,8 +59,10 @@ export default function StockMovementModal({
   }, [isOpen, reset]);
 
   const onSubmit = async (data: FormData) => {
-    if (!warehouseId) {
-      toast.error('Aucun entrepôt disponible. Veuillez créer un entrepôt d\'abord.');
+    // COMMENTED: Multiple warehouses - always use MAIN
+    const mainWarehouseId = mainWarehouse?.id || warehouseId;
+    if (!mainWarehouseId) {
+      toast.error('L\'entrepôt principal (MAIN) est introuvable. Veuillez le créer d\'abord.');
       return;
     }
 
@@ -68,7 +72,7 @@ export default function StockMovementModal({
       
       await createMovement(endpoint, 'POST', {
         productId,
-        warehouseId,
+        warehouseId: mainWarehouseId, // Always use MAIN warehouse
         quantity: Number(data.quantity),
         reason: data.reason || undefined,
         reference: data.reference || undefined,
@@ -107,11 +111,7 @@ export default function StockMovementModal({
           <p className="text-sm font-medium">
             Produit: <span className="font-semibold">{productName}</span>
           </p>
-          {warehouseId && warehouses && (
-            <p className="text-xs mt-1 text-blue-600">
-              Entrepôt: {warehouses.find(w => w.id === warehouseId)?.name || 'Par défaut'}
-            </p>
-          )}
+          {/* Warehouse info removed from display */}
         </div>
 
         {/* Quantity */}

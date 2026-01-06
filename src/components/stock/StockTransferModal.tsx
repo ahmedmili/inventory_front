@@ -99,9 +99,11 @@ export default function StockTransferModal({
     try {
       const [productsRes, warehousesRes] = await Promise.all([
         apiClient.get('/products'),
-        apiClient.get('/warehouses'),
+        // COMMENTED: Multiple warehouses - transfer not available with single warehouse
+        apiClient.get('/warehouses'), // Still loading but transfer disabled
       ]);
       setProducts(extractCollection<Product>(productsRes.data));
+      // COMMENTED: Multiple warehouses - storing but transfer disabled
       setWarehouses(extractCollection<Warehouse>(warehousesRes.data));
     } catch (error) {
       console.error('Failed to load options:', error);
@@ -188,8 +190,9 @@ export default function StockTransferModal({
           )}
         </div>
 
+        {/* COMMENTED: Warehouse Selection - Transfer disabled with single warehouse */}
         {/* From Warehouse */}
-        <div>
+        {/* <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Entrepôt source <span className="text-red-500">*</span>
           </label>
@@ -213,10 +216,10 @@ export default function StockTransferModal({
               Stock disponible: <span className="font-semibold">{availableStock}</span>
             </p>
           )}
-        </div>
+        </div> */}
 
         {/* To Warehouse */}
-        <div>
+        {/* <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Entrepôt de destination <span className="text-red-500">*</span>
           </label>
@@ -237,6 +240,13 @@ export default function StockTransferModal({
           {errors.toWarehouseId && (
             <p className="mt-1 text-sm text-red-600">{errors.toWarehouseId.message}</p>
           )}
+        </div> */}
+        
+        {/* Message: Transfer disabled with single warehouse */}
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+          <p className="text-sm text-yellow-700">
+            <strong>Transfert désactivé:</strong> Le transfert entre entrepôts n'est pas disponible avec un seul entrepôt (MAIN).
+          </p>
         </div>
 
         {/* Quantity */}
@@ -279,10 +289,11 @@ export default function StockTransferModal({
           </button>
           <button
             type="submit"
-            disabled={loading || loadingOptions || quantity > availableStock}
-            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+            disabled={true} // COMMENTED: Transfer disabled with single warehouse
+            className="px-4 py-2 bg-gray-400 text-white rounded-lg cursor-not-allowed opacity-50"
+            title="Transfert désactivé avec un seul entrepôt"
           >
-            {loading ? 'Transfert...' : 'Effectuer le transfert'}
+            Transfert désactivé
           </button>
         </div>
       </form>
