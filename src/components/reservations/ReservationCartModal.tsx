@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Modal from '../Modal';
+import Autocomplete from '../ui/Autocomplete';
 import { useAuth } from '@/contexts/AuthContext';
 import { hasPermission } from '@/lib/permissions';
 import { apiClient } from '@/lib/api';
@@ -45,6 +46,7 @@ interface ReservationCartModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialProductId?: string;
+  initialProjectId?: string; // Pre-fill project when creating reservation from project page
   onSuccess?: () => void;
 }
 
@@ -52,6 +54,7 @@ export default function ReservationCartModal({
   isOpen,
   onClose,
   initialProductId,
+  initialProjectId,
   onSuccess,
 }: ReservationCartModalProps) {
   const router = useRouter();
@@ -67,7 +70,7 @@ export default function ReservationCartModal({
   const [formData, setFormData] = useState({
     productId: initialProductId || '',
     warehouseId: '',
-    projectId: '',
+    projectId: initialProjectId || '', // Pre-fill project if provided
     quantity: 1,
     expiresAt: '',
     notes: '',
@@ -75,12 +78,16 @@ export default function ReservationCartModal({
 
   const canCreate = hasPermission(user, 'reservations.create');
 
-  // Load initial product if provided
+  // Load initial product and project if provided
   useEffect(() => {
-    if (initialProductId && isOpen) {
-      setFormData(prev => ({ ...prev, productId: initialProductId }));
+    if (isOpen) {
+      setFormData(prev => ({
+        ...prev,
+        productId: initialProductId || prev.productId,
+        projectId: initialProjectId || prev.projectId, // Pre-fill project
+      }));
     }
-  }, [initialProductId, isOpen]);
+  }, [initialProductId, initialProjectId, isOpen]);
 
   // Load options when modal opens
   useEffect(() => {
@@ -92,11 +99,28 @@ export default function ReservationCartModal({
   const loadOptions = async () => {
     try {
       setLoadingOptions(true);
+      // If initialProjectId is provided, load that specific project too
+      const projectsPromise = initialProjectId
+        ? Promise.all([
+            apiClient.get('/projects?status=ACTIVE'),
+            apiClient.get(`/projects/${initialProjectId}`).catch(() => null), // Load specific project even if not active
+          ]).then(([activeRes, specificRes]) => {
+            const activeProjects = activeRes.data?.data || activeRes.data || [];
+            const specificProject = specificRes?.data;
+            // Merge and deduplicate
+            const allProjects = [...activeProjects];
+            if (specificProject && !allProjects.find(p => p.id === specificProject.id)) {
+              allProjects.push(specificProject);
+            }
+            return { data: allProjects };
+          })
+        : apiClient.get('/projects?status=ACTIVE');
+      
       const [productsRes, warehousesRes, projectsRes] = await Promise.all([
         apiClient.get('/products?limit=1000'),
         // COMMENTED: Multiple warehouses - using only MAIN warehouse
         apiClient.get('/warehouses'), // Still loading to get MAIN warehouse ID
-        apiClient.get('/projects?status=ACTIVE'),
+        projectsPromise,
       ]);
 
       // Les produits incluent déjà warehouseStock avec les informations de l'entrepôt
@@ -114,6 +138,8 @@ export default function ReservationCartModal({
         setFormData(prev => ({
           ...prev,
           warehouseId: mainWarehouse.id, // Always use MAIN warehouse silently
+          // Ensure projectId is set if initialProjectId was provided
+          projectId: initialProjectId || prev.projectId,
         }));
       } else {
         toast.error('Erreur de configuration. Veuillez contacter l\'administrateur.');
@@ -250,8 +276,9 @@ export default function ReservationCartModal({
         })),
       };
 
-      if (formData.projectId) {
-        payload.projectId = formData.projectId;
+      // Always include projectId if provided (from initialProjectId or user selection)
+      if (formData.projectId || initialProjectId) {
+        payload.projectId = formData.projectId || initialProjectId;
       }
 
       if (formData.expiresAt) {
@@ -299,40 +326,30 @@ export default function ReservationCartModal({
         <div className="bg-gray-50 rounded-lg p-4">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Ajouter un Produit</h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Product Selection */}
+          <div className="space-y-4">
+            {/* Product Selection with Autocomplete */}
             <div>
               <label htmlFor="productId" className="block text-sm font-medium text-gray-700 mb-2">
                 Produit <span className="text-red-500">*</span>
               </label>
-              <select
-                id="productId"
-                required
+              <Autocomplete
+                options={products.map((product) => ({
+                  value: product.id,
+                  label: `${product.name}${product.sku ? ` (${product.sku})` : ''}`,
+                }))}
                 value={formData.productId}
-                onChange={(e) => setFormData({ ...formData, productId: e.target.value })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onChange={(value) => setFormData({ ...formData, productId: value })}
+                placeholder="Rechercher un produit..."
+                className="w-full"
                 disabled={loadingOptions}
-              >
-                <option value="">Sélectionner un produit</option>
-                {products.map((product) => (
-                  <option key={product.id} value={product.id}>
-                    {product.name} {product.sku && `(${product.sku})`}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* COMMENTED: Warehouse Selection - Using only MAIN warehouse (hidden from user) */}
-            {/* Warehouse selection removed - using MAIN warehouse automatically */}
-            
-            {/* Display stock info only (no warehouse mention) */}
-            {formData.productId && formData.warehouseId && (
-              <div>
-                <p className="text-sm text-gray-500">
-                  Stock disponible: {getAvailableStock(formData.productId, formData.warehouseId)}
+              />
+              {/* Display stock info */}
+              {formData.productId && formData.warehouseId && (
+                <p className="mt-2 text-sm text-gray-600">
+                  Stock disponible: <span className="font-semibold">{getAvailableStock(formData.productId, formData.warehouseId)}</span>
                 </p>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Quantity */}
             <div>
@@ -382,10 +399,10 @@ export default function ReservationCartModal({
           ) : (
             <div className="space-y-3 max-h-64 overflow-y-auto">
               {cart.map((item, index) => (
-                <div key={index} className="border border-gray-200 rounded-lg p-4 bg-white">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-900">{item.productName}</h4>
+                <div key={index} className="border border-gray-200 rounded-lg p-3 sm:p-4 bg-white">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-gray-900 truncate">{item.productName}</h4>
                       {item.productSku && (
                         <p className="text-sm text-gray-500">SKU: {item.productSku}</p>
                       )}
@@ -394,12 +411,12 @@ export default function ReservationCartModal({
                         Stock disponible: {item.availableStock}
                       </p>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4">
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleUpdateQuantity(index, item.quantity - 1)}
                           disabled={item.quantity <= 1}
-                          className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                           title="Diminuer la quantité"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -410,7 +427,7 @@ export default function ReservationCartModal({
                         <button
                           onClick={() => handleUpdateQuantity(index, item.quantity + 1)}
                           disabled={item.quantity >= item.availableStock}
-                          className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                           title={
                             item.quantity >= item.availableStock
                               ? `Stock maximum disponible: ${item.availableStock}`
@@ -424,7 +441,7 @@ export default function ReservationCartModal({
                       </div>
                       <button
                         onClick={() => handleRemoveFromCart(index)}
-                        className="text-red-600 hover:text-red-800 p-2"
+                        className="text-red-600 hover:text-red-800 p-2 transition-colors"
                         title="Retirer du panier"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -444,25 +461,39 @@ export default function ReservationCartModal({
           <div className="border-t pt-4 space-y-4">
             <h3 className="text-lg font-semibold text-gray-900">Détails de la Réservation</h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-4">
               {/* Project Selection */}
               <div>
                 <label htmlFor="projectId" className="block text-sm font-medium text-gray-700 mb-2">
-                  Projet (optionnel)
+                  Projet {initialProjectId ? '(pré-sélectionné)' : '(optionnel)'}
                 </label>
-                <select
-                  id="projectId"
-                  value={formData.projectId}
-                  onChange={(e) => setFormData({ ...formData, projectId: e.target.value })}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Aucun projet</option>
-                  {projects.map((project) => (
-                    <option key={project.id} value={project.id}>
-                      {project.name}
-                    </option>
-                  ))}
-                </select>
+                {initialProjectId ? (
+                  // Display selected project (read-only) when opened from project page
+                  <div className="bg-blue-50 border border-blue-200 rounded-md px-3 py-2">
+                    <p className="text-sm font-medium text-blue-900">
+                      {projects.find(p => p.id === initialProjectId)?.name || 'Projet sélectionné'}
+                    </p>
+                    <p className="text-xs text-blue-600 mt-1">
+                      Ce projet est automatiquement associé à cette réservation
+                    </p>
+                  </div>
+                ) : (
+                  // Allow selection if no initial project - using Autocomplete
+                  <Autocomplete
+                    options={[
+                      { value: '', label: 'Aucun projet' },
+                      ...projects.map((project) => ({
+                        value: project.id,
+                        label: project.name,
+                      })),
+                    ]}
+                    value={formData.projectId}
+                    onChange={(value) => setFormData({ ...formData, projectId: value || undefined })}
+                    placeholder="Rechercher un projet..."
+                    className="w-full"
+                    allowClear={true}
+                  />
+                )}
               </div>
 
               {/* Expiration Date */}
@@ -502,10 +533,10 @@ export default function ReservationCartModal({
         )}
 
         {/* Actions */}
-        <div className="flex justify-end gap-4 pt-4 border-t">
+        <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 pt-4 border-t">
           <button
             onClick={handleClose}
-            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+            className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
             title={cart.length > 0 ? 'Fermer le panier' : 'Annuler et fermer'}
           >
             {cart.length > 0 ? 'Fermer' : 'Annuler'}
@@ -514,7 +545,7 @@ export default function ReservationCartModal({
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
               title="Créer la réservation avec les produits du panier"
             >
               {loading ? 'Création...' : `Créer la Réservation (${cart.length} produit${cart.length > 1 ? 's' : ''})`}

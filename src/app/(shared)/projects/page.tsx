@@ -7,7 +7,7 @@ import Link from 'next/link';
 import Pagination from '@/components/Pagination';
 import RouteGuard from '@/components/guards/RouteGuard';
 import Table, { Column, SortDirection } from '@/components/Table';
-import { EyeIcon, EditIcon, PlusIcon, SearchIcon, TrashIcon } from '@/components/icons';
+import { EyeIcon, EditIcon, PlusIcon, SearchIcon, TrashIcon, ReservationIcon } from '@/components/icons';
 import { useApiMutation } from '@/hooks/useApi';
 import { useToast } from '@/contexts/ToastContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,6 +15,7 @@ import { hasPermission } from '@/lib/permissions';
 import ConfirmModal from '@/components/ConfirmModal';
 import { useModal } from '@/contexts/ModalContext';
 import ProjectFormModal from '@/components/projects/ProjectFormModal';
+import ReservationCartModal from '@/components/reservations/ReservationCartModal';
 import { TableSkeleton } from '@/components/SkeletonLoader';
 
 interface Project {
@@ -62,11 +63,14 @@ export default function ProjectsPage() {
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [isReservationModalOpen, setIsReservationModalOpen] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const limit = 20;
   const { mutate: deleteProject, loading: deleting } = useApiMutation();
   const canDelete = hasPermission(user, 'projects.delete');
   const canCreate = hasPermission(user, 'projects.create');
   const canUpdate = hasPermission(user, 'projects.update');
+  const canCreateReservation = hasPermission(user, 'reservations.create');
 
   // Debounce pour la recherche : attendre 500ms après la dernière saisie
   useEffect(() => {
@@ -225,6 +229,18 @@ export default function ProjectsPage() {
           >
             <EyeIcon className="w-5 h-5" />
           </Link>
+          {canCreateReservation && (
+            <button
+              onClick={() => {
+                setSelectedProjectId(project.id);
+                setIsReservationModalOpen(true);
+              }}
+              className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+              title="Créer une réservation pour ce projet"
+            >
+              <ReservationIcon className="w-5 h-5" />
+            </button>
+          )}
           {canUpdate && (
             <button
               onClick={() => handleOpenEditModal(project.id)}
@@ -355,6 +371,23 @@ export default function ProjectsPage() {
             cancelText="Annuler"
             type="danger"
             loading={deleting}
+          />
+        )}
+
+        {/* Reservation Modal */}
+        {canCreateReservation && (
+          <ReservationCartModal
+            isOpen={isReservationModalOpen}
+            onClose={() => {
+              setIsReservationModalOpen(false);
+              setSelectedProjectId(null);
+            }}
+            initialProjectId={selectedProjectId || undefined}
+            onSuccess={() => {
+              setIsReservationModalOpen(false);
+              setSelectedProjectId(null);
+              toast.success('Réservation créée avec succès pour ce projet!');
+            }}
           />
         )}
       </div>
