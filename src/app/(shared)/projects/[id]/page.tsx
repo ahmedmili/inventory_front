@@ -13,9 +13,13 @@ import Link from 'next/link';
 import { useModal } from '@/contexts/ModalContext';
 import ProjectFormModal from '@/components/projects/ProjectFormModal';
 import AddProjectProductModal from '@/components/projects/AddProjectProductModal';
+import AddProjectMemberModal from '@/components/projects/AddProjectMemberModal';
 import ConfirmModal from '@/components/ConfirmModal';
 import ReservationCartModal from '@/components/reservations/ReservationCartModal';
 import Pagination from '@/components/Pagination';
+import ExportDropdown from '@/components/ui/ExportDropdown';
+import { exportProjectsToCSV, downloadCSV, exportProductsToCSV } from '@/lib/csv-utils';
+import { exportProjectsToExcel, exportProductsToExcel } from '@/lib/excel-utils';
 
 interface Project {
   id: string;
@@ -65,6 +69,7 @@ export default function ProjectDetailPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
+  const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
   const [isReservationModalOpen, setIsReservationModalOpen] = useState(false);
   
   // Reservations state
@@ -246,6 +251,58 @@ export default function ProjectDetailPage() {
     });
   };
 
+  const handleExportProjectCSV = () => {
+    if (!project) return;
+    const csvContent = exportProjectsToCSV([project]);
+    downloadCSV(csvContent, `projet_${project.name.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.csv`);
+    toast.success('Projet exporté en CSV');
+  };
+
+  const handleExportProjectExcel = async () => {
+    if (!project) return;
+    await exportProjectsToExcel([project], `projet_${project.name.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`);
+    toast.success('Projet exporté en Excel');
+  };
+
+  const handleExportProjectProductsCSV = () => {
+    if (!project || !productReservations.length) {
+      toast.error('Aucun produit à exporter');
+      return;
+    }
+    // Convert reservations to products format
+    const products = productReservations.map(entry => ({
+      name: entry.product.name,
+      sku: entry.product.sku,
+      description: '',
+      salePrice: 0,
+      minStock: 0,
+      supplier: null,
+      warehouseStock: [{ quantity: entry.totalQuantity }],
+    }));
+    const csvContent = exportProductsToCSV(products);
+    downloadCSV(csvContent, `produits_projet_${project.name.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.csv`);
+    toast.success('Produits du projet exportés en CSV');
+  };
+
+  const handleExportProjectProductsExcel = async () => {
+    if (!project || !productReservations.length) {
+      toast.error('Aucun produit à exporter');
+      return;
+    }
+    // Convert reservations to products format
+    const products = productReservations.map(entry => ({
+      name: entry.product.name,
+      sku: entry.product.sku,
+      description: '',
+      salePrice: 0,
+      minStock: 0,
+      supplier: null,
+      warehouseStock: [{ quantity: entry.totalQuantity }],
+    }));
+    await exportProductsToExcel(products, `produits_projet_${project.name.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`);
+    toast.success('Produits du projet exportés en Excel');
+  };
+
   if (loading) {
     return (
       <RouteGuard requirements={{ requirePermissions: ['projects.read'] }}>
@@ -286,6 +343,60 @@ export default function ProjectDetailPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <ExportDropdown
+              trigger={
+                <>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Exporter
+                </>
+              }
+              options={[
+                {
+                  label: 'Exporter le projet (CSV)',
+                  description: 'Informations du projet',
+                  icon: (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  ),
+                  onClick: handleExportProjectCSV,
+                },
+                {
+                  label: 'Exporter le projet (Excel)',
+                  description: 'Informations du projet',
+                  icon: (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  ),
+                  onClick: handleExportProjectExcel,
+                },
+                ...(productReservations.length > 0 ? [
+                  {
+                    label: 'Exporter les produits (CSV)',
+                    description: `${productReservations.length} produit(s) réservé(s)`,
+                    icon: (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    ),
+                    onClick: handleExportProjectProductsCSV,
+                  },
+                  {
+                    label: 'Exporter les produits (Excel)',
+                    description: `${productReservations.length} produit(s) réservé(s)`,
+                    icon: (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    ),
+                    onClick: handleExportProjectProductsExcel,
+                  },
+                ] : []),
+              ]}
+            />
             {canUpdate && (
               <button
                 onClick={handleEdit}
@@ -346,12 +457,7 @@ export default function ProjectDetailPage() {
             </h2>
             {canUpdate && (
               <button
-                onClick={() => {
-                  modal.info({
-                    title: 'Ajouter un membre',
-                    content: 'Fonctionnalité à venir',
-                  });
-                }}
+                onClick={() => setIsAddMemberModalOpen(true)}
                 className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
               >
                 <PlusIcon className="w-4 h-4" />
@@ -643,6 +749,19 @@ export default function ProjectDetailPage() {
             onSuccess={() => {
               mutate();
               setIsAddProductModalOpen(false);
+            }}
+          />
+        )}
+
+        {isAddMemberModalOpen && (
+          <AddProjectMemberModal
+            isOpen={isAddMemberModalOpen}
+            onClose={() => setIsAddMemberModalOpen(false)}
+            projectId={projectId}
+            existingMemberIds={project.members?.map(m => m.user.id) || []}
+            onSuccess={() => {
+              mutate();
+              setIsAddMemberModalOpen(false);
             }}
           />
         )}

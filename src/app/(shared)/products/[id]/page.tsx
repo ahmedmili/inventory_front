@@ -12,8 +12,13 @@ import { hasPermission } from '@/lib/permissions';
 import ProductFormModal from '@/components/products/ProductFormModal';
 import StockMovementModal from '@/components/products/StockMovementModal';
 import ReservationCartModal from '@/components/reservations/ReservationCartModal';
+import ExportDropdown from '@/components/ui/ExportDropdown';
+import StockActionsDropdown from '@/components/ui/StockActionsDropdown';
 import { useState, useEffect } from 'react';
 import { useProductsRealtime } from '@/hooks/useProductsRealtime';
+import { exportProductsToCSV, downloadCSV } from '@/lib/csv-utils';
+import { exportProductsToExcel } from '@/lib/excel-utils';
+import { useToast } from '@/contexts/ToastContext';
 
 // Stock Movements History Component
 function ProductMovementsHistory({ productId }: { productId: string }) {
@@ -207,6 +212,7 @@ export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
+  const toast = useToast();
   const id = params.id as string;
   const { data: product, loading, error, mutate } = useApi<Product>(`/products/${id}`);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -217,6 +223,19 @@ export default function ProductDetailPage() {
   const canEdit = hasPermission(user, 'products.update');
   const canManageStock = hasPermission(user, 'stock.create');
   const canCreateReservation = hasPermission(user, 'reservations.create');
+
+  const handleExportProductCSV = () => {
+    if (!product) return;
+    const csvContent = exportProductsToCSV([product]);
+    downloadCSV(csvContent, `produit_${product.name.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.csv`);
+    toast.success('Produit exporté en CSV');
+  };
+
+  const handleExportProductExcel = async () => {
+    if (!product) return;
+    await exportProductsToExcel([product], `produit_${product.name.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`);
+    toast.success('Produit exporté en Excel');
+  };
 
   // Écouter les mises à jour de stock en temps réel pour ce produit
   useProductsRealtime((payload) => {
@@ -302,29 +321,73 @@ export default function ProductDetailPage() {
               Retour à la liste
             </Link>
             <div className="flex items-center gap-3 flex-wrap">
+              <ExportDropdown
+                trigger={
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Exporter
+                  </>
+                }
+                options={[
+                  {
+                    label: 'Exporter en CSV',
+                    description: 'Format texte compatible avec Excel',
+                    icon: (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    ),
+                    onClick: handleExportProductCSV,
+                  },
+                  {
+                    label: 'Exporter en Excel',
+                    description: 'Format .xlsx avec formatage',
+                    icon: (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    ),
+                    onClick: handleExportProductExcel,
+                  },
+                ]}
+              />
               {canManageStock && (
-                <>
-                  <button
-                    onClick={() => setIsDisposeModalOpen(true)}
-                    className="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 font-medium transition-colors shadow-sm hover:shadow-md"
-                    title="Ajouter du stock à ce produit"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    Disposer
-                  </button>
-                  <button
-                    onClick={() => setIsWithdrawModalOpen(true)}
-                    className="inline-flex items-center gap-2 bg-red-600 text-white px-4 py-2.5 rounded-lg hover:bg-red-700 font-medium transition-colors shadow-sm hover:shadow-md"
-                    title="Retirer du stock de ce produit"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                    </svg>
-                    Retirer
-                  </button>
-                </>
+                <StockActionsDropdown
+                  trigger={
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                      </svg>
+                      Stock
+                    </>
+                  }
+                  actions={[
+                    {
+                      label: 'Disposer',
+                      icon: (
+                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                      ),
+                      onClick: () => setIsDisposeModalOpen(true),
+                      color: 'text-green-600',
+                      hoverColor: 'hover:bg-green-50',
+                    },
+                    {
+                      label: 'Retirer',
+                      icon: (
+                        <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                        </svg>
+                      ),
+                      onClick: () => setIsWithdrawModalOpen(true),
+                      color: 'text-red-600',
+                      hoverColor: 'hover:bg-red-50',
+                    },
+                  ]}
+                />
               )}
               {canCreateReservation && (
                 <button
@@ -339,24 +402,14 @@ export default function ProductDetailPage() {
                 </button>
               )}
               {canEdit && (
-                <>
-                  <Link
-                    href={`/products/${id}/edit`}
-                    className="inline-flex items-center gap-2 bg-primary-600 text-white px-4 py-2.5 rounded-lg hover:bg-primary-700 font-medium transition-colors shadow-sm hover:shadow-md"
-                    title="Modifier les informations du produit"
-                  >
-                    <EditIcon className="w-5 h-5" />
-                    Modifier
-                  </Link>
-                  <button
-                    onClick={() => setIsEditModalOpen(true)}
-                    className="inline-flex items-center gap-2 bg-gray-600 text-white px-4 py-2.5 rounded-lg hover:bg-gray-700 font-medium transition-colors shadow-sm hover:shadow-md"
-                    title="Modifier rapidement (modal)"
-                  >
-                    <EditIcon className="w-5 h-5" />
-                    Modifier (Modal)
-                  </button>
-                </>
+                <button
+                  onClick={() => setIsEditModalOpen(true)}
+                  className="inline-flex items-center gap-2 bg-primary-600 text-white px-4 py-2.5 rounded-lg hover:bg-primary-700 font-medium transition-colors shadow-sm hover:shadow-md"
+                  title="Modifier les informations du produit"
+                >
+                  <EditIcon className="w-5 h-5" />
+                  Modifier
+                </button>
               )}
             </div>
           </div>

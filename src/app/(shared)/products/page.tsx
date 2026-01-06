@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApi } from '@/hooks/useApi';
+import { apiClient } from '@/lib/api';
 // Layout is handled by (shared)/layout.tsx
 import Link from 'next/link';
 import Pagination from '@/components/Pagination';
@@ -16,7 +17,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { hasPermission } from '@/lib/permissions';
 import ConfirmModal from '@/components/ConfirmModal';
 import ReservationCartModal from '@/components/reservations/ReservationCartModal';
+import ImportProductsModal from '@/components/products/ImportProductsModal';
+import ExportDropdown from '@/components/ui/ExportDropdown';
 import { useProductsRealtime } from '@/hooks/useProductsRealtime';
+import { exportProductsToCSV, downloadCSV } from '@/lib/csv-utils';
+import { exportProductsToExcel } from '@/lib/excel-utils';
 
 interface Product {
   id: string;
@@ -70,6 +75,7 @@ export default function ProductsPage() {
   const canCreateReservation = hasPermission(user, 'reservations.create');
   const [isReservationModalOpen, setIsReservationModalOpen] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   const searchParams = useMemo(() => {
     const params = new URLSearchParams();
@@ -159,6 +165,33 @@ export default function ProductsPage() {
     setSortBy(key);
     setSortOrder(direction);
     setPage(1); // Reset to first page when sorting changes
+  };
+
+  const handleExportCSV = async () => {
+    try {
+      // Fetch all products for export
+      const response = await apiClient.get('/products?limit=10000');
+      const products = response.data?.data || response.data || [];
+      const csvContent = exportProductsToCSV(products);
+      downloadCSV(csvContent, `produits_${new Date().toISOString().split('T')[0]}.csv`);
+      toast.success('Export CSV réussi');
+    } catch (error: any) {
+      console.error('Export CSV error:', error);
+      toast.error('Erreur lors de l\'export CSV');
+    }
+  };
+
+  const handleExportExcel = async () => {
+    try {
+      // Fetch all products for export
+      const response = await apiClient.get('/products?limit=10000');
+      const products = response.data?.data || response.data || [];
+      await exportProductsToExcel(products, `produits_${new Date().toISOString().split('T')[0]}.xlsx`);
+      toast.success('Export Excel réussi');
+    } catch (error: any) {
+      console.error('Export Excel error:', error);
+      toast.error('Erreur lors de l\'export Excel');
+    }
   };
 
   const columns: Column<Product>[] = [
@@ -371,16 +404,62 @@ export default function ProductsPage() {
                 </p>
               )}
             </div>
-            {canCreate && (
-              <button
-                onClick={handleOpenCreateModal}
-                className="inline-flex items-center gap-2 bg-primary-600 text-white px-4 py-2.5 rounded-lg hover:bg-primary-700 font-medium transition-colors shadow-sm hover:shadow-md"
-                title="Créer un nouveau produit"
-              >
-                <PlusIcon />
-                Ajouter un produit
-              </button>
-            )}
+            <div className="flex flex-wrap items-center gap-2">
+              {canCreate && (
+                <>
+                  <button
+                    onClick={() => setIsImportModalOpen(true)}
+                    className="inline-flex items-center gap-2 bg-gray-600 text-white px-4 py-2.5 rounded-lg hover:bg-gray-700 font-medium transition-colors shadow-sm hover:shadow-md"
+                    title="Importer des produits depuis CSV/Excel"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    Importer
+                  </button>
+                  <ExportDropdown
+                    trigger={
+                      <>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Exporter
+                      </>
+                    }
+                    options={[
+                      {
+                        label: 'Exporter en CSV',
+                        description: 'Format texte compatible avec Excel',
+                        icon: (
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                        ),
+                        onClick: handleExportCSV,
+                      },
+                      {
+                        label: 'Exporter en Excel',
+                        description: 'Format .xlsx avec formatage',
+                        icon: (
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                        ),
+                        onClick: handleExportExcel,
+                      },
+                    ]}
+                  />
+                  <button
+                    onClick={handleOpenCreateModal}
+                    className="inline-flex items-center gap-2 bg-primary-600 text-white px-4 py-2.5 rounded-lg hover:bg-primary-700 font-medium transition-colors shadow-sm hover:shadow-md"
+                    title="Créer un nouveau produit"
+                  >
+                    <PlusIcon />
+                    Ajouter un produit
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
@@ -478,6 +557,18 @@ export default function ProductsPage() {
               setSelectedProductId(null);
             }}
             initialProductId={selectedProductId || undefined}
+            onSuccess={() => {
+              if (mutate) {
+                mutate();
+              }
+            }}
+          />
+        )}
+
+        {isImportModalOpen && (
+          <ImportProductsModal
+            isOpen={isImportModalOpen}
+            onClose={() => setIsImportModalOpen(false)}
             onSuccess={() => {
               if (mutate) {
                 mutate();
