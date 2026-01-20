@@ -693,6 +693,8 @@ export default function ProjectDetailPage() {
                   <Pagination
                     currentPage={reservationPage}
                     totalPages={reservationMeta.totalPages}
+                    hasNext={reservationMeta.hasNext}
+                    hasPrev={reservationMeta.hasPrev}
                     onPageChange={setReservationPage}
                   />
                 </div>
