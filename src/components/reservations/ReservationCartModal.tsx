@@ -487,7 +487,7 @@ export default function ReservationCartModal({
                         label: project.name,
                       })),
                     ]}
-                    value={formData.projectId}
+                    value={formData.projectId || ''}
                     onChange={(value) => setFormData({ ...formData, projectId: value || undefined })}
                     placeholder="Rechercher un projet..."
                     className="w-full"
