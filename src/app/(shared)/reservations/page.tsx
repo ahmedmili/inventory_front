@@ -378,34 +378,35 @@ export default function ReservationsPage() {
   }
 
   return (
-    <div className="px-4 py-6 sm:px-0">
+    <div className="px-4 py-4 sm:py-6 sm:px-0 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">
             {isAdmin ? 'Toutes les Réservations' : 'Mes Réservations'}
           </h1>
-          <p className="text-gray-600">
+          <p className="text-sm sm:text-base text-gray-600">
             {isAdmin ? 'Gérez toutes les réservations de produits' : 'Gérez vos réservations de produits'}
           </p>
         </div>
         {canCreate && (
           <Link
             href="/reservations/new"
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
+            className="bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-2 text-sm sm:text-base"
             title="Créer une nouvelle réservation"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            Nouvelle Réservation
+            <span className="hidden sm:inline">Nouvelle Réservation</span>
+            <span className="sm:hidden">Nouvelle</span>
           </Link>
         )}
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4 mb-6">
-        <div className={`grid grid-cols-1 md:grid-cols-2 ${isAdmin ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-4`}>
+      <div className="bg-white rounded-lg shadow p-4 sm:p-6 mb-6">
+        <div className={`grid grid-cols-1 sm:grid-cols-2 ${isAdmin ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-4`}>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Statut</label>
             <select
@@ -455,7 +456,7 @@ export default function ReservationsPage() {
                 </button>
               )}
               {showProjectSuggestions && filteredProjects.length > 0 && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
                   {filteredProjects.map((project) => (
                     <button
                       key={project.id}
@@ -564,7 +565,7 @@ export default function ReservationsPage() {
                   </button>
                 )}
                 {showUserSuggestions && filteredUsers.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                  <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
                     {filteredUsers.map((u) => (
                       <button
                         key={u.id}
@@ -612,9 +613,9 @@ export default function ReservationsPage() {
       {/* Reservations List */}
       <div className="space-y-4 mb-6">
         {reservations.length === 0 ? (
-          <div className="bg-white rounded-lg shadow text-center py-12">
+          <div className="bg-white rounded-lg shadow-md text-center py-12 px-4">
             <svg
-              className="mx-auto h-12 w-12 text-gray-400"
+              className="mx-auto h-12 w-12 sm:h-16 sm:w-16 text-gray-400"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -626,8 +627,8 @@ export default function ReservationsPage() {
                 d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
               />
             </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">Aucune réservation</h3>
-            <p className="mt-1 text-sm text-gray-500">
+            <h3 className="mt-4 text-base sm:text-lg font-medium text-gray-900">Aucune réservation</h3>
+            <p className="mt-2 text-sm sm:text-base text-gray-500 max-w-md mx-auto">
               {canCreate
                 ? 'Commencez par créer une nouvelle réservation.'
                 : 'Vous n\'avez aucune réservation pour le moment.'}
@@ -636,8 +637,11 @@ export default function ReservationsPage() {
               <div className="mt-6">
                 <Link
                   href="/reservations/new"
-                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                  className="inline-flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 border border-transparent shadow-sm text-sm sm:text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
                 >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
                   Nouvelle Réservation
                 </Link>
               </div>
@@ -650,77 +654,88 @@ export default function ReservationsPage() {
             const allReserved = group.items.every(item => item.status === 'RESERVED');
 
             return (
-              <div key={group.groupId} className="bg-white rounded-lg shadow overflow-hidden">
+              <div key={group.groupId} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden">
                 {/* Group Header */}
-                <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-4">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h3 className="text-lg font-semibold text-gray-900">
-                              Réservation #{group.groupId.slice(-8)}
-                            </h3>
-                            <span
-                              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                                group.status
-                              )}`}
-                            >
-                              {getStatusLabel(group.status)}
+                <div className="px-4 sm:px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
+                          Réservation #{group.groupId.slice(-8)}
+                        </h3>
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${getStatusColor(
+                            group.status
+                          )}`}
+                        >
+                          {getStatusLabel(group.status)}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
+                        <span className="flex items-center gap-1">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                          </svg>
+                          {group.totalItems} produit{group.totalItems > 1 ? 's' : ''}
+                        </span>
+                        <span className="hidden sm:inline">•</span>
+                        <span className="flex items-center gap-1">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          {formatDate(group.createdAt)}
+                        </span>
+                        {isAdmin && group.user && (
+                          <>
+                            <span className="hidden sm:inline">•</span>
+                            <span className="truncate max-w-[200px] sm:max-w-none">
+                              Par: {group.user.firstName} {group.user.lastName}
                             </span>
-                          </div>
-                          <div className="mt-1 flex items-center gap-4 text-sm text-gray-600">
-                            <span>{group.totalItems} produit{group.totalItems > 1 ? 's' : ''}</span>
-                            <span>•</span>
-                            <span>Créé le {formatDate(group.createdAt)}</span>
-                            {isAdmin && group.user && (
-                              <>
-                                <span>•</span>
-                                <span>
-                                  Par: {group.user.firstName} {group.user.lastName} ({group.user.email})
-                                </span>
-                              </>
-                            )}
-                            {group.project && (
-                              <>
-                                <span>•</span>
-                                <span>Projet: {group.project.name}</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
+                          </>
+                        )}
+                        {group.project && (
+                          <>
+                            <span className="hidden sm:inline">•</span>
+                            <span className="flex items-center gap-1 truncate">
+                              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                              {group.project.name}
+                            </span>
+                          </>
+                        )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                       {(canManage || isAdmin) && allReserved && (
                         <button
                           onClick={() => {
                             setSelectedGroup(group);
                             setIsUpdateGroupModalOpen(true);
                           }}
-                          className="text-blue-600 hover:text-blue-900 inline-flex items-center gap-1 px-3 py-2 border border-blue-300 rounded-md hover:bg-blue-50 transition-colors"
+                          className="text-blue-600 hover:text-blue-900 inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 border border-blue-300 rounded-md hover:bg-blue-50 transition-colors text-xs sm:text-sm"
                           title="Modifier le groupe de réservations"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                           </svg>
-                          Modifier
+                          <span className="hidden sm:inline">Modifier</span>
                         </button>
                       )}
                       <button
                         onClick={() => handleDownloadGroupPDF(group.groupId)}
-                        className="text-blue-600 hover:text-blue-900 inline-flex items-center gap-1 px-3 py-2 border border-blue-300 rounded-md hover:bg-blue-50 transition-colors"
+                        className="text-blue-600 hover:text-blue-900 inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 border border-blue-300 rounded-md hover:bg-blue-50 transition-colors text-xs sm:text-sm"
                         title="Télécharger le PDF du groupe"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
-                        PDF
+                        <span className="hidden sm:inline">PDF</span>
                       </button>
                       {hasMultipleItems && (
                         <button
                           onClick={() => toggleGroup(group.groupId)}
-                          className="text-gray-600 hover:text-gray-900 inline-flex items-center gap-1 px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                          className="text-gray-600 hover:text-gray-900 inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors text-xs sm:text-sm"
                           title={isExpanded ? 'Masquer les détails' : 'Voir les détails des produits'}
                         >
                           {isExpanded ? (
@@ -728,14 +743,14 @@ export default function ReservationsPage() {
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                               </svg>
-                              Masquer
+                              <span className="hidden sm:inline">Masquer</span>
                             </>
                           ) : (
                             <>
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                               </svg>
-                              Voir les produits
+                              <span className="hidden sm:inline">Voir</span>
                             </>
                           )}
                         </button>
@@ -759,10 +774,11 @@ export default function ReservationsPage() {
                               });
                             }
                           }}
-                          className="text-red-600 hover:text-red-900 px-3 py-2 border border-red-300 rounded-md hover:bg-red-50 transition-colors"
+                          className="text-red-600 hover:text-red-900 px-2.5 sm:px-3 py-2 border border-red-300 rounded-md hover:bg-red-50 transition-colors text-xs sm:text-sm"
                           title="Libérer toutes les réservations de ce groupe"
                         >
-                          Libérer tout
+                          <span className="hidden sm:inline">Libérer tout</span>
+                          <span className="sm:hidden">Libérer</span>
                         </button>
                       )}
                     </div>
@@ -771,41 +787,56 @@ export default function ReservationsPage() {
 
                 {/* Group Items */}
                 {isExpanded && hasMultipleItems && (
-                  <div className="px-6 py-4 bg-white">
+                  <div className="px-4 sm:px-6 py-4 bg-white">
                     <div className="space-y-3">
                       <h4 className="text-sm font-semibold text-gray-700 mb-3">Produits dans cette réservation:</h4>
                       {group.items.map((item) => (
-                        <div key={item.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3">
-                                <div className="text-sm font-medium text-gray-900">
+                        <div key={item.id} className="border border-gray-200 rounded-lg p-3 sm:p-4 bg-gray-50 hover:bg-gray-100 transition-colors">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex flex-wrap items-center gap-2 mb-2">
+                                <div className="text-sm sm:text-base font-medium text-gray-900 truncate">
                                   {item.product.name}
                                 </div>
                                 {item.product.sku && (
-                                  <span className="text-xs text-gray-500">SKU: {item.product.sku}</span>
+                                  <span className="text-xs text-gray-500 whitespace-nowrap">SKU: {item.product.sku}</span>
                                 )}
                                 <span
-                                  className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${getStatusColor(
+                                  className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full whitespace-nowrap ${getStatusColor(
                                     item.status
                                   )}`}
                                 >
                                   {getStatusLabel(item.status)}
                                 </span>
                               </div>
-                              <div className="mt-2 flex items-center gap-4 text-sm text-gray-600">
-                                <span>Quantité: {item.quantity}</span>
-                                {/* Warehouse name removed from display */}
+                              <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
+                                <span className="flex items-center gap-1">
+                                  <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                  </svg>
+                                  Quantité: {item.quantity}
+                                </span>
+                                {item.expiresAt && (
+                                  <>
+                                    <span className="hidden sm:inline">•</span>
+                                    <span className="flex items-center gap-1">
+                                      <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                      </svg>
+                                      Expire: {formatDate(item.expiresAt)}
+                                    </span>
+                                  </>
+                                )}
                               </div>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-shrink-0">
                               {(canManage || isAdmin) && item.status === 'RESERVED' && (
                                 <button
                                   onClick={() => {
                                     setSelectedReservation(item);
                                     setIsUpdateModalOpen(true);
                                   }}
-                                  className="text-blue-600 hover:text-blue-900 text-sm px-3 py-1 border border-blue-300 rounded-md hover:bg-blue-50 transition-colors"
+                                  className="text-blue-600 hover:text-blue-900 text-xs sm:text-sm px-2.5 sm:px-3 py-1.5 sm:py-1 border border-blue-300 rounded-md hover:bg-blue-50 transition-colors whitespace-nowrap"
                                   title="Modifier cette réservation"
                                 >
                                   Modifier
@@ -814,7 +845,7 @@ export default function ReservationsPage() {
                               {canCancel && item.status === 'RESERVED' && (
                                 <button
                                   onClick={() => handleRelease(item.id)}
-                                  className="text-red-600 hover:text-red-900 text-sm px-3 py-1 border border-red-300 rounded-md hover:bg-red-50 transition-colors"
+                                  className="text-red-600 hover:text-red-900 text-xs sm:text-sm px-2.5 sm:px-3 py-1.5 sm:py-1 border border-red-300 rounded-md hover:bg-red-50 transition-colors whitespace-nowrap"
                                   title="Libérer cette réservation"
                                 >
                                   Libérer
@@ -830,35 +861,53 @@ export default function ReservationsPage() {
 
                 {/* Single Item Display (when not expanded or only one item) */}
                 {(!hasMultipleItems || !isExpanded) && (
-                  <div className="px-6 py-4">
+                  <div className="px-4 sm:px-6 py-4">
                     {group.items.map((item) => (
-                      <div key={item.id} className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="text-sm font-medium text-gray-900">
-                            {item.product.name}
+                      <div key={item.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <div className="text-sm sm:text-base font-medium text-gray-900 truncate">
+                              {item.product.name}
+                            </div>
                             {item.product.sku && (
-                              <span className="text-xs text-gray-500 ml-2">({item.product.sku})</span>
+                              <span className="text-xs text-gray-500">({item.product.sku})</span>
                             )}
+                            <span
+                              className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${getStatusColor(
+                                item.status
+                              )}`}
+                            >
+                              {getStatusLabel(item.status)}
+                            </span>
                           </div>
-                          <div className="mt-1 flex items-center gap-4 text-sm text-gray-600">
-                            <span>Quantité: {item.quantity}</span>
-                            {/* Warehouse name removed from display */}
+                          <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
+                            <span className="flex items-center gap-1">
+                              <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                              </svg>
+                              Quantité: {item.quantity}
+                            </span>
                             {item.expiresAt && (
                               <>
-                                <span>•</span>
-                                <span>Expire: {formatDate(item.expiresAt)}</span>
+                                <span className="hidden sm:inline">•</span>
+                                <span className="flex items-center gap-1">
+                                  <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                  </svg>
+                                  Expire: {formatDate(item.expiresAt)}
+                                </span>
                               </>
                             )}
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-shrink-0">
                           {(canManage || isAdmin) && item.status === 'RESERVED' && (
                             <button
                               onClick={() => {
                                 setSelectedReservation(item);
                                 setIsUpdateModalOpen(true);
                               }}
-                              className="text-blue-600 hover:text-blue-900 text-sm px-3 py-1 border border-blue-300 rounded-md hover:bg-blue-50 transition-colors"
+                              className="text-blue-600 hover:text-blue-900 text-xs sm:text-sm px-2.5 sm:px-3 py-1.5 sm:py-1 border border-blue-300 rounded-md hover:bg-blue-50 transition-colors whitespace-nowrap"
                               title="Modifier cette réservation"
                             >
                               Modifier
@@ -867,7 +916,7 @@ export default function ReservationsPage() {
                           {canCancel && item.status === 'RESERVED' && (
                             <button
                               onClick={() => handleRelease(item.id)}
-                              className="text-red-600 hover:text-red-900 text-sm px-3 py-1 border border-red-300 rounded-md hover:bg-red-50 transition-colors"
+                              className="text-red-600 hover:text-red-900 text-xs sm:text-sm px-2.5 sm:px-3 py-1.5 sm:py-1 border border-red-300 rounded-md hover:bg-red-50 transition-colors whitespace-nowrap"
                               title="Libérer cette réservation"
                             >
                               Libérer
@@ -881,8 +930,8 @@ export default function ReservationsPage() {
 
                 {/* Notes */}
                 {group.notes && (
-                  <div className="px-6 py-3 bg-gray-50 border-t border-gray-200">
-                    <p className="text-sm text-gray-600">
+                  <div className="px-4 sm:px-6 py-3 bg-gray-50 border-t border-gray-200">
+                    <p className="text-xs sm:text-sm text-gray-600 break-words">
                       <span className="font-medium">Notes:</span> {group.notes}
                     </p>
                   </div>
