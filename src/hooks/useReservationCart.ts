@@ -6,8 +6,6 @@ interface CartItem {
   productId: string;
   productName: string;
   productSku?: string;
-  warehouseId: string;
-  warehouseName: string;
   quantity: number;
   availableStock: number;
 }

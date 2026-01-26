@@ -10,9 +10,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 
-const deliverSchema = z.object({
-  warehouseId: z.string().min(1, 'Warehouse is required'),
-});
+const deliverSchema = z.object({});
 
 type DeliverFormData = z.infer<typeof deliverSchema>;
 
@@ -35,61 +33,25 @@ export default function DeliverSalesOrderPage() {
   const { data: order, loading: loadingOrder } = useApi<SalesOrder>(`/sales/${id}`);
   const { mutate, loading } = useApiMutation();
   const [error, setError] = useState('');
-  const [warehouses, setWarehouses] = useState<Array<{ id: string; name: string }>>([]);
-  const [loadingWarehouses, setLoadingWarehouses] = useState(true);
 
   const {
-    register,
     handleSubmit,
-    formState: { errors },
-    reset,
   } = useForm<DeliverFormData>({
     resolver: zodResolver(deliverSchema),
   });
-
-  useEffect(() => {
-    loadWarehouses();
-  }, []);
-
-  useEffect(() => {
-    if (warehouses.length > 0) {
-      // COMMENTED: Multiple warehouses - always use MAIN
-      const mainWarehouse = warehouses.find((w: any) => w.code === 'MAIN') || warehouses[0];
-      reset({
-        warehouseId: mainWarehouse?.id || '',
-      });
-    }
-  }, [warehouses, reset]);
-
-  const loadWarehouses = async () => {
-    try {
-      // COMMENTED: Multiple warehouses - using only MAIN warehouse
-      const response = await apiClient.get('/warehouses');
-      const warehousesData = response.data?.data || response.data || [];
-      setWarehouses(warehousesData);
-    } catch (error) {
-      console.error('Failed to load warehouses:', error);
-    } finally {
-      setLoadingWarehouses(false);
-    }
-  };
 
   const onSubmit = async (data: DeliverFormData) => {
     setError('');
 
     try {
-      // COMMENTED: Multiple warehouses - always use MAIN
-      const mainWarehouse = warehouses.find((w: any) => w.code === 'MAIN') || warehouses[0];
-      const warehouseId = mainWarehouse?.id || data.warehouseId;
-      
-      await mutate(`/sales/${id}/deliver`, 'POST', { warehouseId }); // Always use MAIN
+      await mutate(`/sales/${id}/deliver`, 'POST', {});
       router.push(`/sales/${id}`);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to deliver sales order');
     }
   };
 
-  if (loadingOrder || loadingWarehouses) {
+  if (loadingOrder) {
     return (
         <div className="flex items-center justify-center h-64">
           <div className="text-lg">Loading...</div>

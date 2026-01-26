@@ -11,7 +11,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 
 const receiveSchema = z.object({
-  warehouseId: z.string().min(1, 'Warehouse is required'),
   lines: z.array(
     z.object({
       lineId: z.string(),
@@ -44,8 +43,6 @@ export default function ReceivePurchaseOrderPage() {
   const { data: order, loading: loadingOrder } = useApi<PurchaseOrder>(`/purchases/${id}`);
   const { mutate, loading } = useApiMutation();
   const [error, setError] = useState('');
-  const [warehouses, setWarehouses] = useState<Array<{ id: string; name: string }>>([]);
-  const [loadingWarehouses, setLoadingWarehouses] = useState(true);
 
   const {
     register,
@@ -64,11 +61,7 @@ export default function ReceivePurchaseOrderPage() {
   });
 
   useEffect(() => {
-    loadWarehouses();
-  }, []);
-
-  useEffect(() => {
-    if (order && warehouses.length > 0) {
+    if (order) {
       const initialLines = order.lines.map((line) => ({
         lineId: line.id,
         productId: line.product.id,
@@ -76,38 +69,17 @@ export default function ReceivePurchaseOrderPage() {
         quantityOrdered: line.quantityOrdered,
       }));
 
-      // COMMENTED: Multiple warehouses - always use MAIN
-      const mainWarehouse = warehouses.find((w: any) => w.code === 'MAIN') || warehouses[0];
       reset({
-        warehouseId: mainWarehouse?.id || '',
         lines: initialLines,
       });
     }
-  }, [order, warehouses, reset]);
-
-  const loadWarehouses = async () => {
-    try {
-      // COMMENTED: Multiple warehouses - using only MAIN warehouse
-      const response = await apiClient.get('/warehouses');
-      const warehousesData = response.data?.data || response.data || [];
-      setWarehouses(warehousesData);
-    } catch (error) {
-      console.error('Failed to load warehouses:', error);
-    } finally {
-      setLoadingWarehouses(false);
-    }
-  };
+  }, [order, reset]);
 
   const onSubmit = async (data: ReceiveFormData) => {
     setError('');
 
     try {
-      // COMMENTED: Multiple warehouses - always use MAIN
-      const mainWarehouse = warehouses.find((w: any) => w.code === 'MAIN') || warehouses[0];
-      const warehouseId = mainWarehouse?.id || data.warehouseId;
-      
       const payload = {
-        warehouseId: warehouseId, // Always use MAIN
         lines: data.lines.map((line) => ({
           lineId: line.lineId,
           productId: line.productId,
@@ -121,7 +93,7 @@ export default function ReceivePurchaseOrderPage() {
     }
   };
 
-  if (loadingOrder || loadingWarehouses) {
+  if (loadingOrder) {
     return (
         <div className="flex items-center justify-center h-64">
           <div className="text-lg">Loading...</div>

@@ -11,7 +11,6 @@ import { extractCollection } from '@/types/api';
 
 const adjustmentSchema = z.object({
   productId: z.string().min(1, 'Le produit est requis'),
-  warehouseId: z.string().min(1, "L'entrepôt est requis"),
   type: z.enum(['IN', 'OUT', 'ADJUSTMENT']),
   quantity: z.number().int().min(1, 'La quantité doit être positive'),
   reason: z.string().optional(),
@@ -26,18 +25,11 @@ interface Product {
   sku?: string;
 }
 
-interface Warehouse {
-  id: string;
-  name: string;
-  code: string;
-}
-
 interface ManualStockAdjustmentModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
   initialProductId?: string;
-  initialWarehouseId?: string;
 }
 
 export default function ManualStockAdjustmentModal({
@@ -45,12 +37,10 @@ export default function ManualStockAdjustmentModal({
   onClose,
   onSuccess,
   initialProductId,
-  initialWarehouseId,
 }: ManualStockAdjustmentModalProps) {
   const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
-  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
 
   const {
@@ -65,7 +55,6 @@ export default function ManualStockAdjustmentModal({
     defaultValues: {
       type: 'ADJUSTMENT',
       productId: initialProductId || '',
-      warehouseId: initialWarehouseId || '',
     },
   });
 
@@ -77,10 +66,6 @@ export default function ManualStockAdjustmentModal({
       if (initialProductId) {
         setValue('productId', initialProductId);
       }
-      // COMMENTED: Multiple warehouses - always use MAIN
-      // if (initialWarehouseId) {
-      //   setValue('warehouseId', initialWarehouseId);
-      // }
     } else {
       reset();
     }
@@ -89,21 +74,8 @@ export default function ManualStockAdjustmentModal({
   const loadOptions = async () => {
     setLoadingOptions(true);
     try {
-      const [productsRes, warehousesRes] = await Promise.all([
-        apiClient.get('/products'),
-        // COMMENTED: Multiple warehouses - using only MAIN warehouse
-        apiClient.get('/warehouses'), // Still loading to get MAIN warehouse ID
-      ]);
+      const productsRes = await apiClient.get('/products');
       setProducts(extractCollection<Product>(productsRes.data));
-      // COMMENTED: Multiple warehouses - storing but not using for selection
-      const warehousesData = extractCollection<Warehouse>(warehousesRes.data);
-      setWarehouses(warehousesData);
-      
-      // Set MAIN warehouse as default
-      const mainWarehouse = warehousesData.find(w => w.code === 'MAIN');
-      if (mainWarehouse && !initialWarehouseId) {
-        setValue('warehouseId', mainWarehouse.id);
-      }
     } catch (error) {
       console.error('Failed to load options:', error);
       toast.error('Échec du chargement des options');
@@ -115,19 +87,8 @@ export default function ManualStockAdjustmentModal({
   const onSubmit = async (data: AdjustmentFormData) => {
     setLoading(true);
     try {
-      // COMMENTED: Multiple warehouses - always use MAIN warehouse
-      const mainWarehouse = warehouses.find(w => w.code === 'MAIN');
-      const warehouseId = mainWarehouse?.id || data.warehouseId;
-      
-      if (!warehouseId) {
-        toast.error('L\'entrepôt principal (MAIN) est introuvable.');
-        setLoading(false);
-        return;
-      }
-      
       await apiClient.post('/stock-movements', {
         productId: data.productId,
-        warehouseId: warehouseId, // Always use MAIN
         type: data.type,
         quantity: data.quantity,
         reason: data.reason || undefined,

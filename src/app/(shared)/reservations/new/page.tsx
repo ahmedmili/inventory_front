@@ -16,17 +16,10 @@ interface Product {
   id: string;
   name: string;
   sku?: string;
-  warehouseStock?: Array<{
-    warehouseId: string;
-    warehouse: { id: string; name: string; code?: string };
+  stock?: {
+    id: string;
     quantity: number;
-  }>;
-}
-
-interface Warehouse {
-  id: string;
-  name: string;
-  code?: string;
+  };
 }
 
 interface Project {
@@ -38,8 +31,6 @@ interface CartItem {
   productId: string;
   productName: string;
   productSku?: string;
-  warehouseId: string;
-  warehouseName: string;
   quantity: number;
   availableStock: number;
 }
@@ -51,7 +42,6 @@ export default function NewReservationPage() {
   const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
-  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(true);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -63,7 +53,6 @@ export default function NewReservationPage() {
 
   const [formData, setFormData] = useState({
     productId: productIdFromUrl,
-    warehouseId: '',
     projectId: '',
     quantity: 1,
     expiresAt: '',
@@ -92,33 +81,14 @@ export default function NewReservationPage() {
   const loadOptions = async () => {
     try {
       setLoadingOptions(true);
-      const [productsRes, warehousesRes, projectsRes] = await Promise.all([
+      const [productsRes, projectsRes] = await Promise.all([
         apiClient.get('/products?limit=1000'),
-        // COMMENTED: Multiple warehouses - using only MAIN warehouse
-        // apiClient.get('/warehouses'),
-        apiClient.get('/warehouses'), // Still loading to get MAIN warehouse ID
         apiClient.get('/projects?status=ACTIVE'),
       ]);
 
-      // Les produits incluent déjà warehouseStock avec les informations de l'entrepôt
       const productsData = productsRes.data?.data || productsRes.data || [];
       setProducts(productsData);
-      
-      const warehousesData: Warehouse[] = warehousesRes.data?.data || warehousesRes.data || [];
-      // COMMENTED: Multiple warehouses - storing but not using for selection
-      setWarehouses(warehousesData);
       setProjects(projectsRes.data?.data || projectsRes.data || []);
-
-      // Set MAIN warehouse automatically (hidden from user)
-      const mainWarehouse = warehousesData.find(w => w.code === 'MAIN');
-      if (mainWarehouse) {
-        setFormData(prev => ({
-          ...prev,
-          warehouseId: mainWarehouse.id, // Always use MAIN warehouse silently
-        }));
-      } else {
-        toast.error('Erreur de configuration. Veuillez contacter l\'administrateur.');
-      }
     } catch (error: any) {
       console.error('Failed to load options:', error);
       toast.error('Erreur lors du chargement des options');
@@ -127,14 +97,9 @@ export default function NewReservationPage() {
     }
   };
 
-  const getAvailableStock = (productId: string, warehouseId: string): number => {
+  const getAvailableStock = (productId: string): number => {
     const product = products.find(p => p.id === productId);
-    if (!product || !product.warehouseStock) return 0;
-    
-    const stock = product.warehouseStock.find(
-      ws => ws.warehouseId === warehouseId
-    );
-    return stock?.quantity || 0;
+    return product?.stock?.quantity || 0;
   };
 
   const handleCreateProduct = (searchTerm: string) => {
@@ -174,14 +139,9 @@ export default function NewReservationPage() {
       }
       
       if (productToSelect) {
-        // Trouver l'entrepôt principal - ONLY MAIN
-        const mainWarehouse = warehouses.find(w => w.code === 'MAIN');
-        
         setFormData(prev => ({ 
           ...prev, 
           productId: productToSelect!.id,
-          // Always use MAIN warehouse
-          warehouseId: mainWarehouse?.id || prev.warehouseId || '',
           // S'assurer que la quantité est au moins à 1
           quantity: prev.quantity || 1,
         }));
@@ -196,7 +156,7 @@ export default function NewReservationPage() {
   };
 
   const handleAddToCart = () => {
-    if (!formData.productId || !formData.warehouseId || formData.quantity < 1) {
+    if (!formData.productId || formData.quantity < 1) {
       toast.error('Veuillez remplir tous les champs requis');
       return;
     }
@@ -207,15 +167,8 @@ export default function NewReservationPage() {
       toast.error('Produit introuvable');
       return;
     }
-    
-    // Get warehouse silently (MAIN) - hidden from user
-    const warehouse = warehouses.find(w => w.id === formData.warehouseId) || warehouses.find(w => w.code === 'MAIN');
-    if (!warehouse) {
-      toast.error('Erreur de configuration');
-      return;
-    }
 
-    const availableStock = getAvailableStock(formData.productId, formData.warehouseId);
+    const availableStock = getAvailableStock(formData.productId);
     
     if (availableStock < formData.quantity) {
       toast.error(`Stock insuffisant. Disponible: ${availableStock}`);
@@ -224,7 +177,7 @@ export default function NewReservationPage() {
 
     // Check if item already in cart
     const existingIndex = cart.findIndex(
-      item => item.productId === formData.productId && item.warehouseId === formData.warehouseId
+      item => item.productId === formData.productId
     );
 
     if (existingIndex >= 0) {
@@ -245,20 +198,15 @@ export default function NewReservationPage() {
         productId: formData.productId,
         productName: product.name,
         productSku: product.sku,
-        warehouseId: formData.warehouseId,
-        warehouseName: warehouse.name,
         quantity: formData.quantity,
         availableStock,
       }]);
     }
 
-    // Reset form - Always keep MAIN warehouse
-    const mainWarehouse = warehouses.find(w => w.code === 'MAIN');
-
+    // Reset form
     setFormData(prev => ({
       ...prev,
       productId: '',
-      warehouseId: mainWarehouse ? mainWarehouse.id : prev.warehouseId, // Keep MAIN warehouse
       quantity: 1,
     }));
 
@@ -306,7 +254,6 @@ export default function NewReservationPage() {
       const payload: any = {
         items: cart.map(item => ({
           productId: item.productId,
-          warehouseId: item.warehouseId,
           quantity: item.quantity,
         })),
       };
@@ -397,14 +344,11 @@ export default function NewReservationPage() {
                   />
                 </div>
 
-                {/* COMMENTED: Warehouse Selection - Using only MAIN warehouse (hidden from user) */}
-                {/* Warehouse selection removed - using MAIN warehouse automatically */}
-                
-                {/* Display stock info only (no warehouse mention) */}
-                {formData.productId && formData.warehouseId && (
+                {/* Display stock info */}
+                {formData.productId && (
                   <div>
                     <p className="text-sm text-gray-500">
-                      Stock disponible: {getAvailableStock(formData.productId, formData.warehouseId)}
+                      Stock disponible: {getAvailableStock(formData.productId)}
                     </p>
                   </div>
                 )}
@@ -419,7 +363,7 @@ export default function NewReservationPage() {
                     id="quantity"
                     required
                     min="1"
-                    max={formData.productId && formData.warehouseId ? getAvailableStock(formData.productId, formData.warehouseId) : undefined}
+                    max={formData.productId ? getAvailableStock(formData.productId) : undefined}
                     value={formData.quantity}
                     onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })}
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"

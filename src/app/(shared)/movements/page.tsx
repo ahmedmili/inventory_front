@@ -12,12 +12,10 @@ import { useToast } from '@/contexts/ToastContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { hasPermission } from '@/lib/permissions';
 import ManualStockAdjustmentModal from '@/components/stock/ManualStockAdjustmentModal';
-import StockTransferModal from '@/components/stock/StockTransferModal';
-import { extractCollection } from '@/types/api';
 
 interface StockMovement {
   id: string;
-  type: 'IN' | 'OUT' | 'TRANSFER' | 'ADJUSTMENT';
+  type: 'IN' | 'OUT' | 'ADJUSTMENT';
   quantity: number;
   reason?: string;
   reference?: string;
@@ -25,11 +23,6 @@ interface StockMovement {
     id: string;
     name: string;
     sku?: string;
-  };
-  warehouse: {
-    id: string;
-    name: string;
-    code: string;
   };
   user?: {
     id: string;
@@ -40,46 +33,20 @@ interface StockMovement {
   createdAt: string;
 }
 
-interface Warehouse {
-  id: string;
-  name: string;
-  code: string;
-}
-
 export default function MovementsPage() {
   const { user } = useAuth();
   const toast = useToast();
-  const [filter, setFilter] = useState<'all' | 'IN' | 'OUT' | 'TRANSFER' | 'ADJUSTMENT'>('all');
+  const [filter, setFilter] = useState<'all' | 'IN' | 'OUT' | 'ADJUSTMENT'>('all');
   const [search, setSearch] = useState('');
-  const [warehouseFilter, setWarehouseFilter] = useState<string>('all');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
-  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState(false);
-  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
 
   const canCreateStock = hasPermission(user, 'stock.create');
-  const canTransferStock = hasPermission(user, 'warehouses.transfer');
-
-  useEffect(() => {
-    loadWarehouses();
-  }, []);
-
-  const loadWarehouses = async () => {
-    try {
-      const response = await apiClient.get('/warehouses');
-      setWarehouses(extractCollection<Warehouse>(response.data));
-    } catch (error) {
-      console.error('Failed to load warehouses:', error);
-    }
-  };
 
   const queryParams = new URLSearchParams();
   if (filter !== 'all') {
     queryParams.set('type', filter);
-  }
-  if (warehouseFilter !== 'all') {
-    queryParams.set('warehouseId', warehouseFilter);
   }
   if (startDate) {
     queryParams.set('startDate', startDate);
@@ -96,7 +63,6 @@ export default function MovementsPage() {
     const colors: Record<string, string> = {
       IN: 'bg-green-100 text-green-800 border-green-200',
       OUT: 'bg-red-100 text-red-800 border-red-200',
-      TRANSFER: 'bg-blue-100 text-blue-800 border-blue-200',
       ADJUSTMENT: 'bg-yellow-100 text-yellow-800 border-yellow-200',
     };
     return colors[type] || 'bg-gray-100 text-gray-800 border-gray-200';
@@ -106,7 +72,6 @@ export default function MovementsPage() {
     const labels: Record<string, string> = {
       IN: 'Dispose',
       OUT: 'Withdraw',
-      TRANSFER: 'Transfer',
       ADJUSTMENT: 'Adjustment',
     };
     return labels[type] || type;
@@ -137,8 +102,6 @@ export default function MovementsPage() {
     return (
       movement.product.name.toLowerCase().includes(searchLower) ||
       movement.product.sku?.toLowerCase().includes(searchLower) ||
-      movement.warehouse.name.toLowerCase().includes(searchLower) ||
-      movement.warehouse.code.toLowerCase().includes(searchLower) ||
       movement.user?.firstName.toLowerCase().includes(searchLower) ||
       movement.user?.lastName.toLowerCase().includes(searchLower) ||
       movement.user?.email.toLowerCase().includes(searchLower) ||
@@ -180,17 +143,6 @@ export default function MovementsPage() {
               {movement.product.sku}
             </div>
           )}
-        </div>
-      ),
-    },
-    {
-      key: 'warehouse',
-      label: 'Entrepôt',
-      sortable: false,
-      render: (movement) => (
-        <div>
-          <div className="text-sm font-medium text-gray-900">{movement.warehouse.name}</div>
-          <div className="text-xs text-gray-500 font-mono">{movement.warehouse.code}</div>
         </div>
       ),
     },
@@ -299,17 +251,6 @@ export default function MovementsPage() {
                   Ajustement manuel
                 </button>
               )}
-              {canTransferStock && (
-                <button
-                  onClick={() => setIsTransferModalOpen(true)}
-                  className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                  </svg>
-                  Transfert
-                </button>
-              )}
             </div>
           </div>
         </div>
@@ -325,7 +266,7 @@ export default function MovementsPage() {
               </div>
               <input
                 type="text"
-                placeholder="Rechercher par produit, entrepôt, utilisateur..."
+                placeholder="Rechercher par produit, utilisateur..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
@@ -353,33 +294,13 @@ export default function MovementsPage() {
                 <option value="all">Tous les types</option>
                 <option value="IN">Dispose (IN)</option>
                 <option value="OUT">Withdraw (OUT)</option>
-                <option value="TRANSFER">Transfer</option>
                 <option value="ADJUSTMENT">Adjustment</option>
               </select>
             </div>
           </div>
 
-          {/* Second Row: Warehouse, Date Range */}
+          {/* Second Row: Date Range */}
           <div className="flex flex-col sm:flex-row gap-4">
-            {/* Warehouse Filter */}
-            <div className="flex-1">
-              <select
-                value={warehouseFilter}
-                onChange={(e) => {
-                  setWarehouseFilter(e.target.value);
-                  mutate?.();
-                }}
-                className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all bg-white"
-              >
-                <option value="all">Tous les entrepôts</option>
-                {warehouses.map((warehouse) => (
-                  <option key={warehouse.id} value={warehouse.id}>
-                    {warehouse.name} ({warehouse.code})
-                  </option>
-                ))}
-              </select>
-            </div>
-
             {/* Date Range */}
             <div className="flex gap-2">
               <div className="flex-1">
@@ -446,15 +367,6 @@ export default function MovementsPage() {
           <ManualStockAdjustmentModal
             isOpen={isAdjustmentModalOpen}
             onClose={() => setIsAdjustmentModalOpen(false)}
-            onSuccess={() => {
-              mutate?.();
-            }}
-          />
-        )}
-        {canTransferStock && (
-          <StockTransferModal
-            isOpen={isTransferModalOpen}
-            onClose={() => setIsTransferModalOpen(false)}
             onSuccess={() => {
               mutate?.();
             }}
