@@ -10,6 +10,8 @@ import { SkeletonLoader } from '@/components/SkeletonLoader';
 import { useToast } from '@/contexts/ToastContext';
 import Pagination from '@/components/Pagination';
 import { useReservationsRealtime } from '@/hooks/useReservationsRealtime';
+import UpdateReservationModal from '@/components/reservations/UpdateReservationModal';
+import UpdateGroupReservationModal from '@/components/reservations/UpdateGroupReservationModal';
 
 interface ReservationItem {
   id: string;
@@ -111,8 +113,15 @@ export default function ReservationsPage() {
   const limit = 20;
   const canCreate = hasPermission(user, 'reservations.create');
   const canCancel = hasPermission(user, 'reservations.cancel');
+  const canManage = hasPermission(user, 'reservations.manage');
   const userRoleCode = getUserRoleCode(user);
   const isAdmin = userRoleCode === 'ADMIN' || userRoleCode === 'MANAGER';
+  
+  // Update modal state
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [selectedReservation, setSelectedReservation] = useState<ReservationItem | null>(null);
+  const [isUpdateGroupModalOpen, setIsUpdateGroupModalOpen] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState<ReservationGroup | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -683,6 +692,21 @@ export default function ReservationsPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
+                      {(canManage || isAdmin) && allReserved && (
+                        <button
+                          onClick={() => {
+                            setSelectedGroup(group);
+                            setIsUpdateGroupModalOpen(true);
+                          }}
+                          className="text-blue-600 hover:text-blue-900 inline-flex items-center gap-1 px-3 py-2 border border-blue-300 rounded-md hover:bg-blue-50 transition-colors"
+                          title="Modifier le groupe de réservations"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                          Modifier
+                        </button>
+                      )}
                       <button
                         onClick={() => handleDownloadGroupPDF(group.groupId)}
                         className="text-blue-600 hover:text-blue-900 inline-flex items-center gap-1 px-3 py-2 border border-blue-300 rounded-md hover:bg-blue-50 transition-colors"
@@ -774,15 +798,29 @@ export default function ReservationsPage() {
                                 {/* Warehouse name removed from display */}
                               </div>
                             </div>
-                            {canCancel && item.status === 'RESERVED' && (
-                              <button
-                                onClick={() => handleRelease(item.id)}
-                                className="text-red-600 hover:text-red-900 text-sm px-3 py-1 border border-red-300 rounded-md hover:bg-red-50 transition-colors"
-                                title="Libérer cette réservation"
-                              >
-                                Libérer
-                              </button>
-                            )}
+                            <div className="flex items-center gap-2">
+                              {(canManage || isAdmin) && item.status === 'RESERVED' && (
+                                <button
+                                  onClick={() => {
+                                    setSelectedReservation(item);
+                                    setIsUpdateModalOpen(true);
+                                  }}
+                                  className="text-blue-600 hover:text-blue-900 text-sm px-3 py-1 border border-blue-300 rounded-md hover:bg-blue-50 transition-colors"
+                                  title="Modifier cette réservation"
+                                >
+                                  Modifier
+                                </button>
+                              )}
+                              {canCancel && item.status === 'RESERVED' && (
+                                <button
+                                  onClick={() => handleRelease(item.id)}
+                                  className="text-red-600 hover:text-red-900 text-sm px-3 py-1 border border-red-300 rounded-md hover:bg-red-50 transition-colors"
+                                  title="Libérer cette réservation"
+                                >
+                                  Libérer
+                                </button>
+                              )}
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -813,15 +851,29 @@ export default function ReservationsPage() {
                             )}
                           </div>
                         </div>
-                        {canCancel && item.status === 'RESERVED' && (
-                          <button
-                            onClick={() => handleRelease(item.id)}
-                            className="text-red-600 hover:text-red-900 text-sm px-3 py-1 border border-red-300 rounded-md hover:bg-red-50 transition-colors"
-                            title="Libérer cette réservation"
-                          >
-                            Libérer
-                          </button>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {(canManage || isAdmin) && item.status === 'RESERVED' && (
+                            <button
+                              onClick={() => {
+                                setSelectedReservation(item);
+                                setIsUpdateModalOpen(true);
+                              }}
+                              className="text-blue-600 hover:text-blue-900 text-sm px-3 py-1 border border-blue-300 rounded-md hover:bg-blue-50 transition-colors"
+                              title="Modifier cette réservation"
+                            >
+                              Modifier
+                            </button>
+                          )}
+                          {canCancel && item.status === 'RESERVED' && (
+                            <button
+                              onClick={() => handleRelease(item.id)}
+                              className="text-red-600 hover:text-red-900 text-sm px-3 py-1 border border-red-300 rounded-md hover:bg-red-50 transition-colors"
+                              title="Libérer cette réservation"
+                            >
+                              Libérer
+                            </button>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -856,6 +908,32 @@ export default function ReservationsPage() {
           />
         </div>
       )}
+
+      {/* Update Reservation Modal */}
+      <UpdateReservationModal
+        isOpen={isUpdateModalOpen}
+        onClose={() => {
+          setIsUpdateModalOpen(false);
+          setSelectedReservation(null);
+        }}
+        reservation={selectedReservation}
+        onSuccess={() => {
+          loadReservations();
+        }}
+      />
+
+      {/* Update Group Reservation Modal */}
+      <UpdateGroupReservationModal
+        isOpen={isUpdateGroupModalOpen}
+        onClose={() => {
+          setIsUpdateGroupModalOpen(false);
+          setSelectedGroup(null);
+        }}
+        group={selectedGroup}
+        onSuccess={() => {
+          loadReservations();
+        }}
+      />
     </div>
   );
 }
