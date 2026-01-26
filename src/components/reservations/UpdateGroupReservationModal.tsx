@@ -202,7 +202,7 @@ export default function UpdateGroupReservationModal({
         return;
       }
 
-      await apiClient.put(`/reservations/group/${group.groupId}`, payload);
+      await apiClient.post(`/reservations/group/${group.groupId}/update`, payload);
 
       toast.success('Groupe de réservations mis à jour avec succès');
       onClose();

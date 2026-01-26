@@ -119,7 +119,7 @@ export default function UpdateReservationModal({
         return;
       }
 
-      await apiClient.put(`/reservations/${reservation.id}`, payload);
+      await apiClient.post(`/reservations/${reservation.id}/update`, payload);
 
       toast.success('Réservation mise à jour avec succès');
       onClose();
