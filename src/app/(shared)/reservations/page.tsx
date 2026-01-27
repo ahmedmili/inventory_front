@@ -441,72 +441,74 @@ export default function ReservationsPage() {
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            {isAdmin ? 'Toutes les Réservations' : 'Mes Réservations'}
-          </h1>
-          <p className="text-sm text-gray-600 mt-1">
-            {isAdmin ? 'Gérez toutes les réservations de produits' : 'Gérez vos réservations de produits'}
-          </p>
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 sm:p-8 border border-blue-100 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
+              {isAdmin ? 'Toutes les Réservations' : 'Mes Réservations'}
+            </h1>
+            <p className="text-sm sm:text-base text-gray-600">
+              {isAdmin ? 'Gérez toutes les réservations de produits' : 'Gérez vos réservations de produits'}
+            </p>
+          </div>
+          {canCreate && (
+            <Link
+              href="/reservations/new"
+              className="inline-flex items-center px-5 py-3 border border-transparent rounded-xl shadow-lg text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-105"
+              title="Créer une nouvelle réservation"
+            >
+              <PlusIcon className="w-5 h-5 mr-2" />
+              <span className="hidden sm:inline">Nouvelle Réservation</span>
+              <span className="sm:hidden">Nouvelle</span>
+            </Link>
+          )}
         </div>
-        {canCreate && (
-          <Link
-            href="/reservations/new"
-            className="inline-flex items-center px-4 py-2.5 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
-            title="Créer une nouvelle réservation"
-          >
-            <PlusIcon className="w-5 h-5 mr-2" />
-            <span className="hidden sm:inline">Nouvelle Réservation</span>
-            <span className="sm:hidden">Nouvelle</span>
-          </Link>
-        )}
       </div>
 
       {/* Statistics Cards */}
       {reservations.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 sm:p-5 border border-blue-200 shadow-sm">
+          <div className="bg-gradient-to-br from-blue-50 via-blue-50 to-blue-100 rounded-xl p-4 sm:p-5 border border-blue-200 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
                 <p className="text-xs sm:text-sm font-medium text-blue-600 truncate">Total Réservations</p>
                 <p className="text-xl sm:text-2xl font-bold text-blue-900 mt-1">{totalReservations}</p>
               </div>
-              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-blue-200 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
-                <CalendarIcon className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-gradient-to-br from-blue-200 to-blue-300 rounded-xl flex items-center justify-center flex-shrink-0 ml-2 shadow-sm">
+                <CalendarIcon className="w-5 h-5 sm:w-6 sm:h-6 text-blue-700" />
               </div>
             </div>
           </div>
-          <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 sm:p-5 border border-green-200 shadow-sm">
+          <div className="bg-gradient-to-br from-green-50 via-green-50 to-green-100 rounded-xl p-4 sm:p-5 border border-green-200 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
                 <p className="text-xs sm:text-sm font-medium text-green-600 truncate">Produits Réservés</p>
                 <p className="text-xl sm:text-2xl font-bold text-green-900 mt-1">{totalProducts}</p>
               </div>
-              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-green-200 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
-                <PackageIcon className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
+              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-gradient-to-br from-green-200 to-green-300 rounded-xl flex items-center justify-center flex-shrink-0 ml-2 shadow-sm">
+                <PackageIcon className="w-5 h-5 sm:w-6 sm:h-6 text-green-700" />
               </div>
             </div>
           </div>
-          <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 sm:p-5 border border-purple-200 shadow-sm">
+          <div className="bg-gradient-to-br from-purple-50 via-purple-50 to-purple-100 rounded-xl p-4 sm:p-5 border border-purple-200 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
                 <p className="text-xs sm:text-sm font-medium text-purple-600 truncate">En Attente</p>
                 <p className="text-xl sm:text-2xl font-bold text-purple-900 mt-1">{reservedCount}</p>
               </div>
-              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-purple-200 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
-                <CalendarIcon className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
+              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-gradient-to-br from-purple-200 to-purple-300 rounded-xl flex items-center justify-center flex-shrink-0 ml-2 shadow-sm">
+                <CalendarIcon className="w-5 h-5 sm:w-6 sm:h-6 text-purple-700" />
               </div>
             </div>
           </div>
-          <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-4 sm:p-5 border border-orange-200 shadow-sm">
+          <div className="bg-gradient-to-br from-orange-50 via-orange-50 to-orange-100 rounded-xl p-4 sm:p-5 border border-orange-200 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
                 <p className="text-xs sm:text-sm font-medium text-orange-600 truncate">Remplies</p>
                 <p className="text-xl sm:text-2xl font-bold text-orange-900 mt-1">{fulfilledCount}</p>
               </div>
-              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-orange-200 rounded-lg flex items-center justify-center flex-shrink-0 ml-2">
-                <PackageIcon className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
+              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-gradient-to-br from-orange-200 to-orange-300 rounded-xl flex items-center justify-center flex-shrink-0 ml-2 shadow-sm">
+                <PackageIcon className="w-5 h-5 sm:w-6 sm:h-6 text-orange-700" />
               </div>
             </div>
           </div>
@@ -514,7 +516,7 @@ export default function ReservationsPage() {
       )}
 
       {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-5">
+      <div className="bg-white rounded-xl shadow-md border border-gray-200 p-4 sm:p-5 hover:shadow-lg transition-shadow duration-200">
         <div className={`grid grid-cols-1 sm:grid-cols-2 ${isAdmin ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-3 sm:gap-4`}>
           <div>
             <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Statut</label>
@@ -722,13 +724,13 @@ export default function ReservationsPage() {
       {/* Reservations List */}
       <div className="space-y-4">
         {reservations.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="text-center py-16 px-4">
-              <div className="mx-auto h-16 w-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                <CalendarIcon className="h-8 w-8 text-gray-400" />
+          <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-md border border-gray-200 overflow-hidden">
+            <div className="text-center py-20 px-4">
+              <div className="mx-auto h-20 w-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mb-6 shadow-inner">
+                <CalendarIcon className="h-10 w-10 text-gray-400" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucune réservation</h3>
-              <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Aucune réservation</h3>
+              <p className="text-sm text-gray-600 mb-8 max-w-md mx-auto">
                 {canCreate
                   ? 'Commencez par créer une nouvelle réservation pour gérer vos produits.'
                   : 'Vous n\'avez aucune réservation pour le moment.'}
@@ -736,7 +738,7 @@ export default function ReservationsPage() {
               {canCreate && (
                 <Link
                   href="/reservations/new"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+                  className="inline-flex items-center gap-2 px-6 py-3 border border-transparent shadow-lg text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-105"
                 >
                   <PlusIcon className="w-5 h-5" />
                   Nouvelle Réservation
@@ -754,27 +756,27 @@ export default function ReservationsPage() {
             return (
               <div
                 key={group.groupId}
-                className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 overflow-hidden"
+                className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 hover:shadow-2xl hover:border-blue-400 transition-all duration-300 overflow-hidden transform hover:-translate-y-1 group"
               >
                 {/* Group Header */}
-                <div className="p-4 sm:p-6">
+                <div className="p-5 sm:p-7 bg-gradient-to-br from-white via-blue-50/30 to-gray-50 border-b border-gray-100">
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                     <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
                       {/* Icon */}
                       <div className="flex-shrink-0">
-                        <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
-                          <CalendarIcon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                        <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 flex items-center justify-center shadow-xl ring-4 ring-blue-100 group-hover:ring-blue-200 transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                          <CalendarIcon className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
                         </div>
                       </div>
 
                       {/* Main Info */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3">
                           <h3 className="text-lg sm:text-xl font-bold text-gray-900 break-words">
                             Réservation #{group.groupId.slice(-8)}
                           </h3>
                           <span
-                            className={`inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs font-semibold border flex-shrink-0 ${getStatusColor(
+                            className={`inline-flex items-center px-3 sm:px-4 py-1.5 rounded-xl text-xs font-bold border-2 shadow-md flex-shrink-0 ${getStatusColor(
                               group.status
                             )}`}
                           >
@@ -783,38 +785,38 @@ export default function ReservationsPage() {
                         </div>
 
                         {/* Metadata */}
-                        <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
-                          <div className="flex items-center gap-1.5">
-                            <div className="h-4 w-4 sm:h-5 sm:w-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                              <PackageIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-gray-600" />
+                        <div className="flex flex-wrap items-center gap-3 sm:gap-5 text-xs sm:text-sm">
+                          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 border border-blue-100">
+                            <div className="h-5 w-5 rounded-lg bg-gradient-to-br from-blue-200 to-blue-300 flex items-center justify-center flex-shrink-0 shadow-sm">
+                              <PackageIcon className="w-3 h-3 text-blue-700" />
                             </div>
-                            <span className="font-medium whitespace-nowrap">{group.totalItems} produit{group.totalItems > 1 ? 's' : ''}</span>
+                            <span className="font-semibold text-gray-700 whitespace-nowrap">{group.totalItems} produit{group.totalItems > 1 ? 's' : ''}</span>
                           </div>
-                          <div className="flex items-center gap-1.5">
-                            <div className="h-4 w-4 sm:h-5 sm:w-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                              <CalendarIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-gray-600" />
+                          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-purple-50 border border-purple-100">
+                            <div className="h-5 w-5 rounded-lg bg-gradient-to-br from-purple-200 to-purple-300 flex items-center justify-center flex-shrink-0 shadow-sm">
+                              <CalendarIcon className="w-3 h-3 text-purple-700" />
                             </div>
-                            <span className="whitespace-nowrap">{formatDate(group.createdAt)}</span>
+                            <span className="font-medium text-gray-700 whitespace-nowrap">{formatDate(group.createdAt)}</span>
                             {daysAgo >= 0 && daysAgo <= 7 && (
                               <span className="ml-1 text-xs text-gray-500 whitespace-nowrap">({daysAgo === 0 ? "Aujourd'hui" : `Il y a ${daysAgo} jour${daysAgo > 1 ? 's' : ''}`})</span>
                             )}
                           </div>
                           {isAdmin && group.user && (
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <div className="h-4 w-4 sm:h-5 sm:w-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                                <UserIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-gray-600" />
+                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-50 border border-green-100 min-w-0">
+                              <div className="h-5 w-5 rounded-lg bg-gradient-to-br from-green-200 to-green-300 flex items-center justify-center flex-shrink-0 shadow-sm">
+                                <UserIcon className="w-3 h-3 text-green-700" />
                               </div>
-                              <span className="truncate max-w-[120px] sm:max-w-[200px] md:max-w-none">
+                              <span className="font-medium text-gray-700 truncate max-w-[120px] sm:max-w-[200px] md:max-w-none">
                                 {group.user.firstName} {group.user.lastName}
                               </span>
                             </div>
                           )}
                           {group.project && (
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <div className="h-4 w-4 sm:h-5 sm:w-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                                <ProjectIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-gray-600" />
+                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-orange-50 border border-orange-100 min-w-0">
+                              <div className="h-5 w-5 rounded-lg bg-gradient-to-br from-orange-200 to-orange-300 flex items-center justify-center flex-shrink-0 shadow-sm">
+                                <ProjectIcon className="w-3 h-3 text-orange-700" />
                               </div>
-                              <span className="truncate max-w-[150px] sm:max-w-[250px] md:max-w-none">{group.project.name}</span>
+                              <span className="font-medium text-gray-700 truncate max-w-[150px] sm:max-w-[250px] md:max-w-none">{group.project.name}</span>
                             </div>
                           )}
                         </div>
@@ -829,7 +831,7 @@ export default function ReservationsPage() {
                             setSelectedGroup(group);
                             setIsUpdateGroupModalOpen(true);
                           }}
-                          className="inline-flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 border border-blue-300 rounded-lg hover:bg-blue-50 text-blue-600 hover:text-blue-900 transition-colors text-xs sm:text-sm font-medium"
+                          className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 border border-blue-300 rounded-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 text-blue-600 hover:text-blue-900 transition-all duration-200 text-xs sm:text-sm font-semibold shadow-sm hover:shadow-md transform hover:scale-105"
                           title="Modifier le groupe de réservations"
                         >
                           <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -840,7 +842,7 @@ export default function ReservationsPage() {
                       )}
                       <button
                         onClick={() => handleDownloadGroupPDF(group.groupId)}
-                        className="inline-flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 border border-blue-300 rounded-lg hover:bg-blue-50 text-blue-600 hover:text-blue-900 transition-colors text-xs sm:text-sm font-medium"
+                        className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 border border-blue-300 rounded-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 text-blue-600 hover:text-blue-900 transition-all duration-200 text-xs sm:text-sm font-semibold shadow-sm hover:shadow-md transform hover:scale-105"
                         title="Télécharger le PDF du groupe"
                       >
                         <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -852,13 +854,14 @@ export default function ReservationsPage() {
                       {hasMultipleItems && (
                         <button
                           onClick={() => toggleGroup(group.groupId)}
-                          className="inline-flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-600 hover:text-gray-900 transition-colors text-xs sm:text-sm font-medium"
+                          className="inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 border-2 border-gray-300 rounded-xl hover:border-blue-400 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-blue-50 hover:to-blue-100 text-gray-700 hover:text-blue-700 transition-all duration-300 text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transform hover:scale-110 active:scale-95"
                           title={isExpanded ? 'Masquer les détails' : 'Voir les détails des produits'}
                         >
                           <ChevronDownIcon
-                            className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                            className={`w-4 h-4 sm:w-5 sm:h-5 transition-all duration-300 ${isExpanded ? 'rotate-180' : ''}`}
                           />
-                          <span className="hidden sm:inline">{isExpanded ? 'Masquer' : 'Voir'}</span>
+                          <span className="hidden sm:inline">{isExpanded ? 'Masquer' : 'Voir les détails'}</span>
+                          <span className="sm:hidden">{isExpanded ? 'Masquer' : 'Voir'}</span>
                         </button>
                       )}
                       {canCancel && allReserved && (
@@ -880,7 +883,7 @@ export default function ReservationsPage() {
                               });
                             }
                           }}
-                          className="inline-flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 border border-red-300 rounded-lg hover:bg-red-50 text-red-600 hover:text-red-900 transition-colors text-xs sm:text-sm font-medium"
+                          className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 border border-red-300 rounded-lg hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100 text-red-600 hover:text-red-900 transition-all duration-200 text-xs sm:text-sm font-semibold shadow-sm hover:shadow-md transform hover:scale-105"
                           title="Libérer toutes les réservations de ce groupe"
                         >
                           <span className="hidden sm:inline">Libérer tout</span>
@@ -893,91 +896,141 @@ export default function ReservationsPage() {
 
                 {/* Group Items - Expanded View (only shown when expanded) */}
                 {isExpanded && hasMultipleItems && (
-                  <div className="border-t border-gray-200 bg-gray-50">
-                    <div className="p-4 sm:p-6">
-                      <h4 className="text-xs sm:text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">
-                        Produits dans cette réservation ({group.items.length})
-                      </h4>
-                      <div className="space-y-2">
-                        {group.items.map((item, index) => (
-                          <div
-                            key={item.id}
-                            className="bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-sm transition-all duration-200"
-                          >
-                            <div className="p-3 sm:p-4">
-                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                                {/* Left side - Product Info */}
-                                <div className="flex-1 min-w-0 flex items-start gap-3">
-                                  {/* Index number */}
-                                  <div className="flex-shrink-0 h-6 w-6 sm:h-7 sm:w-7 rounded-full bg-gray-100 flex items-center justify-center text-xs sm:text-sm font-semibold text-gray-600">
+                  <div className="border-t-2 border-gray-200 bg-gradient-to-br from-blue-50/50 via-gray-50 to-purple-50/50 overflow-hidden">
+                    <div className="p-5 sm:p-7 animate-in slide-in-from-top-2 duration-300">
+                      <div className="mb-6">
+                        <h4 className="text-sm sm:text-base font-bold text-gray-800 mb-2 flex items-center gap-3">
+                          <div className="h-1 w-8 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full"></div>
+                          <span>Produits dans cette réservation</span>
+                          <span className="ml-auto px-3 py-1 rounded-full bg-blue-100 border border-blue-200 text-blue-700 font-bold text-xs sm:text-sm">
+                            {group.items.length}
+                          </span>
+                        </h4>
+                        <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent mt-2"></div>
+                      </div>
+                      <div className="overflow-x-auto rounded-xl border-2 border-gray-300 bg-white shadow-xl">
+                        <table className="w-full min-w-[600px]">
+                          <thead className="bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600">
+                            <tr>
+                              <th className="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider w-12">
+                                #
+                              </th>
+                              <th className="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                                Produit
+                              </th>
+                              <th className="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider hidden sm:table-cell">
+                                SKU
+                              </th>
+                              <th className="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider w-24">
+                                Quantité
+                              </th>
+                              <th className="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider w-28">
+                                Statut
+                              </th>
+                              <th className="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider hidden lg:table-cell">
+                                Expiration
+                              </th>
+                              <th className="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider w-32">
+                                Actions
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-200 bg-white">
+                            {group.items.map((item, index) => (
+                              <tr
+                                key={item.id}
+                                className={`hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-white transition-all duration-200 group/row ${
+                                  index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
+                                }`}
+                              >
+                                <td className="px-4 py-4 whitespace-nowrap">
+                                  <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-400 via-blue-500 to-indigo-600 border-2 border-blue-300 flex items-center justify-center text-sm font-bold text-white shadow-md group-hover/row:scale-110 group-hover/row:rotate-6 transition-all duration-300">
                                     {index + 1}
                                   </div>
-                                  
-                                  {/* Product Details */}
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                                      <p className="text-sm sm:text-base font-semibold text-gray-900 break-words">
-                                        {item.product.name}
+                                </td>
+                                <td className="px-4 py-4">
+                                  <div className="flex flex-col">
+                                    <p className="text-sm font-bold text-gray-900 group-hover/row:text-blue-700 transition-colors">
+                                      {item.product.name}
+                                    </p>
+                                    {item.product.sku && (
+                                      <p className="text-xs text-gray-500 font-mono mt-1 sm:hidden">
+                                        SKU: {item.product.sku}
                                       </p>
-                                      <span
-                                        className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold border flex-shrink-0 ${getStatusColor(
-                                          item.status
-                                        )}`}
-                                      >
-                                        {getStatusLabel(item.status)}
-                                      </span>
-                                    </div>
-                                    <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm text-gray-600">
-                                      {item.product.sku && (
-                                        <span className="font-mono text-gray-500">
-                                          SKU: {item.product.sku}
-                                        </span>
-                                      )}
-                                      <span className="flex items-center gap-1">
-                                        <PackageIcon className="w-3 h-3" />
-                                        <span className="font-medium">Quantité: <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 ml-1">{item.quantity}</span></span>
-                                      </span>
-                                      {item.expiresAt && (
-                                        <>
-                                          <span className="hidden sm:inline text-gray-400">•</span>
-                                          <span className="flex items-center gap-1">
-                                            <CalendarIcon className="w-3 h-3" />
-                                            <span>Expire: {formatDate(item.expiresAt)}</span>
-                                          </span>
-                                        </>
-                                      )}
-                                    </div>
+                                    )}
+                                    {item.expiresAt && (
+                                      <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-1 lg:hidden">
+                                        <CalendarIcon className="w-3 h-3 text-purple-600" />
+                                        <span>Expire: {formatDate(item.expiresAt)}</span>
+                                      </div>
+                                    )}
                                   </div>
-                                </div>
-
-                                {/* Right side - Actions */}
-                                <div className="flex items-center gap-2 flex-shrink-0 sm:ml-4">
-                                  {(canManage || isAdmin) && item.status === 'RESERVED' && (
-                                    <button
-                                      onClick={() => {
-                                        setSelectedReservation(item);
-                                        setIsUpdateModalOpen(true);
-                                      }}
-                                      className="text-blue-600 hover:text-blue-900 text-xs sm:text-sm px-2 sm:px-3 py-1.5 border border-blue-300 rounded-md hover:bg-blue-50 transition-colors whitespace-nowrap font-medium"
-                                      title="Modifier"
-                                    >
-                                      Modifier
-                                    </button>
+                                </td>
+                                <td className="px-4 py-4 whitespace-nowrap hidden sm:table-cell">
+                                  {item.product.sku ? (
+                                    <span className="px-2.5 py-1 rounded-lg bg-gray-100 border border-gray-200 font-mono text-xs font-semibold text-gray-700">
+                                      {item.product.sku}
+                                    </span>
+                                  ) : (
+                                    <span className="text-xs text-gray-400 italic">-</span>
                                   )}
-                                  {canCancel && item.status === 'RESERVED' && (
-                                    <button
-                                      onClick={() => handleRelease(item.id)}
-                                      className="text-red-600 hover:text-red-900 text-xs sm:text-sm px-2 sm:px-3 py-1.5 border border-red-300 rounded-md hover:bg-red-50 transition-colors whitespace-nowrap font-medium"
-                                      title="Libérer"
-                                    >
-                                      Libérer
-                                    </button>
+                                </td>
+                                <td className="px-4 py-4 whitespace-nowrap text-center">
+                                  <span className="inline-flex items-center justify-center w-12 h-8 rounded-lg text-sm font-extrabold bg-gradient-to-br from-blue-500 to-blue-600 text-white border-2 border-blue-700 shadow-lg">
+                                    {item.quantity}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-4 whitespace-nowrap text-center">
+                                  <span
+                                    className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold border-2 shadow-sm ${getStatusColor(
+                                      item.status
+                                    )}`}
+                                  >
+                                    {getStatusLabel(item.status)}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-4 whitespace-nowrap hidden lg:table-cell">
+                                  {item.expiresAt ? (
+                                    <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                                      <CalendarIcon className="w-3.5 h-3.5 text-purple-600" />
+                                      <span>{formatDate(item.expiresAt)}</span>
+                                    </div>
+                                  ) : (
+                                    <span className="text-xs text-gray-400 italic">-</span>
                                   )}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
+                                </td>
+                                <td className="px-4 py-4 whitespace-nowrap text-center">
+                                  <div className="flex items-center justify-center gap-1.5">
+                                    {(canManage || isAdmin) && item.status === 'RESERVED' && (
+                                      <button
+                                        onClick={() => {
+                                          setSelectedReservation(item);
+                                          setIsUpdateModalOpen(true);
+                                        }}
+                                        className="text-blue-600 hover:text-blue-800 text-xs px-2.5 py-1.5 border-2 border-blue-300 rounded-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 hover:border-blue-400 transition-all duration-200 font-bold shadow-sm hover:shadow-md transform hover:scale-110 active:scale-95 whitespace-nowrap"
+                                        title="Modifier"
+                                      >
+                                        Modifier
+                                      </button>
+                                    )}
+                                    {canCancel && item.status === 'RESERVED' && (
+                                      <button
+                                        onClick={() => handleRelease(item.id)}
+                                        className="text-red-600 hover:text-red-800 text-xs px-2.5 py-1.5 border-2 border-red-300 rounded-lg hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100 hover:border-red-400 transition-all duration-200 font-bold shadow-sm hover:shadow-md transform hover:scale-110 active:scale-95 whitespace-nowrap"
+                                        title="Libérer"
+                                      >
+                                        Libérer
+                                      </button>
+                                    )}
+                                    {(!canManage && !isAdmin && !canCancel) || item.status !== 'RESERVED' ? (
+                                      <span className="text-xs text-gray-400 italic">Aucune action</span>
+                                    ) : null}
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
                   </div>
@@ -985,83 +1038,149 @@ export default function ReservationsPage() {
 
                 {/* Single Item Display (only for groups with one item, always visible) */}
                 {!hasMultipleItems && (
-                  <div className="border-t border-gray-200 bg-gray-50">
-                    <div className="p-4 sm:p-6">
-                      {group.items.map((item) => (
-                        <div key={item.id} className="bg-white rounded-lg p-4 border border-gray-200">
-                          <div className="flex flex-col gap-3">
-                            {/* Product Info */}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex flex-wrap items-start gap-2 mb-3">
-                                <p className="text-sm font-semibold text-gray-900 break-words flex-1 min-w-0">
-                                  {item.product.name}
-                                </p>
-                                <span
-                                  className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-semibold border flex-shrink-0 ${getStatusColor(
-                                    item.status
-                                  )}`}
-                                >
-                                  {getStatusLabel(item.status)}
-                                </span>
-                              </div>
-                              {item.product.sku && (
-                                <p className="text-xs text-gray-500 font-mono break-all mb-2">
-                                  SKU: {item.product.sku}
-                                </p>
-                              )}
-                              <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-600">
-                                <span className="flex items-center gap-1 whitespace-nowrap">
-                                  <PackageIcon className="w-3 h-3 flex-shrink-0" />
-                                  <span className="font-medium">Quantité: {item.quantity}</span>
-                                </span>
-                                {item.expiresAt && (
-                                  <>
-                                    <span className="hidden sm:inline text-gray-400">•</span>
-                                    <span className="flex items-center gap-1 flex-wrap">
-                                      <CalendarIcon className="w-3 h-3 flex-shrink-0" />
-                                      <span className="break-words">Expire: {formatDate(item.expiresAt)}</span>
+                  <div className="border-t-2 border-gray-200 bg-gradient-to-br from-blue-50/50 via-gray-50 to-purple-50/50">
+                    <div className="p-5 sm:p-7">
+                      <div className="mb-4">
+                        <h4 className="text-sm sm:text-base font-bold text-gray-800 mb-2 flex items-center gap-3">
+                          <div className="h-1 w-8 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full"></div>
+                          <span>Détails du produit</span>
+                        </h4>
+                        <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent mt-2"></div>
+                      </div>
+                      <div className="overflow-x-auto rounded-xl border-2 border-gray-300 bg-white shadow-xl">
+                        <table className="w-full min-w-[500px]">
+                          <thead className="bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600">
+                            <tr>
+                              <th className="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                                Produit
+                              </th>
+                              <th className="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider hidden sm:table-cell">
+                                SKU
+                              </th>
+                              <th className="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">
+                                Quantité
+                              </th>
+                              <th className="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">
+                                Statut
+                              </th>
+                              <th className="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider hidden lg:table-cell">
+                                Expiration
+                              </th>
+                              <th className="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">
+                                Actions
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-200 bg-white">
+                            {group.items.map((item, index) => (
+                              <tr
+                                key={item.id}
+                                className={`hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-white transition-all duration-200 ${
+                                  index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
+                                }`}
+                              >
+                                <td className="px-4 py-4">
+                                  <div className="flex flex-col">
+                                    <p className="text-sm font-bold text-gray-900">
+                                      {item.product.name}
+                                    </p>
+                                    {item.product.sku && (
+                                      <p className="text-xs text-gray-500 font-mono mt-1 sm:hidden">
+                                        SKU: {item.product.sku}
+                                      </p>
+                                    )}
+                                    {item.expiresAt && (
+                                      <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-1 lg:hidden">
+                                        <CalendarIcon className="w-3 h-3 text-purple-600" />
+                                        <span>Expire: {formatDate(item.expiresAt)}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="px-4 py-4 whitespace-nowrap hidden sm:table-cell">
+                                  {item.product.sku ? (
+                                    <span className="px-2.5 py-1 rounded-lg bg-gray-100 border border-gray-200 font-mono text-xs font-semibold text-gray-700">
+                                      {item.product.sku}
                                     </span>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-                            {/* Action Buttons */}
-                            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-100">
-                              {(canManage || isAdmin) && item.status === 'RESERVED' && (
-                                <button
-                                  onClick={() => {
-                                    setSelectedReservation(item);
-                                    setIsUpdateModalOpen(true);
-                                  }}
-                                  className="flex-1 min-w-[100px] text-blue-600 hover:text-blue-900 text-xs sm:text-sm px-3 py-2 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors whitespace-nowrap font-medium"
-                                  title="Modifier cette réservation"
-                                >
-                                  Modifier
-                                </button>
-                              )}
-                              {canCancel && item.status === 'RESERVED' && (
-                                <button
-                                  onClick={() => handleRelease(item.id)}
-                                  className="flex-1 min-w-[100px] text-red-600 hover:text-red-900 text-xs sm:text-sm px-3 py-2 border border-red-300 rounded-lg hover:bg-red-50 transition-colors whitespace-nowrap font-medium"
-                                  title="Libérer cette réservation"
-                                >
-                                  Libérer
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                                  ) : (
+                                    <span className="text-xs text-gray-400 italic">-</span>
+                                  )}
+                                </td>
+                                <td className="px-4 py-4 whitespace-nowrap text-center">
+                                  <span className="inline-flex items-center justify-center w-12 h-8 rounded-lg text-sm font-extrabold bg-gradient-to-br from-blue-500 to-blue-600 text-white border-2 border-blue-700 shadow-lg">
+                                    {item.quantity}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-4 whitespace-nowrap text-center">
+                                  <span
+                                    className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold border-2 shadow-sm ${getStatusColor(
+                                      item.status
+                                    )}`}
+                                  >
+                                    {getStatusLabel(item.status)}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-4 whitespace-nowrap hidden lg:table-cell">
+                                  {item.expiresAt ? (
+                                    <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                                      <CalendarIcon className="w-3.5 h-3.5 text-purple-600" />
+                                      <span>{formatDate(item.expiresAt)}</span>
+                                    </div>
+                                  ) : (
+                                    <span className="text-xs text-gray-400 italic">-</span>
+                                  )}
+                                </td>
+                                <td className="px-4 py-4 whitespace-nowrap text-center">
+                                  <div className="flex items-center justify-center gap-1.5">
+                                    {(canManage || isAdmin) && item.status === 'RESERVED' && (
+                                      <button
+                                        onClick={() => {
+                                          setSelectedReservation(item);
+                                          setIsUpdateModalOpen(true);
+                                        }}
+                                        className="text-blue-600 hover:text-blue-800 text-xs px-2.5 py-1.5 border-2 border-blue-300 rounded-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 hover:border-blue-400 transition-all duration-200 font-bold shadow-sm hover:shadow-md transform hover:scale-110 active:scale-95 whitespace-nowrap"
+                                        title="Modifier cette réservation"
+                                      >
+                                        Modifier
+                                      </button>
+                                    )}
+                                    {canCancel && item.status === 'RESERVED' && (
+                                      <button
+                                        onClick={() => handleRelease(item.id)}
+                                        className="text-red-600 hover:text-red-800 text-xs px-2.5 py-1.5 border-2 border-red-300 rounded-lg hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100 hover:border-red-400 transition-all duration-200 font-bold shadow-sm hover:shadow-md transform hover:scale-110 active:scale-95 whitespace-nowrap"
+                                        title="Libérer cette réservation"
+                                      >
+                                        Libérer
+                                      </button>
+                                    )}
+                                    {(!canManage && !isAdmin && !canCancel) || item.status !== 'RESERVED' ? (
+                                      <span className="text-xs text-gray-400 italic">Aucune action</span>
+                                    ) : null}
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   </div>
                 )}
 
                 {/* Notes */}
                 {group.notes && (
-                  <div className="border-t border-gray-200 bg-gray-50 px-6 py-4">
-                    <p className="text-sm text-gray-600 break-words">
-                      <span className="font-semibold text-gray-700">Notes:</span> {group.notes}
-                    </p>
+                  <div className="border-t-2 border-gray-200 bg-gradient-to-r from-amber-50/50 to-yellow-50/50 px-6 py-5">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 h-6 w-6 rounded-lg bg-gradient-to-br from-amber-200 to-amber-300 flex items-center justify-center shadow-sm">
+                        <svg className="w-4 h-4 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-gray-700 mb-1">Notes:</p>
+                        <p className="text-sm text-gray-600 break-words leading-relaxed">{group.notes}</p>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
