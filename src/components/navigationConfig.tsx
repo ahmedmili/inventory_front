@@ -13,6 +13,7 @@ import {
   DashboardIcon,
   ReservationIcon,
   BellIcon,
+  ImportIcon,
 } from './icons';
 
 export interface NavigationItem {
@@ -103,7 +104,7 @@ export const navigationItems: NavigationItem[] = [
   {
     name: 'Opérations',
     icon: <ArrowsIcon />,
-    requirePermissions: ['stock.read', 'purchases.read', 'sales.read'],
+    requirePermissions: ['stock.read', 'purchases.read', 'sales.read', 'imports.read'],
     requireAllPermissions: false,
     children: [
       {
@@ -111,6 +112,13 @@ export const navigationItems: NavigationItem[] = [
         href: '/movements',
         icon: <ArrowsIcon />,
         requirePermissions: ['stock.read'],
+      },
+      {
+        name: 'Importations',
+        href: '/imports',
+        icon: <ImportIcon />,
+        requireRoles: ['ADMIN'],
+        requirePermissions: ['imports.read'],
       },
       // {
       //   name: 'Achats',
