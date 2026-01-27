@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { apiClient } from '@/lib/api';
 import Link from 'next/link';
 import { useToast } from '@/contexts/ToastContext';
@@ -68,13 +69,25 @@ interface ImportsResponse {
 }
 
 export default function ImportsPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [imports, setImports] = useState<Import[]>([]);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(Number(searchParams?.get('page')) || 1);
   const [paginationMeta, setPaginationMeta] = useState<ImportsResponse['meta'] | null>(null);
-  const [supplierFilter, setSupplierFilter] = useState<string>('');
+  const [supplierFilter, setSupplierFilter] = useState<string>(searchParams?.get('supplierId') || '');
   const [suppliers, setSuppliers] = useState<Array<{ id: string; name: string }>>([]);
   const toast = useToast();
+
+  // Update URL when filters or pagination change
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (page > 1) params.set('page', page.toString());
+    if (supplierFilter) params.set('supplierId', supplierFilter);
+    
+    const newUrl = params.toString() ? `?${params.toString()}` : '';
+    router.replace(`/imports${newUrl}`, { scroll: false });
+  }, [page, supplierFilter, router]);
 
   useEffect(() => {
     loadImports();
@@ -150,7 +163,7 @@ export default function ImportsPage() {
               value={supplierFilter}
               onChange={(e) => {
                 setSupplierFilter(e.target.value);
-                setPage(1);
+                setPage(1); // Reset to page 1 when filter changes
               }}
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >

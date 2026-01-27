@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useApi } from '@/hooks/useApi';
 import { apiClient } from '@/lib/api';
 // Layout is handled by (shared)/layout.tsx
@@ -56,13 +56,14 @@ interface ProductsResponse {
 
 export default function ProductsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const toast = useToast();
   const { user } = useAuth();
-  const [page, setPage] = useState(1);
-  const [searchInput, setSearchInput] = useState(''); // Input value (no debounce)
-  const [search, setSearch] = useState(''); // Debounced search value
-  const [sortBy, setSortBy] = useState<string>('createdAt');
-  const [sortOrder, setSortOrder] = useState<SortDirection>('desc');
+  const [page, setPage] = useState(Number(searchParams?.get('page')) || 1);
+  const [searchInput, setSearchInput] = useState(searchParams?.get('search') || ''); // Input value (no debounce)
+  const [search, setSearch] = useState(searchParams?.get('search') || ''); // Debounced search value
+  const [sortBy, setSortBy] = useState<string>(searchParams?.get('sortBy') || 'createdAt');
+  const [sortOrder, setSortOrder] = useState<SortDirection>((searchParams?.get('sortOrder') as SortDirection) || 'desc');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -77,7 +78,7 @@ export default function ProductsPage() {
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
-  const searchParams = useMemo(() => {
+  const apiParams = useMemo(() => {
     const params = new URLSearchParams();
     params.set('page', page.toString());
     params.set('limit', limit.toString());
@@ -89,7 +90,7 @@ export default function ProductsPage() {
     return params.toString();
   }, [page, search, limit, sortBy, sortOrder]);
 
-  const { data, loading, error, mutate } = useApi<ProductsResponse>(`/products?${searchParams}`);
+  const { data, loading, error, mutate } = useApi<ProductsResponse>(`/products?${apiParams}`);
 
   // Debounce search input - wait 500ms after user stops typing
   useEffect(() => {
@@ -100,6 +101,18 @@ export default function ProductsPage() {
 
     return () => clearTimeout(timer);
   }, [searchInput]);
+
+  // Update URL when filters or pagination change
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (page > 1) params.set('page', page.toString());
+    if (search) params.set('search', search);
+    if (sortBy && sortBy !== 'createdAt') params.set('sortBy', sortBy);
+    if (sortOrder && sortOrder !== 'desc') params.set('sortOrder', sortOrder);
+    
+    const newUrl = params.toString() ? `?${params.toString()}` : '';
+    router.replace(`/products${newUrl}`, { scroll: false });
+  }, [page, search, sortBy, sortOrder, router]);
 
   // Écouter les mises à jour de stock en temps réel
   useProductsRealtime(() => {

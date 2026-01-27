@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useApi } from '@/hooks/useApi';
 import Link from 'next/link';
 import Pagination from '@/components/Pagination';
@@ -86,7 +86,18 @@ export default function ProjectsPage() {
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  const searchParams = useMemo(() => {
+  // Synchroniser l'URL avec les filtres et la pagination
+  useEffect(() => {
+    const params = new URLSearchParams();
+    params.set('page', page.toString());
+    params.set('limit', limit.toString());
+    if (search) params.set('search', search);
+    if (statusFilter !== 'all') params.set('status', statusFilter);
+    
+    router.replace(`/projects?${params.toString()}`, { scroll: false });
+  }, [page, search, statusFilter, limit, router]);
+
+  const apiParams = useMemo(() => {
     const params = new URLSearchParams();
     params.set('page', page.toString());
     params.set('limit', limit.toString());
@@ -95,7 +106,7 @@ export default function ProjectsPage() {
     return params.toString();
   }, [page, search, limit, statusFilter]);
 
-  const { data, loading, error, mutate } = useApi<ProjectsResponse>(`/projects?${searchParams}`);
+  const { data, loading, error, mutate } = useApi<ProjectsResponse>(`/projects?${apiParams}`);
 
   const handleSearch = (value: string) => {
     setSearchInput(value); // Mettre à jour immédiatement l'input (sans debounce)

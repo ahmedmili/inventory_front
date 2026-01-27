@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useApi } from '@/hooks/useApi';
+import { useState, useEffect, useMemo } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import RouteGuard from '@/components/guards/RouteGuard';
 import { format } from 'date-fns';
 import Table, { Column } from '@/components/Table';
@@ -12,6 +12,8 @@ import { useToast } from '@/contexts/ToastContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { hasPermission } from '@/lib/permissions';
 import ManualStockAdjustmentModal from '@/components/stock/ManualStockAdjustmentModal';
+import Pagination from '@/components/Pagination';
+import { SkeletonLoader } from '@/components/SkeletonLoader';
 
 interface StockMovement {
   id: string;
@@ -33,31 +35,97 @@ interface StockMovement {
   createdAt: string;
 }
 
+interface MovementsResponse {
+  data: StockMovement[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}
+
 export default function MovementsPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const toast = useToast();
-  const [filter, setFilter] = useState<'all' | 'IN' | 'OUT' | 'ADJUSTMENT'>('all');
-  const [search, setSearch] = useState('');
-  const [startDate, setStartDate] = useState<string>('');
-  const [endDate, setEndDate] = useState<string>('');
+  
+  // Initialize state from URL params
+  const [filter, setFilter] = useState<'all' | 'IN' | 'OUT' | 'ADJUSTMENT'>(
+    (searchParams?.get('type') as 'all' | 'IN' | 'OUT' | 'ADJUSTMENT') || 'all'
+  );
+  const [searchInput, setSearchInput] = useState(searchParams?.get('search') || ''); // Input value (no debounce)
+  const [search, setSearch] = useState(searchParams?.get('search') || ''); // Debounced search value
+  const [startDate, setStartDate] = useState<string>(searchParams?.get('startDate') || '');
+  const [endDate, setEndDate] = useState<string>(searchParams?.get('endDate') || '');
   const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState(false);
+  const [movements, setMovements] = useState<StockMovement[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(Number(searchParams?.get('page')) || 1);
+  const [paginationMeta, setPaginationMeta] = useState<MovementsResponse['meta'] | null>(null);
 
   const canCreateStock = hasPermission(user, 'stock.create');
 
-  const queryParams = new URLSearchParams();
-  if (filter !== 'all') {
-    queryParams.set('type', filter);
-  }
-  if (startDate) {
-    queryParams.set('startDate', startDate);
-  }
-  if (endDate) {
-    queryParams.set('endDate', endDate);
-  }
+  // Debounce search: wait 500ms after user stops typing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(searchInput);
+      setPage(1); // Reset to page 1 when search changes
+    }, 500);
 
-  const { data: movements, loading, error, mutate } = useApi<StockMovement[]>(
-    `/stock-movements?${queryParams.toString()}`
-  );
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  // Update URL when filters or pagination change
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (page > 1) params.set('page', page.toString());
+    if (filter !== 'all') params.set('type', filter);
+    if (search) params.set('search', search);
+    if (startDate) params.set('startDate', startDate);
+    if (endDate) params.set('endDate', endDate);
+    
+    const newUrl = params.toString() ? `?${params.toString()}` : '';
+    router.replace(`/movements${newUrl}`, { scroll: false });
+  }, [page, filter, search, startDate, endDate, router]);
+
+  useEffect(() => {
+    loadMovements();
+  }, [page, filter, search, startDate, endDate]);
+
+  const loadMovements = async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: '20',
+      });
+      if (filter !== 'all') {
+        params.set('type', filter);
+      }
+      if (search) {
+        params.set('search', search);
+      }
+      if (startDate) {
+        params.set('startDate', startDate);
+      }
+      if (endDate) {
+        params.set('endDate', endDate);
+      }
+      const response = await apiClient.get(`/stock-movements?${params.toString()}`);
+      const data: MovementsResponse = response.data;
+      setMovements(data.data || []);
+      setPaginationMeta(data.meta || null);
+    } catch (error: any) {
+      console.error('Failed to load movements:', error);
+      toast.error('Erreur lors du chargement des mouvements');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getTypeColor = (type: string) => {
     const colors: Record<string, string> = {
@@ -95,20 +163,8 @@ export default function MovementsPage() {
     return null;
   };
 
-  // Filter movements by search term
-  const filteredMovements = movements?.filter((movement) => {
-    if (!search) return true;
-    const searchLower = search.toLowerCase();
-    return (
-      movement.product.name.toLowerCase().includes(searchLower) ||
-      movement.product.sku?.toLowerCase().includes(searchLower) ||
-      movement.user?.firstName.toLowerCase().includes(searchLower) ||
-      movement.user?.lastName.toLowerCase().includes(searchLower) ||
-      movement.user?.email.toLowerCase().includes(searchLower) ||
-      movement.reason?.toLowerCase().includes(searchLower) ||
-      movement.reference?.toLowerCase().includes(searchLower)
-    );
-  }) || [];
+  // No client-side filtering needed - search is done server-side
+  const filteredMovements = movements;
 
   const columns: Column<StockMovement>[] = [
     {
@@ -233,9 +289,9 @@ export default function MovementsPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h2 className="text-2xl font-bold text-gray-900">Mouvements de stock</h2>
-              {movements && (
+              {paginationMeta && (
                 <p className="mt-1 text-sm text-gray-500">
-                  {filteredMovements.length} mouvement{filteredMovements.length !== 1 ? 's' : ''}
+                  {paginationMeta.total} mouvement{paginationMeta.total !== 1 ? 's' : ''}
                 </p>
               )}
             </div>
@@ -267,13 +323,17 @@ export default function MovementsPage() {
               <input
                 type="text"
                 placeholder="Rechercher par produit, utilisateur..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
                 className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
               />
-              {search && (
+              {searchInput && (
                 <button
-                  onClick={() => setSearch('')}
+                  onClick={() => {
+                    setSearchInput('');
+                    setSearch('');
+                    setPage(1);
+                  }}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                 >
                   <CloseIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
@@ -287,7 +347,7 @@ export default function MovementsPage() {
                 value={filter}
                 onChange={(e) => {
                   setFilter(e.target.value as any);
-                  mutate?.();
+                  setPage(1);
                 }}
                 className="block w-full sm:w-auto px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all bg-white"
               >
@@ -310,7 +370,7 @@ export default function MovementsPage() {
                   value={startDate}
                   onChange={(e) => {
                     setStartDate(e.target.value);
-                    mutate?.();
+                    setPage(1);
                   }}
                   className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
                 />
@@ -322,7 +382,7 @@ export default function MovementsPage() {
                   value={endDate}
                   onChange={(e) => {
                     setEndDate(e.target.value);
-                    mutate?.();
+                    setPage(1);
                   }}
                   className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
                 />
@@ -333,7 +393,7 @@ export default function MovementsPage() {
                     onClick={() => {
                       setStartDate('');
                       setEndDate('');
-                      mutate?.();
+                      setPage(1);
                     }}
                     className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900"
                     title="Effacer les dates"
@@ -347,10 +407,8 @@ export default function MovementsPage() {
         </div>
 
         {/* Table */}
-        {error ? (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-red-800">Échec du chargement des mouvements. Veuillez réessayer.</p>
-          </div>
+        {loading && movements.length === 0 ? (
+          <SkeletonLoader />
         ) : (
           <>
             <Table
@@ -359,6 +417,18 @@ export default function MovementsPage() {
               loading={loading}
               emptyMessage="Aucun mouvement de stock trouvé"
             />
+            {/* Pagination */}
+            {paginationMeta && paginationMeta.totalPages > 1 && (
+              <div className="mt-6">
+                <Pagination
+                  currentPage={page}
+                  totalPages={paginationMeta.totalPages}
+                  onPageChange={setPage}
+                  hasNext={paginationMeta.hasNext}
+                  hasPrev={paginationMeta.hasPrev}
+                />
+              </div>
+            )}
           </>
         )}
 
@@ -368,7 +438,7 @@ export default function MovementsPage() {
             isOpen={isAdjustmentModalOpen}
             onClose={() => setIsAdjustmentModalOpen(false)}
             onSuccess={() => {
-              mutate?.();
+              loadMovements();
             }}
           />
         )}

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useMemo } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { hasPermission, getUserRoleCode } from '@/lib/permissions';
@@ -87,15 +87,16 @@ interface User {
 
 export default function ReservationsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
   const toast = useToast();
   const [reservations, setReservations] = useState<ReservationGroup[]>([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [projectFilter, setProjectFilter] = useState<string>('all');
-  const [productFilter, setProductFilter] = useState<string>('all');
-  const [userFilter, setUserFilter] = useState<string>('all');
-  const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState<string>(searchParams?.get('status') || 'all');
+  const [projectFilter, setProjectFilter] = useState<string>(searchParams?.get('projectId') || 'all');
+  const [productFilter, setProductFilter] = useState<string>(searchParams?.get('productId') || 'all');
+  const [userFilter, setUserFilter] = useState<string>(searchParams?.get('userId') || 'all');
+  const [page, setPage] = useState(Number(searchParams?.get('page')) || 1);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [paginationMeta, setPaginationMeta] = useState<ReservationsResponse['meta'] | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -133,6 +134,21 @@ export default function ReservationsPage() {
       loadReservations();
     }
   }, [user, authLoading]);
+
+  // Synchroniser l'URL avec les filtres et la pagination
+  useEffect(() => {
+    if (!user) return;
+    
+    const params = new URLSearchParams();
+    params.set('page', page.toString());
+    params.set('limit', limit.toString());
+    if (statusFilter !== 'all') params.set('status', statusFilter);
+    if (projectFilter !== 'all') params.set('projectId', projectFilter);
+    if (productFilter !== 'all') params.set('productId', productFilter);
+    if (isAdmin && userFilter !== 'all') params.set('userId', userFilter);
+    
+    router.replace(`/reservations?${params.toString()}`, { scroll: false });
+  }, [page, statusFilter, projectFilter, productFilter, userFilter, isAdmin, limit, router, user]);
 
   useEffect(() => {
     if (user) {
