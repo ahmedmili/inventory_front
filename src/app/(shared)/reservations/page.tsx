@@ -12,98 +12,20 @@ import Pagination from '@/components/Pagination';
 import { useReservationsRealtime } from '@/hooks/useReservationsRealtime';
 import UpdateReservationModal from '@/components/reservations/UpdateReservationModal';
 import UpdateGroupReservationModal from '@/components/reservations/UpdateGroupReservationModal';
-
-// Icons as SVG components
-const CalendarIcon = ({ className = 'w-5 h-5' }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-  </svg>
-);
-
-const PackageIcon = ({ className = 'w-5 h-5' }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-  </svg>
-);
-
-const UserIcon = ({ className = 'w-5 h-5' }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-  </svg>
-);
-
-const ProjectIcon = ({ className = 'w-5 h-5' }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-  </svg>
-);
-
-const ChevronDownIcon = ({ className = 'w-5 h-5' }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-  </svg>
-);
-
-const ChevronUpIcon = ({ className = 'w-5 h-5' }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-  </svg>
-);
-
-const PlusIcon = ({ className = 'w-5 h-5' }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-  </svg>
-);
-
-interface ReservationItem {
-  id: string;
-  quantity: number;
-  status: string;
-  expiresAt?: string;
-  createdAt: string;
-  product: {
-    id: string;
-    name: string;
-    sku?: string;
-  };
-  project?: {
-    id: string;
-    name: string;
-  };
-  notes?: string;
-}
-
-interface ReservationGroup {
-  groupId: string;
-  createdAt: string;
-  status: string;
-  expiresAt?: string;
-  project?: {
-    id: string;
-    name: string;
-  };
-  notes?: string;
-  items: ReservationItem[];
-  totalItems: number;
-  user?: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-}
+import { CalendarIcon, PackageIcon, PlusIcon } from '@/components/icons';
+import StatisticsCard from '@/components/ui/StatisticsCard';
+import PageHeader from '@/components/ui/PageHeader';
+import SelectFilter from '@/components/ui/SelectFilter';
+import SearchFilter from '@/components/ui/SearchFilter';
+import ReservationCard from '@/components/reservations/ReservationCard';
+import ReservationProductsTable from '@/components/reservations/ReservationProductsTable';
+import { useUrlSync } from '@/hooks/useUrlSync';
+import { UserIcon, ProjectIcon } from '@/components/icons';
+import type { ReservationItem, ReservationGroup, PaginationMeta } from '@/types/shared';
 
 interface ReservationsResponse {
   data: ReservationGroup[];
-  meta: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-    hasNext: boolean;
-    hasPrev: boolean;
-  };
+  meta: PaginationMeta;
 }
 
 interface Project {
@@ -174,20 +96,6 @@ export default function ReservationsPage() {
     }
   }, [user, authLoading]);
 
-  // Synchroniser l'URL avec les filtres et la pagination
-  useEffect(() => {
-    if (!user) return;
-    
-    const params = new URLSearchParams();
-    params.set('page', page.toString());
-    params.set('limit', limit.toString());
-    if (statusFilter !== 'all') params.set('status', statusFilter);
-    if (projectFilter !== 'all') params.set('projectId', projectFilter);
-    if (productFilter !== 'all') params.set('productId', productFilter);
-    if (isAdmin && userFilter !== 'all') params.set('userId', userFilter);
-    
-    router.replace(`/reservations?${params.toString()}`, { scroll: false });
-  }, [page, statusFilter, projectFilter, productFilter, userFilter, isAdmin, limit, router, user]);
 
   useEffect(() => {
     if (user) {
@@ -383,6 +291,7 @@ export default function ReservationsPage() {
     });
   };
 
+  // Status helpers - using StatusBadge component now, but keeping for backward compatibility
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       RESERVED: 'bg-blue-100 text-blue-800 border-blue-200',
@@ -468,70 +377,49 @@ export default function ReservationsPage() {
       {/* Statistics Cards */}
       {reservations.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <div className="bg-gradient-to-br from-blue-50 via-blue-50 to-blue-100 rounded-xl p-4 sm:p-5 border border-blue-200 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
-            <div className="flex items-center justify-between">
-              <div className="min-w-0 flex-1">
-                <p className="text-xs sm:text-sm font-medium text-blue-600 truncate">Total Réservations</p>
-                <p className="text-xl sm:text-2xl font-bold text-blue-900 mt-1">{totalReservations}</p>
-              </div>
-              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-gradient-to-br from-blue-200 to-blue-300 rounded-xl flex items-center justify-center flex-shrink-0 ml-2 shadow-sm">
-                <CalendarIcon className="w-5 h-5 sm:w-6 sm:h-6 text-blue-700" />
-              </div>
-            </div>
-          </div>
-          <div className="bg-gradient-to-br from-green-50 via-green-50 to-green-100 rounded-xl p-4 sm:p-5 border border-green-200 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
-            <div className="flex items-center justify-between">
-              <div className="min-w-0 flex-1">
-                <p className="text-xs sm:text-sm font-medium text-green-600 truncate">Produits Réservés</p>
-                <p className="text-xl sm:text-2xl font-bold text-green-900 mt-1">{totalProducts}</p>
-              </div>
-              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-gradient-to-br from-green-200 to-green-300 rounded-xl flex items-center justify-center flex-shrink-0 ml-2 shadow-sm">
-                <PackageIcon className="w-5 h-5 sm:w-6 sm:h-6 text-green-700" />
-              </div>
-            </div>
-          </div>
-          <div className="bg-gradient-to-br from-purple-50 via-purple-50 to-purple-100 rounded-xl p-4 sm:p-5 border border-purple-200 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
-            <div className="flex items-center justify-between">
-              <div className="min-w-0 flex-1">
-                <p className="text-xs sm:text-sm font-medium text-purple-600 truncate">En Attente</p>
-                <p className="text-xl sm:text-2xl font-bold text-purple-900 mt-1">{reservedCount}</p>
-              </div>
-              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-gradient-to-br from-purple-200 to-purple-300 rounded-xl flex items-center justify-center flex-shrink-0 ml-2 shadow-sm">
-                <CalendarIcon className="w-5 h-5 sm:w-6 sm:h-6 text-purple-700" />
-              </div>
-            </div>
-          </div>
-          <div className="bg-gradient-to-br from-orange-50 via-orange-50 to-orange-100 rounded-xl p-4 sm:p-5 border border-orange-200 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
-            <div className="flex items-center justify-between">
-              <div className="min-w-0 flex-1">
-                <p className="text-xs sm:text-sm font-medium text-orange-600 truncate">Remplies</p>
-                <p className="text-xl sm:text-2xl font-bold text-orange-900 mt-1">{fulfilledCount}</p>
-              </div>
-              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-gradient-to-br from-orange-200 to-orange-300 rounded-xl flex items-center justify-center flex-shrink-0 ml-2 shadow-sm">
-                <PackageIcon className="w-5 h-5 sm:w-6 sm:h-6 text-orange-700" />
-              </div>
-            </div>
-          </div>
+          <StatisticsCard
+            title="Total Réservations"
+            value={totalReservations}
+            icon={<CalendarIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
+            colorScheme="blue"
+          />
+          <StatisticsCard
+            title="Produits Réservés"
+            value={totalProducts}
+            icon={<PackageIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
+            colorScheme="green"
+          />
+          <StatisticsCard
+            title="En Attente"
+            value={reservedCount}
+            icon={<CalendarIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
+            colorScheme="purple"
+          />
+          <StatisticsCard
+            title="Remplies"
+            value={fulfilledCount}
+            icon={<PackageIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
+            colorScheme="orange"
+          />
         </div>
       )}
 
       {/* Filters */}
       <div className="bg-white rounded-xl shadow-md border border-gray-200 p-4 sm:p-5 hover:shadow-lg transition-shadow duration-200">
         <div className={`grid grid-cols-1 sm:grid-cols-2 ${isAdmin ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-3 sm:gap-4`}>
-          <div>
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Statut</label>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 sm:py-2.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="all">Tous</option>
-              <option value="RESERVED">Réservé</option>
-              <option value="FULFILLED">Rempli</option>
-              <option value="RELEASED">Libéré</option>
-              <option value="CANCELLED">Annulé</option>
-            </select>
-          </div>
+          <SelectFilter
+            label="Statut"
+            value={statusFilter}
+            onChange={setStatusFilter}
+            options={[
+              { value: 'RESERVED', label: 'Réservé' },
+              { value: 'FULFILLED', label: 'Rempli' },
+              { value: 'RELEASED', label: 'Libéré' },
+              { value: 'CANCELLED', label: 'Annulé' },
+            ]}
+            placeholder="Tous"
+            showClear={statusFilter !== 'all'}
+          />
 
           {/* Project Autocomplete */}
           <div className="relative">
@@ -754,436 +642,72 @@ export default function ReservationsPage() {
             const daysAgo = Math.floor((new Date().getTime() - new Date(group.createdAt).getTime()) / (1000 * 60 * 60 * 24));
 
             return (
-              <div
+              <ReservationCard
                 key={group.groupId}
-                className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 hover:shadow-2xl hover:border-blue-400 transition-all duration-300 overflow-hidden transform hover:-translate-y-1 group"
-              >
-                {/* Group Header */}
-                <div className="p-5 sm:p-7 bg-gradient-to-br from-white via-blue-50/30 to-gray-50 border-b border-gray-100">
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                    <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
-                      {/* Icon */}
-                      <div className="flex-shrink-0">
-                        <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 flex items-center justify-center shadow-xl ring-4 ring-blue-100 group-hover:ring-blue-200 transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                          <CalendarIcon className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
-                        </div>
-                      </div>
-
-                      {/* Main Info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3">
-                          <h3 className="text-lg sm:text-xl font-bold text-gray-900 break-words">
-                            Réservation #{group.groupId.slice(-8)}
-                          </h3>
-                          <span
-                            className={`inline-flex items-center px-3 sm:px-4 py-1.5 rounded-xl text-xs font-bold border-2 shadow-md flex-shrink-0 ${getStatusColor(
-                              group.status
-                            )}`}
-                          >
-                            {getStatusLabel(group.status)}
-                          </span>
-                        </div>
-
-                        {/* Metadata */}
-                        <div className="flex flex-wrap items-center gap-3 sm:gap-5 text-xs sm:text-sm">
-                          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 border border-blue-100">
-                            <div className="h-5 w-5 rounded-lg bg-gradient-to-br from-blue-200 to-blue-300 flex items-center justify-center flex-shrink-0 shadow-sm">
-                              <PackageIcon className="w-3 h-3 text-blue-700" />
-                            </div>
-                            <span className="font-semibold text-gray-700 whitespace-nowrap">{group.totalItems} produit{group.totalItems > 1 ? 's' : ''}</span>
-                          </div>
-                          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-purple-50 border border-purple-100">
-                            <div className="h-5 w-5 rounded-lg bg-gradient-to-br from-purple-200 to-purple-300 flex items-center justify-center flex-shrink-0 shadow-sm">
-                              <CalendarIcon className="w-3 h-3 text-purple-700" />
-                            </div>
-                            <span className="font-medium text-gray-700 whitespace-nowrap">{formatDate(group.createdAt)}</span>
-                            {daysAgo >= 0 && daysAgo <= 7 && (
-                              <span className="ml-1 text-xs text-gray-500 whitespace-nowrap">({daysAgo === 0 ? "Aujourd'hui" : `Il y a ${daysAgo} jour${daysAgo > 1 ? 's' : ''}`})</span>
-                            )}
-                          </div>
-                          {isAdmin && group.user && (
-                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-50 border border-green-100 min-w-0">
-                              <div className="h-5 w-5 rounded-lg bg-gradient-to-br from-green-200 to-green-300 flex items-center justify-center flex-shrink-0 shadow-sm">
-                                <UserIcon className="w-3 h-3 text-green-700" />
-                              </div>
-                              <span className="font-medium text-gray-700 truncate max-w-[120px] sm:max-w-[200px] md:max-w-none">
-                                {group.user.firstName} {group.user.lastName}
-                              </span>
-                            </div>
-                          )}
-                          {group.project && (
-                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-orange-50 border border-orange-100 min-w-0">
-                              <div className="h-5 w-5 rounded-lg bg-gradient-to-br from-orange-200 to-orange-300 flex items-center justify-center flex-shrink-0 shadow-sm">
-                                <ProjectIcon className="w-3 h-3 text-orange-700" />
-                              </div>
-                              <span className="font-medium text-gray-700 truncate max-w-[150px] sm:max-w-[250px] md:max-w-none">{group.project.name}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex flex-wrap items-center gap-2 flex-shrink-0 sm:ml-auto">
-                      {(canManage || isAdmin) && allReserved && (
-                        <button
-                          onClick={() => {
-                            setSelectedGroup(group);
-                            setIsUpdateGroupModalOpen(true);
-                          }}
-                          className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 border border-blue-300 rounded-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 text-blue-600 hover:text-blue-900 transition-all duration-200 text-xs sm:text-sm font-semibold shadow-sm hover:shadow-md transform hover:scale-105"
-                          title="Modifier le groupe de réservations"
-                        >
-                          <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                          <span className="hidden sm:inline">Modifier</span>
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleDownloadGroupPDF(group.groupId)}
-                        className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 border border-blue-300 rounded-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 text-blue-600 hover:text-blue-900 transition-all duration-200 text-xs sm:text-sm font-semibold shadow-sm hover:shadow-md transform hover:scale-105"
-                        title="Télécharger le PDF du groupe"
-                      >
-                        <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        <span className="hidden sm:inline">PDF</span>
-                      </button>
-                      {/* Collapse/Expand Button - Always visible for groups with multiple items */}
-                      {hasMultipleItems && (
-                        <button
-                          onClick={() => toggleGroup(group.groupId)}
-                          className="inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 border-2 border-gray-300 rounded-xl hover:border-blue-400 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-blue-50 hover:to-blue-100 text-gray-700 hover:text-blue-700 transition-all duration-300 text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transform hover:scale-110 active:scale-95"
-                          title={isExpanded ? 'Masquer les détails' : 'Voir les détails des produits'}
-                        >
-                          <ChevronDownIcon
-                            className={`w-4 h-4 sm:w-5 sm:h-5 transition-all duration-300 ${isExpanded ? 'rotate-180' : ''}`}
-                          />
-                          <span className="hidden sm:inline">{isExpanded ? 'Masquer' : 'Voir les détails'}</span>
-                          <span className="sm:hidden">{isExpanded ? 'Masquer' : 'Voir'}</span>
-                        </button>
-                      )}
-                      {canCancel && allReserved && (
-                        <button
-                          onClick={() => {
-                            if (confirm('Êtes-vous sûr de vouloir libérer toutes les réservations de ce groupe ?')) {
-                              Promise.all(
-                                group.items.map(item => 
-                                  apiClient.patch(`/reservations/${item.id}/release`, {
-                                    notes: 'Libéré par l\'utilisateur',
-                                  })
-                                )
-                              ).then(() => {
-                                toast.success('Toutes les réservations libérées avec succès');
-                                loadReservations();
-                              }).catch((error: any) => {
-                                toast.error('Erreur lors de la libération');
-                                console.error(error);
-                              });
-                            }
-                          }}
-                          className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 border border-red-300 rounded-lg hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100 text-red-600 hover:text-red-900 transition-all duration-200 text-xs sm:text-sm font-semibold shadow-sm hover:shadow-md transform hover:scale-105"
-                          title="Libérer toutes les réservations de ce groupe"
-                        >
-                          <span className="hidden sm:inline">Libérer tout</span>
-                          <span className="sm:hidden">Libérer</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Group Items - Expanded View (only shown when expanded) */}
-                {isExpanded && hasMultipleItems && (
-                  <div className="border-t-2 border-gray-200 bg-gradient-to-br from-blue-50/50 via-gray-50 to-purple-50/50 overflow-hidden">
-                    <div className="p-5 sm:p-7 animate-in slide-in-from-top-2 duration-300">
-                      <div className="mb-6">
-                        <h4 className="text-sm sm:text-base font-bold text-gray-800 mb-2 flex items-center gap-3">
-                          <div className="h-1 w-8 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full"></div>
-                          <span>Produits dans cette réservation</span>
-                          <span className="ml-auto px-3 py-1 rounded-full bg-blue-100 border border-blue-200 text-blue-700 font-bold text-xs sm:text-sm">
-                            {group.items.length}
-                          </span>
-                        </h4>
-                        <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent mt-2"></div>
-                      </div>
-                      <div className="overflow-x-auto rounded-xl border-2 border-gray-300 bg-white shadow-xl">
-                        <table className="w-full min-w-[600px]">
-                          <thead className="bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600">
-                            <tr>
-                              <th className="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider w-12">
-                                #
-                              </th>
-                              <th className="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
-                                Produit
-                              </th>
-                              <th className="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider hidden sm:table-cell">
-                                SKU
-                              </th>
-                              <th className="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider w-24">
-                                Quantité
-                              </th>
-                              <th className="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider w-28">
-                                Statut
-                              </th>
-                              <th className="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider hidden lg:table-cell">
-                                Expiration
-                              </th>
-                              <th className="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider w-32">
-                                Actions
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-gray-200 bg-white">
-                            {group.items.map((item, index) => (
-                              <tr
-                                key={item.id}
-                                className={`hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-white transition-all duration-200 group/row ${
-                                  index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
-                                }`}
-                              >
-                                <td className="px-4 py-4 whitespace-nowrap">
-                                  <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-400 via-blue-500 to-indigo-600 border-2 border-blue-300 flex items-center justify-center text-sm font-bold text-white shadow-md group-hover/row:scale-110 group-hover/row:rotate-6 transition-all duration-300">
-                                    {index + 1}
-                                  </div>
-                                </td>
-                                <td className="px-4 py-4">
-                                  <div className="flex flex-col">
-                                    <p className="text-sm font-bold text-gray-900 group-hover/row:text-blue-700 transition-colors">
-                                      {item.product.name}
-                                    </p>
-                                    {item.product.sku && (
-                                      <p className="text-xs text-gray-500 font-mono mt-1 sm:hidden">
-                                        SKU: {item.product.sku}
-                                      </p>
-                                    )}
-                                    {item.expiresAt && (
-                                      <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-1 lg:hidden">
-                                        <CalendarIcon className="w-3 h-3 text-purple-600" />
-                                        <span>Expire: {formatDate(item.expiresAt)}</span>
-                                      </div>
-                                    )}
-                                  </div>
-                                </td>
-                                <td className="px-4 py-4 whitespace-nowrap hidden sm:table-cell">
-                                  {item.product.sku ? (
-                                    <span className="px-2.5 py-1 rounded-lg bg-gray-100 border border-gray-200 font-mono text-xs font-semibold text-gray-700">
-                                      {item.product.sku}
-                                    </span>
-                                  ) : (
-                                    <span className="text-xs text-gray-400 italic">-</span>
-                                  )}
-                                </td>
-                                <td className="px-4 py-4 whitespace-nowrap text-center">
-                                  <span className="inline-flex items-center justify-center w-12 h-8 rounded-lg text-sm font-extrabold bg-gradient-to-br from-blue-500 to-blue-600 text-white border-2 border-blue-700 shadow-lg">
-                                    {item.quantity}
-                                  </span>
-                                </td>
-                                <td className="px-4 py-4 whitespace-nowrap text-center">
-                                  <span
-                                    className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold border-2 shadow-sm ${getStatusColor(
-                                      item.status
-                                    )}`}
-                                  >
-                                    {getStatusLabel(item.status)}
-                                  </span>
-                                </td>
-                                <td className="px-4 py-4 whitespace-nowrap hidden lg:table-cell">
-                                  {item.expiresAt ? (
-                                    <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                                      <CalendarIcon className="w-3.5 h-3.5 text-purple-600" />
-                                      <span>{formatDate(item.expiresAt)}</span>
-                                    </div>
-                                  ) : (
-                                    <span className="text-xs text-gray-400 italic">-</span>
-                                  )}
-                                </td>
-                                <td className="px-4 py-4 whitespace-nowrap text-center">
-                                  <div className="flex items-center justify-center gap-1.5">
-                                    {(canManage || isAdmin) && item.status === 'RESERVED' && (
-                                      <button
-                                        onClick={() => {
-                                          setSelectedReservation(item);
-                                          setIsUpdateModalOpen(true);
-                                        }}
-                                        className="text-blue-600 hover:text-blue-800 text-xs px-2.5 py-1.5 border-2 border-blue-300 rounded-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 hover:border-blue-400 transition-all duration-200 font-bold shadow-sm hover:shadow-md transform hover:scale-110 active:scale-95 whitespace-nowrap"
-                                        title="Modifier"
-                                      >
-                                        Modifier
-                                      </button>
-                                    )}
-                                    {canCancel && item.status === 'RESERVED' && (
-                                      <button
-                                        onClick={() => handleRelease(item.id)}
-                                        className="text-red-600 hover:text-red-800 text-xs px-2.5 py-1.5 border-2 border-red-300 rounded-lg hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100 hover:border-red-400 transition-all duration-200 font-bold shadow-sm hover:shadow-md transform hover:scale-110 active:scale-95 whitespace-nowrap"
-                                        title="Libérer"
-                                      >
-                                        Libérer
-                                      </button>
-                                    )}
-                                    {(!canManage && !isAdmin && !canCancel) || item.status !== 'RESERVED' ? (
-                                      <span className="text-xs text-gray-400 italic">Aucune action</span>
-                                    ) : null}
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Single Item Display (only for groups with one item, always visible) */}
-                {!hasMultipleItems && (
-                  <div className="border-t-2 border-gray-200 bg-gradient-to-br from-blue-50/50 via-gray-50 to-purple-50/50">
+                group={group}
+                isExpanded={isExpanded}
+                onToggle={() => toggleGroup(group.groupId)}
+                onUpdateGroup={allReserved && (canManage || isAdmin) ? () => {
+                  setSelectedGroup(group);
+                  setIsUpdateGroupModalOpen(true);
+                } : undefined}
+                onDownloadPDF={() => handleDownloadGroupPDF(group.groupId)}
+                onRelease={canCancel && allReserved ? () => {
+                  if (confirm('Êtes-vous sûr de vouloir libérer toutes les réservations de ce groupe ?')) {
+                    Promise.all(
+                      group.items.map(item => 
+                        apiClient.patch(`/reservations/${item.id}/release`, {
+                          notes: 'Libéré par l\'utilisateur',
+                        })
+                      )
+                    ).then(() => {
+                      toast.success('Toutes les réservations libérées avec succès');
+                      loadReservations();
+                    }).catch((error: any) => {
+                      toast.error('Erreur lors de la libération');
+                      console.error(error);
+                    });
+                  }
+                } : undefined}
+                canManage={canManage}
+                canCancel={canCancel}
+                isAdmin={isAdmin}
+                formatDate={formatDate}
+                daysAgo={daysAgo}
+                expandedContent={
+                  isExpanded && hasMultipleItems ? (
                     <div className="p-5 sm:p-7">
-                      <div className="mb-4">
-                        <h4 className="text-sm sm:text-base font-bold text-gray-800 mb-2 flex items-center gap-3">
-                          <div className="h-1 w-8 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full"></div>
-                          <span>Détails du produit</span>
-                        </h4>
-                        <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent mt-2"></div>
-                      </div>
-                      <div className="overflow-x-auto rounded-xl border-2 border-gray-300 bg-white shadow-xl">
-                        <table className="w-full min-w-[500px]">
-                          <thead className="bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600">
-                            <tr>
-                              <th className="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
-                                Produit
-                              </th>
-                              <th className="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider hidden sm:table-cell">
-                                SKU
-                              </th>
-                              <th className="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">
-                                Quantité
-                              </th>
-                              <th className="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">
-                                Statut
-                              </th>
-                              <th className="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider hidden lg:table-cell">
-                                Expiration
-                              </th>
-                              <th className="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">
-                                Actions
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-gray-200 bg-white">
-                            {group.items.map((item, index) => (
-                              <tr
-                                key={item.id}
-                                className={`hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-white transition-all duration-200 ${
-                                  index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
-                                }`}
-                              >
-                                <td className="px-4 py-4">
-                                  <div className="flex flex-col">
-                                    <p className="text-sm font-bold text-gray-900">
-                                      {item.product.name}
-                                    </p>
-                                    {item.product.sku && (
-                                      <p className="text-xs text-gray-500 font-mono mt-1 sm:hidden">
-                                        SKU: {item.product.sku}
-                                      </p>
-                                    )}
-                                    {item.expiresAt && (
-                                      <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-1 lg:hidden">
-                                        <CalendarIcon className="w-3 h-3 text-purple-600" />
-                                        <span>Expire: {formatDate(item.expiresAt)}</span>
-                                      </div>
-                                    )}
-                                  </div>
-                                </td>
-                                <td className="px-4 py-4 whitespace-nowrap hidden sm:table-cell">
-                                  {item.product.sku ? (
-                                    <span className="px-2.5 py-1 rounded-lg bg-gray-100 border border-gray-200 font-mono text-xs font-semibold text-gray-700">
-                                      {item.product.sku}
-                                    </span>
-                                  ) : (
-                                    <span className="text-xs text-gray-400 italic">-</span>
-                                  )}
-                                </td>
-                                <td className="px-4 py-4 whitespace-nowrap text-center">
-                                  <span className="inline-flex items-center justify-center w-12 h-8 rounded-lg text-sm font-extrabold bg-gradient-to-br from-blue-500 to-blue-600 text-white border-2 border-blue-700 shadow-lg">
-                                    {item.quantity}
-                                  </span>
-                                </td>
-                                <td className="px-4 py-4 whitespace-nowrap text-center">
-                                  <span
-                                    className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold border-2 shadow-sm ${getStatusColor(
-                                      item.status
-                                    )}`}
-                                  >
-                                    {getStatusLabel(item.status)}
-                                  </span>
-                                </td>
-                                <td className="px-4 py-4 whitespace-nowrap hidden lg:table-cell">
-                                  {item.expiresAt ? (
-                                    <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                                      <CalendarIcon className="w-3.5 h-3.5 text-purple-600" />
-                                      <span>{formatDate(item.expiresAt)}</span>
-                                    </div>
-                                  ) : (
-                                    <span className="text-xs text-gray-400 italic">-</span>
-                                  )}
-                                </td>
-                                <td className="px-4 py-4 whitespace-nowrap text-center">
-                                  <div className="flex items-center justify-center gap-1.5">
-                                    {(canManage || isAdmin) && item.status === 'RESERVED' && (
-                                      <button
-                                        onClick={() => {
-                                          setSelectedReservation(item);
-                                          setIsUpdateModalOpen(true);
-                                        }}
-                                        className="text-blue-600 hover:text-blue-800 text-xs px-2.5 py-1.5 border-2 border-blue-300 rounded-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 hover:border-blue-400 transition-all duration-200 font-bold shadow-sm hover:shadow-md transform hover:scale-110 active:scale-95 whitespace-nowrap"
-                                        title="Modifier cette réservation"
-                                      >
-                                        Modifier
-                                      </button>
-                                    )}
-                                    {canCancel && item.status === 'RESERVED' && (
-                                      <button
-                                        onClick={() => handleRelease(item.id)}
-                                        className="text-red-600 hover:text-red-800 text-xs px-2.5 py-1.5 border-2 border-red-300 rounded-lg hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100 hover:border-red-400 transition-all duration-200 font-bold shadow-sm hover:shadow-md transform hover:scale-110 active:scale-95 whitespace-nowrap"
-                                        title="Libérer cette réservation"
-                                      >
-                                        Libérer
-                                      </button>
-                                    )}
-                                    {(!canManage && !isAdmin && !canCancel) || item.status !== 'RESERVED' ? (
-                                      <span className="text-xs text-gray-400 italic">Aucune action</span>
-                                    ) : null}
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                      <ReservationProductsTable
+                        items={group.items}
+                        canManage={canManage}
+                        canCancel={canCancel}
+                        isAdmin={isAdmin}
+                        onUpdate={(item) => {
+                          setSelectedReservation(item);
+                          setIsUpdateModalOpen(true);
+                        }}
+                        onRelease={handleRelease}
+                        formatDate={formatDate}
+                      />
                     </div>
-                  </div>
-                )}
-
-                {/* Notes */}
-                {group.notes && (
-                  <div className="border-t-2 border-gray-200 bg-gradient-to-r from-amber-50/50 to-yellow-50/50 px-6 py-5">
-                    <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0 h-6 w-6 rounded-lg bg-gradient-to-br from-amber-200 to-amber-300 flex items-center justify-center shadow-sm">
-                        <svg className="w-4 h-4 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold text-gray-700 mb-1">Notes:</p>
-                        <p className="text-sm text-gray-600 break-words leading-relaxed">{group.notes}</p>
-                      </div>
+                  ) : !hasMultipleItems ? (
+                    <div className="p-5 sm:p-7">
+                      <ReservationProductsTable
+                        items={group.items}
+                        canManage={canManage}
+                        canCancel={canCancel}
+                        isAdmin={isAdmin}
+                        onUpdate={(item) => {
+                          setSelectedReservation(item);
+                          setIsUpdateModalOpen(true);
+                        }}
+                        onRelease={handleRelease}
+                        formatDate={formatDate}
+                      />
                     </div>
-                  </div>
-                )}
-              </div>
+                  ) : undefined
+                }
+              />
             );
           })
         )}

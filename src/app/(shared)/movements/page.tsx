@@ -4,8 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import RouteGuard from '@/components/guards/RouteGuard';
 import { format } from 'date-fns';
-import Table, { Column } from '@/components/Table';
-import { SearchIcon, CloseIcon } from '@/components/icons';
+import { SearchIcon, CloseIcon, PlusIcon } from '@/components/icons';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
@@ -14,38 +13,13 @@ import { hasPermission } from '@/lib/permissions';
 import ManualStockAdjustmentModal from '@/components/stock/ManualStockAdjustmentModal';
 import Pagination from '@/components/Pagination';
 import { SkeletonLoader } from '@/components/SkeletonLoader';
+import { PageHeader, SearchFilter, SelectFilter, StatisticsCard, ModernTable } from '@/components/ui';
+import { PackageIcon, UserIcon, CalendarIcon } from '@/components/icons';
+import type { TableColumn } from '@/types/shared';
+import { useUrlSync } from '@/hooks/useUrlSync';
+import type { StockMovement, PaginationMeta, ApiListResponse } from '@/types/shared';
 
-interface StockMovement {
-  id: string;
-  type: 'IN' | 'OUT' | 'ADJUSTMENT';
-  quantity: number;
-  reason?: string;
-  reference?: string;
-  product: {
-    id: string;
-    name: string;
-    sku?: string;
-  };
-  user?: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-  createdAt: string;
-}
-
-interface MovementsResponse {
-  data: StockMovement[];
-  meta: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-    hasNext: boolean;
-    hasPrev: boolean;
-  };
-}
+interface MovementsResponse extends ApiListResponse<StockMovement> {}
 
 export default function MovementsPage() {
   const router = useRouter();
@@ -54,8 +28,8 @@ export default function MovementsPage() {
   const toast = useToast();
   
   // Initialize state from URL params
-  const [filter, setFilter] = useState<'all' | 'IN' | 'OUT' | 'ADJUSTMENT'>(
-    (searchParams?.get('type') as 'all' | 'IN' | 'OUT' | 'ADJUSTMENT') || 'all'
+  const [filter, setFilter] = useState<string>(
+    searchParams?.get('type') || 'all'
   );
   const [searchInput, setSearchInput] = useState(searchParams?.get('search') || ''); // Input value (no debounce)
   const [search, setSearch] = useState(searchParams?.get('search') || ''); // Debounced search value
@@ -79,18 +53,14 @@ export default function MovementsPage() {
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  // Update URL when filters or pagination change
-  useEffect(() => {
-    const params = new URLSearchParams();
-    if (page > 1) params.set('page', page.toString());
-    if (filter !== 'all') params.set('type', filter);
-    if (search) params.set('search', search);
-    if (startDate) params.set('startDate', startDate);
-    if (endDate) params.set('endDate', endDate);
-    
-    const newUrl = params.toString() ? `?${params.toString()}` : '';
-    router.replace(`/movements${newUrl}`, { scroll: false });
-  }, [page, filter, search, startDate, endDate, router]);
+  // Sync URL with filters and pagination
+  useUrlSync({
+    page: page > 1 ? page : undefined,
+    type: filter !== 'all' ? filter : undefined,
+    search: search || undefined,
+    startDate: startDate || undefined,
+    endDate: endDate || undefined,
+  });
 
   useEffect(() => {
     loadMovements();
@@ -103,7 +73,7 @@ export default function MovementsPage() {
         page: page.toString(),
         limit: '20',
       });
-      if (filter !== 'all') {
+      if (filter && filter !== 'all') {
         params.set('type', filter);
       }
       if (search) {
@@ -171,8 +141,8 @@ export default function MovementsPage() {
       key: 'createdAt',
       label: 'Date & Heure',
       sortable: false,
-      render: (movement) => (
-        <div className="text-sm">
+      render: (movement: StockMovement) => (
+        <div className="text-sm min-w-[140px]">
           <div className="font-medium text-gray-900">
             {format(new Date(movement.createdAt), 'dd MMM yyyy')}
           </div>
@@ -181,26 +151,28 @@ export default function MovementsPage() {
           </div>
         </div>
       ),
+      className: 'min-w-[140px]',
     },
     {
       key: 'product',
       label: 'Produit',
       sortable: false,
-      render: (movement) => (
-        <div>
+      render: (movement: StockMovement) => (
+        <div className="min-w-[200px]">
           <Link
             href={`/products/${movement.product.id}`}
-            className="text-sm font-medium text-primary-600 hover:text-primary-900"
+            className="text-sm font-semibold text-blue-600 hover:text-blue-800 hover:underline"
           >
             {movement.product.name}
           </Link>
           {movement.product.sku && (
-            <div className="text-xs text-gray-500 font-mono mt-0.5">
-              {movement.product.sku}
+            <div className="text-xs text-gray-500 font-mono mt-1">
+              SKU: {movement.product.sku}
             </div>
           )}
         </div>
       ),
+      className: 'min-w-[200px]',
     },
     {
       key: 'type',
@@ -222,18 +194,20 @@ export default function MovementsPage() {
       label: 'Quantité',
       sortable: false,
       className: 'text-right',
-      render: (movement) => (
+      render: (movement: StockMovement) => (
         <div className="text-right">
           <span
-            className={`text-sm font-semibold ${
+            className={`text-lg font-bold ${
               movement.type === 'OUT' ? 'text-red-600' : 'text-green-600'
             }`}
           >
-            {movement.type === 'OUT' ? '-' : '+'}
+            {movement.type === 'OUT' ? '−' : '+'}
             {movement.quantity}
           </span>
         </div>
       ),
+      align: 'right',
+      className: 'text-right',
     },
     {
       key: 'user',
@@ -258,13 +232,13 @@ export default function MovementsPage() {
       key: 'reason',
       label: 'Raison / Référence',
       sortable: false,
-      render: (movement) => (
-        <div className="text-sm max-w-xs">
+      render: (movement: StockMovement) => (
+        <div className="text-sm max-w-xs min-w-[150px]">
           {movement.reason && (
-            <div className="text-gray-900 mb-1">{movement.reason}</div>
+            <div className="text-gray-900 mb-1 font-medium">{movement.reason}</div>
           )}
           {movement.reference && (
-            <div className="text-xs text-gray-500 font-mono">
+            <div className="text-xs text-gray-500 font-mono bg-gray-50 px-2 py-1 rounded">
               Réf: {movement.reference}
             </div>
           )}
@@ -273,6 +247,7 @@ export default function MovementsPage() {
           )}
         </div>
       ),
+      className: 'min-w-[150px]',
     },
   ];
 
@@ -285,84 +260,56 @@ export default function MovementsPage() {
     >
       <div className="px-4 py-6 sm:px-0">
         {/* Header */}
-        <div className="mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">Mouvements de stock</h2>
-              {paginationMeta && (
-                <p className="mt-1 text-sm text-gray-500">
-                  {paginationMeta.total} mouvement{paginationMeta.total !== 1 ? 's' : ''}
-                </p>
-              )}
-            </div>
-            <div className="flex gap-3">
-              {canCreateStock && (
-                <button
-                  onClick={() => setIsAdjustmentModalOpen(true)}
-                  className="inline-flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 font-medium transition-colors"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  Ajustement manuel
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
+        <PageHeader
+          title="Mouvements de stock"
+          description={paginationMeta ? `${paginationMeta.total} mouvement${paginationMeta.total !== 1 ? 's' : ''}` : undefined}
+          actions={
+            canCreateStock ? (
+              <button
+                onClick={() => setIsAdjustmentModalOpen(true)}
+                className="inline-flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 font-medium transition-colors"
+              >
+                <PlusIcon className="w-5 h-5" />
+                Ajustement manuel
+              </button>
+            ) : undefined
+          }
+        />
 
         {/* Filters */}
         <div className="mb-6 space-y-4">
           {/* First Row: Search and Type */}
           <div className="flex flex-col sm:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1 relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <SearchIcon className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="text"
-                placeholder="Rechercher par produit, utilisateur..."
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-              />
-              {searchInput && (
-                <button
-                  onClick={() => {
-                    setSearchInput('');
-                    setSearch('');
-                    setPage(1);
-                  }}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                >
-                  <CloseIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                </button>
-              )}
-            </div>
-
-            {/* Type Filter */}
-            <div>
-              <select
-                value={filter}
-                onChange={(e) => {
-                  setFilter(e.target.value as any);
-                  setPage(1);
-                }}
-                className="block w-full sm:w-auto px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all bg-white"
-              >
-                <option value="all">Tous les types</option>
-                <option value="IN">Dispose (IN)</option>
-                <option value="OUT">Withdraw (OUT)</option>
-                <option value="ADJUSTMENT">Adjustment</option>
-              </select>
-            </div>
+            <SearchFilter
+              value={searchInput}
+              onChange={(value) => {
+                setSearchInput(value);
+                setPage(1);
+              }}
+              placeholder="Rechercher par produit, utilisateur..."
+              debounceMs={500}
+              className="flex-1"
+            />
+            <SelectFilter
+              value={filter}
+              onChange={(value) => {
+                setFilter(value as any);
+                setPage(1);
+              }}
+              options={[
+                { value: 'all', label: 'Tous les types' },
+                { value: 'IN', label: 'Dispose (IN)' },
+                { value: 'OUT', label: 'Withdraw (OUT)' },
+                { value: 'ADJUSTMENT', label: 'Adjustment' },
+              ]}
+              placeholder="Tous les types"
+              className="w-full sm:w-auto"
+            />
           </div>
 
           {/* Second Row: Date Range */}
           <div className="flex flex-col sm:flex-row gap-4">
-            {/* Date Range */}
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-1">
               <div className="flex-1">
                 <label className="block text-xs text-gray-500 mb-1">Date début</label>
                 <input
@@ -372,7 +319,7 @@ export default function MovementsPage() {
                     setStartDate(e.target.value);
                     setPage(1);
                   }}
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 />
               </div>
               <div className="flex-1">
@@ -384,7 +331,7 @@ export default function MovementsPage() {
                     setEndDate(e.target.value);
                     setPage(1);
                   }}
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 />
               </div>
               {(startDate || endDate) && (
@@ -395,7 +342,7 @@ export default function MovementsPage() {
                       setEndDate('');
                       setPage(1);
                     }}
-                    className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900"
+                    className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
                     title="Effacer les dates"
                   >
                     <CloseIcon className="h-5 w-5" />
@@ -411,11 +358,14 @@ export default function MovementsPage() {
           <SkeletonLoader />
         ) : (
           <>
-            <Table
-              data={filteredMovements}
+            <ModernTable
               columns={columns}
-              loading={loading}
+              data={filteredMovements}
+              headerGradient="from-blue-600 via-blue-500 to-indigo-600"
+              striped={true}
+              hoverable={true}
               emptyMessage="Aucun mouvement de stock trouvé"
+              minWidth="1200px"
             />
             {/* Pagination */}
             {paginationMeta && paginationMeta.totalPages > 1 && (

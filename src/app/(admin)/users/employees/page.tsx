@@ -3,9 +3,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import Modal from '@/components/Modal';
-import Table, { Column, SortDirection } from '@/components/Table';
 import { useApi, useApiMutation } from '@/hooks/useApi';
 import { useToast } from '@/contexts/ToastContext';
+import { StatisticsCard, ModernTable, SearchFilter, StatusBadge } from '@/components/ui';
+import { UserIcon, PlusIcon } from '@/components/icons';
+import type { TableColumn } from '@/types/shared';
 
 interface RoleOption {
   id: string;
@@ -232,52 +234,66 @@ export default function EmployeesPage() {
     setSortDirection(direction);
   };
 
-  const columns: Column<EmployeeUser>[] = [
+  const columns: TableColumn<EmployeeUser>[] = [
     {
       key: 'name',
       label: 'Utilisateur',
       sortable: true,
-      render: (user) => (
-        <div>
-          <p className="font-semibold text-gray-900">
-            {user.firstName} {user.lastName}
-          </p>
-          <p className="text-xs text-gray-500">{user.id.slice(0, 8)}</p>
+      render: (user: EmployeeUser) => (
+        <div className="flex items-center gap-3 min-w-[200px]">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-sm font-semibold">
+            {user.firstName[0]}{user.lastName[0]}
+          </div>
+          <div>
+            <p className="font-semibold text-gray-900">
+              {user.firstName} {user.lastName}
+            </p>
+            <p className="text-xs text-gray-500 font-mono">{user.id.slice(0, 8)}</p>
+          </div>
         </div>
       ),
+      className: 'min-w-[200px]',
     },
     {
       key: 'role',
       label: 'Rôle',
       sortable: true,
-      render: (user) => (
-        <div className="flex items-center gap-2">
-          <span className="px-2 py-1 rounded-full text-xs font-semibold bg-green-50 text-green-700">
-            {user.role?.name || '—'}
-          </span>
-        </div>
+      render: (user: EmployeeUser) => (
+        user.role?.code ? (
+          <StatusBadge status={user.role.code} variant="default" size="sm" />
+        ) : (
+          <span className="text-gray-400">—</span>
+        )
       ),
+      align: 'center',
+      className: 'text-center',
     },
     {
       key: 'email',
       label: 'Email',
       sortable: true,
-      render: (user) => <span className="text-sm text-gray-700">{user.email}</span>,
+      render: (user: EmployeeUser) => (
+        <span className="text-sm text-gray-700 min-w-[200px]">{user.email}</span>
+      ),
+      className: 'min-w-[200px]',
     },
     {
       key: 'createdAt',
       label: 'Créé le',
       sortable: true,
-      render: (user) => (
-        <span className="text-sm text-gray-600">{dateFormatter.format(new Date(user.createdAt))}</span>
+      render: (user: EmployeeUser) => (
+        <span className="text-sm text-gray-600 min-w-[120px]">
+          {dateFormatter.format(new Date(user.createdAt))}
+        </span>
       ),
+      className: 'min-w-[120px]',
     },
     {
       key: 'status',
       label: 'Statut',
       sortable: true,
-      render: (user) => (
-        <div className="flex items-center gap-2">
+      render: (user: EmployeeUser) => (
+        <div className="flex items-center gap-2 min-w-[120px]">
           <span
             className={`inline-flex h-2 w-2 rounded-full ${
               user.deletedAt ? 'bg-gray-400' : 'bg-green-500'
@@ -297,6 +313,7 @@ export default function EmployeesPage() {
           </select>
         </div>
       ),
+      className: 'min-w-[120px]',
     },
     {
       key: 'actions',
@@ -370,61 +387,69 @@ export default function EmployeesPage() {
   const inactiveEmployees = totalEmployees - activeEmployees;
 
   return (
-    <div className="px-4 py-6 sm:px-0 space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Employés</h1>
-          <p className="text-gray-600 mt-2">
-            Gérez les comptes des employés et des gestionnaires de stock.
-          </p>
+    <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 sm:p-8 border border-blue-100 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Employés</h1>
+            <p className="text-sm sm:text-base text-gray-600">
+              Gérez les comptes des employés et des gestionnaires de stock
+            </p>
+          </div>
+          <button
+            onClick={() => setInviteModalOpen(true)}
+            className="inline-flex items-center px-5 py-3 border border-transparent rounded-xl shadow-lg text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-105"
+            title="Créer un nouveau compte employé"
+          >
+            <PlusIcon className="w-5 h-5 mr-2" />
+            <span className="hidden sm:inline">Ajouter un employé</span>
+            <span className="sm:hidden">Ajouter</span>
+          </button>
         </div>
-        <button
-          onClick={() => setInviteModalOpen(true)}
-          className="inline-flex items-center justify-center rounded-lg bg-primary-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-          title="Créer un nouveau compte employé"
-        >
-          + Ajouter un employé
-        </button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          label="Comptes actifs"
-          value={activeEmployees}
-          helperText={`${inactiveEmployees} inactif${inactiveEmployees > 1 ? 's' : ''}`}
-        />
-        <StatCard label="Employés" value={employeeCount} helperText="Rôle EMPLOYEE" />
-        <StatCard label="Gestionnaires de stock" value={stockKeeperCount} helperText="Rôle STOCK_KEEPER" />
-        <StatCard
-          label="Tous les comptes"
-          value={totalEmployees}
-          helperText={debouncedSearch ? 'Recherche filtrée' : 'Tous les employés'}
-        />
-      </div>
+      {/* Statistics Cards */}
+      {employees.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <StatisticsCard
+            title="Comptes actifs"
+            value={activeEmployees}
+            icon={<UserIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
+            colorScheme="green"
+          />
+          <StatisticsCard
+            title="Employés"
+            value={employeeCount}
+            icon={<UserIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
+            colorScheme="blue"
+          />
+          <StatisticsCard
+            title="Gestionnaires"
+            value={stockKeeperCount}
+            icon={<UserIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
+            colorScheme="purple"
+          />
+          <StatisticsCard
+            title="Total comptes"
+            value={totalEmployees}
+            icon={<UserIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
+            colorScheme="orange"
+          />
+        </div>
+      )}
 
-      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-4 sm:p-6 space-y-4">
+      {/* Filters */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 w-full">
-            <div className="relative flex-1">
-              <input
-                type="text"
-                placeholder="Rechercher par nom ou email..."
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-11 pr-4 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
-              />
-              <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400">
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-              </span>
-            </div>
-            <label className="inline-flex items-center gap-2 text-sm text-gray-600">
+            <SearchFilter
+              value={search}
+              onChange={setSearch}
+              placeholder="Rechercher par nom ou email..."
+              className="flex-1"
+            />
+            <label className="inline-flex items-center gap-2 text-sm text-gray-600 whitespace-nowrap">
               <input
                 type="checkbox"
                 className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
@@ -434,25 +459,23 @@ export default function EmployeesPage() {
               Inclure les comptes désactivés
             </label>
           </div>
-          <p className="text-sm text-gray-500">
-            Actualisé le {dateFormatter.format(new Date())}
-          </p>
         </div>
-
-        <Table
-          data={sortedEmployees}
-          columns={columns}
-          loading={employeesLoading}
-          onSort={handleSort}
-          sortKey={sortKey}
-          sortDirection={sortDirection}
-          emptyMessage={
-            debouncedSearch
-              ? 'Aucun employé ne correspond à votre recherche.'
-              : 'Aucun employé enregistré pour le moment.'
-          }
-        />
       </div>
+
+      {/* Table */}
+      <ModernTable
+        columns={columns}
+        data={sortedEmployees}
+        headerGradient="from-blue-600 via-blue-500 to-indigo-600"
+        striped={true}
+        hoverable={true}
+        emptyMessage={
+          debouncedSearch
+            ? 'Aucun employé ne correspond à votre recherche.'
+            : 'Aucun employé enregistré pour le moment.'
+        }
+        minWidth="1000px"
+      />
 
       <Modal
         isOpen={isInviteModalOpen}
@@ -597,24 +620,6 @@ export default function EmployeesPage() {
       <p className="text-center text-xs text-gray-500">
         Gérez les accès et permissions des employés depuis cette interface.
       </p>
-    </div>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  helperText,
-}: {
-  label: string;
-  value: number;
-  helperText?: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
-      <p className="text-sm font-medium text-gray-500">{label}</p>
-      <p className="mt-2 text-3xl font-semibold text-gray-900">{numberFormatter.format(value)}</p>
-      {helperText && <p className="mt-1 text-xs text-gray-500">{helperText}</p>}
     </div>
   );
 }

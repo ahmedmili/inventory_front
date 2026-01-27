@@ -19,4 +19,11 @@ export { default as TrashIcon } from './TrashIcon';
 export { default as ArrowLeftIcon } from './ArrowLeftIcon';
 export { default as ReservationIcon } from './ReservationIcon';
 export { default as ImportIcon } from './ImportIcon';
+export { default as CalendarIcon } from './CalendarIcon';
+export { default as PackageIcon } from './PackageIcon';
+export { default as UserIcon } from './UserIcon';
+export { default as ProjectIcon } from './ProjectIcon';
+export { default as ChevronDownIcon } from './ChevronDownIcon';
+export { default as ChevronUpIcon } from './ChevronUpIcon';
+export { default as TruckIcon } from './TruckIcon';
 

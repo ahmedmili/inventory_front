@@ -9,38 +9,12 @@ import Pagination from '@/components/Pagination';
 import { useAuth } from '@/contexts/AuthContext';
 import { hasPermission } from '@/lib/permissions';
 import ImportFormModal from '@/components/imports/ImportFormModal';
-import { SearchIcon } from '@/components/icons';
-
-// Icons as SVG components
-const PackageIcon = ({ className = 'w-5 h-5' }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-  </svg>
-);
-
-const TruckIcon = ({ className = 'w-5 h-5' }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-  </svg>
-);
-
-const CalendarIcon = ({ className = 'w-5 h-5' }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-  </svg>
-);
-
-const UserIcon = ({ className = 'w-5 h-5' }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-  </svg>
-);
-
-const ChevronDownIcon = ({ className = 'w-5 h-5' }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-  </svg>
-);
+import { PackageIcon, TruckIcon, CalendarIcon, UserIcon, ChevronDownIcon, PlusIcon } from '@/components/icons';
+import StatisticsCard from '@/components/ui/StatisticsCard';
+import PageHeader from '@/components/ui/PageHeader';
+import SelectFilter from '@/components/ui/SelectFilter';
+import { useUrlSync } from '@/hooks/useUrlSync';
+import type { PaginationMeta, ApiListResponse, User } from '@/types/shared';
 
 interface ImportLine {
   productId: string;
@@ -57,26 +31,11 @@ interface Import {
     name: string;
   } | null;
   receivedDate: string;
-  user: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-  } | null;
+  user: User | null;
   lines: ImportLine[];
 }
 
-interface ImportsResponse {
-  data: Import[];
-  meta: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-    hasNext: boolean;
-    hasPrev: boolean;
-  };
-}
+interface ImportsResponse extends ApiListResponse<Import> {}
 
 export default function ImportsPage() {
   const router = useRouter();
@@ -94,15 +53,11 @@ export default function ImportsPage() {
   
   const canCreate = hasPermission(user, 'imports.create');
 
-  // Update URL when filters or pagination change
-  useEffect(() => {
-    const params = new URLSearchParams();
-    if (page > 1) params.set('page', page.toString());
-    if (supplierFilter) params.set('supplierId', supplierFilter);
-    
-    const newUrl = params.toString() ? `?${params.toString()}` : '';
-    router.replace(`/imports${newUrl}`, { scroll: false });
-  }, [page, supplierFilter, router]);
+  // Sync URL with filters and pagination
+  useUrlSync({
+    page: page > 1 ? page : undefined,
+    supplierId: supplierFilter || undefined,
+  });
 
   useEffect(() => {
     loadImports();
@@ -188,39 +143,24 @@ export default function ImportsPage() {
       {/* Statistics Cards */}
       {imports.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-5 border border-blue-200 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-blue-600">Total Importations</p>
-                <p className="text-2xl font-bold text-blue-900 mt-1">{totalImports}</p>
-              </div>
-              <div className="h-12 w-12 bg-blue-200 rounded-lg flex items-center justify-center">
-                <PackageIcon className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-          </div>
-          <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-5 border border-green-200 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-green-600">Produits Importés</p>
-                <p className="text-2xl font-bold text-green-900 mt-1">{totalProducts}</p>
-              </div>
-              <div className="h-12 w-12 bg-green-200 rounded-lg flex items-center justify-center">
-                <TruckIcon className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-          </div>
-          <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-5 border border-purple-200 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-purple-600">Fournisseurs</p>
-                <p className="text-2xl font-bold text-purple-900 mt-1">{uniqueSuppliers}</p>
-              </div>
-              <div className="h-12 w-12 bg-purple-200 rounded-lg flex items-center justify-center">
-                <TruckIcon className="w-6 h-6 text-purple-600" />
-              </div>
-            </div>
-          </div>
+          <StatisticsCard
+            title="Total Importations"
+            value={totalImports}
+            icon={<PackageIcon className="w-6 h-6" />}
+            colorScheme="blue"
+          />
+          <StatisticsCard
+            title="Produits Importés"
+            value={totalProducts}
+            icon={<TruckIcon className="w-6 h-6" />}
+            colorScheme="green"
+          />
+          <StatisticsCard
+            title="Fournisseurs"
+            value={uniqueSuppliers}
+            icon={<TruckIcon className="w-6 h-6" />}
+            colorScheme="purple"
+          />
         </div>
       )}
 
