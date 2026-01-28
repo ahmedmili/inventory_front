@@ -126,7 +126,7 @@ export default function SuppliersModal({ isOpen, onClose }: SuppliersModalProps)
         )}
 
         {/* Search */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <div className="bg-gradient-to-r from-gray-50 to-white rounded-xl shadow-sm border border-gray-200/80 p-5">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <SearchFilter
               value={searchInput}
@@ -154,10 +154,10 @@ export default function SuppliersModal({ isOpen, onClose }: SuppliersModalProps)
         ) : (
           <>
             {suppliers.length === 0 ? (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl shadow-sm border border-gray-200/80 overflow-hidden">
                 <div className="text-center py-16 px-4">
-                  <div className="mx-auto h-16 w-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                    <BuildingIcon className="h-8 w-8 text-gray-400" />
+                  <div className="mx-auto h-16 w-16 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mb-4 shadow-inner">
+                    <BuildingIcon className="h-8 w-8 text-blue-500" />
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
                     {search ? 'Aucun fournisseur trouvé' : 'Aucun fournisseur'}
@@ -184,7 +184,7 @@ export default function SuppliersModal({ isOpen, onClose }: SuppliersModalProps)
                 {suppliers.map((supplier) => (
                   <div
                     key={supplier.id}
-                    className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md hover:border-blue-300 transition-all duration-200 overflow-hidden group cursor-pointer"
+                    className="bg-white rounded-xl shadow-sm border border-gray-200/80 hover:shadow-lg hover:border-blue-400 hover:scale-[1.02] transition-all duration-300 overflow-hidden group cursor-pointer ring-1 ring-transparent hover:ring-blue-200"
                     onClick={() => handleSupplierClick(supplier.id)}
                   >
                     {/* Card Header */}
@@ -192,7 +192,7 @@ export default function SuppliersModal({ isOpen, onClose }: SuppliersModalProps)
                       {/* Icon and Name */}
                       <div className="flex items-start gap-4 mb-4">
                         <div className="flex-shrink-0">
-                          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
+                          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300">
                             <BuildingIcon className="h-6 w-6 text-white" />
                           </div>
                         </div>
@@ -206,14 +206,14 @@ export default function SuppliersModal({ isOpen, onClose }: SuppliersModalProps)
                       {/* Contact Information */}
                       <div className="space-y-3">
                         {supplier.email && (
-                          <div className="flex items-center gap-3 text-sm">
-                            <div className="flex-shrink-0 h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center">
+                          <div className="flex items-center gap-3 text-sm group/email">
+                            <div className="flex-shrink-0 h-8 w-8 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center shadow-sm group-hover/email:shadow-md transition-all duration-200">
                               <EmailIcon className="w-4 h-4 text-blue-600" />
                             </div>
                             <a
                               href={`mailto:${supplier.email}`}
                               onClick={(e) => e.stopPropagation()}
-                              className="text-gray-600 hover:text-blue-600 truncate transition-colors"
+                              className="text-gray-600 hover:text-blue-600 truncate transition-colors font-medium"
                               title={supplier.email}
                             >
                               {supplier.email}
@@ -221,22 +221,22 @@ export default function SuppliersModal({ isOpen, onClose }: SuppliersModalProps)
                           </div>
                         )}
                         {supplier.phone && (
-                          <div className="flex items-center gap-3 text-sm">
-                            <div className="flex-shrink-0 h-8 w-8 rounded-lg bg-green-50 flex items-center justify-center">
+                          <div className="flex items-center gap-3 text-sm group/phone">
+                            <div className="flex-shrink-0 h-8 w-8 rounded-lg bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center shadow-sm group-hover/phone:shadow-md transition-all duration-200">
                               <PhoneIcon className="w-4 h-4 text-green-600" />
                             </div>
                             <a
                               href={`tel:${supplier.phone}`}
                               onClick={(e) => e.stopPropagation()}
-                              className="text-gray-600 hover:text-green-600 transition-colors"
+                              className="text-gray-600 hover:text-green-600 transition-colors font-medium"
                             >
                               {supplier.phone}
                             </a>
                           </div>
                         )}
                         {supplier.address && (
-                          <div className="flex items-start gap-3 text-sm">
-                            <div className="flex-shrink-0 h-8 w-8 rounded-lg bg-purple-50 flex items-center justify-center mt-0.5">
+                          <div className="flex items-start gap-3 text-sm group/address">
+                            <div className="flex-shrink-0 h-8 w-8 rounded-lg bg-gradient-to-br from-purple-50 to-purple-100 flex items-center justify-center mt-0.5 shadow-sm group-hover/address:shadow-md transition-all duration-200">
                               <LocationIcon className="w-4 h-4 text-purple-600" />
                             </div>
                             <p className="text-gray-600 line-clamp-2">{supplier.address}</p>
@@ -246,10 +246,10 @@ export default function SuppliersModal({ isOpen, onClose }: SuppliersModalProps)
                     </div>
 
                     {/* Card Footer */}
-                    <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-                      <div className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-700 group/link transition-colors">
+                    <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-blue-50/30 border-t border-gray-200/80">
+                      <div className="inline-flex items-center text-sm font-semibold text-blue-600 hover:text-blue-700 group/link transition-all duration-200">
                         <span>Voir les détails</span>
-                        <ArrowRightIcon className="w-4 h-4 ml-2 group-hover/link:translate-x-1 transition-transform" />
+                        <ArrowRightIcon className="w-4 h-4 ml-2 group-hover/link:translate-x-1 transition-transform duration-200" />
                       </div>
                     </div>
                   </div>

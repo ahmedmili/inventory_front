@@ -12,10 +12,12 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { LoadingProvider } from '@/contexts/LoadingContext';
 import { RealtimeProvider } from '@/contexts/RealtimeContext';
 import GlobalLoader from '@/components/GlobalLoader';
+import EnvLogger from '@/components/EnvLogger';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ErrorBoundary>
+      <EnvLogger />
       <SWRConfig
         value={{
           revalidateOnFocus: true,

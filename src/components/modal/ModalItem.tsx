@@ -200,7 +200,7 @@ export default function ModalItem({ modal, onClose }: ModalItemProps) {
   };
 
   const getModalClasses = () => {
-    const baseClasses = `relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full ${sizeClasses[size]} transform transition-all ${durationClass} border border-gray-100 dark:border-gray-700 ${modal.className || ''}`;
+    const baseClasses = `relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full ${sizeClasses[size]} transform transition-all ${durationClass} border border-gray-200/50 dark:border-gray-700 ring-1 ring-black/5 dark:ring-white/10 ${modal.className || ''}`;
 
     if (animation === 'none') {
       return `${baseClasses} ${isAnimating ? 'opacity-100' : 'opacity-0'}`;
@@ -340,7 +340,7 @@ export default function ModalItem({ modal, onClose }: ModalItemProps) {
     <div className="fixed inset-0 z-[9999] overflow-y-auto">
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-black/60 backdrop-blur-sm ${getBackdropClasses()}`}
+        className={`fixed inset-0 bg-gradient-to-br from-black/70 via-black/60 to-black/70 backdrop-blur-md ${getBackdropClasses()}`}
         onClick={handleBackdropClick}
         aria-hidden="true"
       />
@@ -366,11 +366,13 @@ export default function ModalItem({ modal, onClose }: ModalItemProps) {
           {/* Header */}
           {(modal.title || modal.showCloseButton !== false) && (
             <div
-              className={`flex items-center justify-between px-6 py-5 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 border-b border-gray-200 dark:border-gray-700 rounded-t-lg ${
+              className={`relative flex items-center justify-between px-6 py-5 bg-gradient-to-r from-gray-50 via-white to-gray-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800 border-b border-gray-200/80 dark:border-gray-700 rounded-t-xl shadow-sm ${
                 modal.draggable ? 'cursor-move select-none' : ''
               }`}
               onMouseDown={modal.draggable ? handleDragStart : undefined}
             >
+              {/* Decorative accent line */}
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 rounded-t-xl"></div>
               <div className="flex items-center gap-3 flex-1">
                 {Icon && (
                   <div className={`flex-shrink-0 ${colors.iconBg} rounded-lg p-2`}>
@@ -379,7 +381,7 @@ export default function ModalItem({ modal, onClose }: ModalItemProps) {
                 )}
                 {modal.icon && <div className="flex-shrink-0">{modal.icon}</div>}
                 {modal.title && (
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white tracking-tight">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight ml-1">
                     {modal.title}
                   </h3>
                 )}
@@ -387,18 +389,18 @@ export default function ModalItem({ modal, onClose }: ModalItemProps) {
               {modal.showCloseButton !== false && (
                 <button
                   onClick={handleClose}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg p-1.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+                  className="group relative text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 rounded-lg p-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                   aria-label="Close modal"
                   title="Fermer"
                 >
-                  <XMarkIcon className="w-5 h-5" />
+                  <XMarkIcon className="w-5 h-5 transition-transform duration-200 group-hover:rotate-90" />
                 </button>
               )}
             </div>
           )}
 
           {/* Content */}
-          <div className={`px-6 py-6 max-h-[calc(100vh-220px)] overflow-y-auto bg-white dark:bg-gray-800 rounded-b-lg ${modal.contentClassName || ''}`}>
+          <div className={`px-6 py-6 max-h-[calc(100vh-220px)] overflow-y-auto bg-white dark:bg-gray-800 rounded-b-xl scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400 ${modal.contentClassName || ''}`}>
             {renderContent()}
             {renderFooter()}
           </div>

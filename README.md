@@ -58,6 +58,7 @@ Interface utilisateur moderne et réactive pour la gestion de stock, construite 
 - Gestion complète des contacts
 - Historique des transactions
 - Informations détaillées
+- Modal pour gestion des fournisseurs (accessible depuis la navigation)
 
 ### 🔔 Notifications
 - Badge de notifications non lues
@@ -70,6 +71,18 @@ Interface utilisateur moderne et réactive pour la gestion de stock, construite 
 - Produits en rupture
 - Meilleurs vendeurs
 - Analytics avec graphiques
+
+### 👤 Gestion des Utilisateurs
+- Page administrateurs avec pagination et recherche
+- Page employés avec pagination et recherche
+- Modal d'ajout d'administrateurs
+- Gestion des rôles et permissions
+- Activation/désactivation de comptes
+
+### 📦 Importations
+- Gestion des importations de produits
+- Association avec fournisseurs
+- Suivi des réceptions
 
 ---
 
@@ -472,6 +485,18 @@ npm run build
 ## 📝 License
 
 Ce projet fait partie de **Gestion de Stock Pro**.
+
+---
+
+---
+
+## ✨ Améliorations Récentes (Janvier 2025)
+
+- ✅ Pagination et synchronisation URL pour pages admins et employees
+- ✅ Modal SuppliersModal pour gestion des fournisseurs
+- ✅ NavigationModalContext pour gestion des modals depuis la navigation
+- ✅ Amélioration de la gestion d'URL avec useUrlSync sur toutes les pages principales
+- ✅ Correction des erreurs TypeScript et amélioration du build
 
 ---
 
