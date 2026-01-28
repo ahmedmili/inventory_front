@@ -5,9 +5,11 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { apiClient } from '@/lib/api';
 import Link from 'next/link';
 import Pagination from '@/components/Pagination';
-import { SearchIcon } from '@/components/icons';
+import { UserIcon, EmailIcon, PhoneIcon, LocationIcon, PlusIcon, ArrowRightIcon } from '@/components/icons';
 import RouteGuard from '@/components/guards/RouteGuard';
 import { TableSkeleton } from '@/components/SkeletonLoader';
+import { StatisticsCard, SearchFilter } from '@/components/ui';
+import { useUrlSync } from '@/hooks/useUrlSync';
 
 interface Customer {
   id: string;
@@ -51,14 +53,10 @@ export default function CustomersPage() {
   }, [searchInput]);
 
   // Synchroniser l'URL avec les filtres et la pagination
-  useEffect(() => {
-    const params = new URLSearchParams();
-    params.set('page', page.toString());
-    params.set('limit', limit.toString());
-    if (search) params.set('search', search);
-    
-    router.replace(`/customers?${params.toString()}`, { scroll: false });
-  }, [page, search, limit, router]);
+  useUrlSync({
+    page: page > 1 ? page : undefined,
+    search: search || undefined,
+  });
 
   useEffect(() => {
     loadCustomers();
@@ -102,31 +100,71 @@ export default function CustomersPage() {
     );
   }
 
+  // Calculate statistics
+  const totalCustomers = paginationMeta?.total || customers.length;
+  const withEmail = customers.filter(c => c.email).length;
+  const withPhone = customers.filter(c => c.phone).length;
+  const withAddress = customers.filter(c => c.address).length;
+
   return (
     <RouteGuard>
-      <div className="px-4 py-6 sm:px-0">
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-          <h2 className="text-2xl font-bold">Clients</h2>
-          <Link
-            href="/customers/new"
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-          >
-            Ajouter un client
-          </Link>
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-6 sm:p-8 border border-indigo-100 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Clients</h1>
+              <p className="text-sm sm:text-base text-gray-600">Gérez vos clients et leurs informations</p>
+            </div>
+            <Link
+              href="/customers/new"
+              className="inline-flex items-center px-5 py-3 border border-transparent rounded-xl shadow-lg text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 transform hover:scale-105"
+            >
+              <PlusIcon className="w-5 h-5 mr-2" />
+              <span className="hidden sm:inline">Ajouter un client</span>
+              <span className="sm:hidden">Ajouter</span>
+            </Link>
+          </div>
         </div>
 
-        {/* Search */}
-        <div className="mb-6 bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-          <div className="relative">
-            <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Rechercher un client..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        {/* Statistics Cards */}
+        {customers.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <StatisticsCard
+              title="Total Clients"
+              value={totalCustomers}
+              icon={<UserIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
+              colorScheme="indigo"
+            />
+            <StatisticsCard
+              title="Avec Email"
+              value={withEmail}
+              icon={<EmailIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
+              colorScheme="blue"
+            />
+            <StatisticsCard
+              title="Avec Téléphone"
+              value={withPhone}
+              icon={<PhoneIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
+              colorScheme="green"
+            />
+            <StatisticsCard
+              title="Avec Adresse"
+              value={withAddress}
+              icon={<LocationIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
+              colorScheme="purple"
             />
           </div>
+        )}
+
+        {/* Search */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+          <SearchFilter
+            value={searchInput}
+            onChange={setSearchInput}
+            placeholder="Rechercher un client..."
+            className="w-full"
+          />
         </div>
 
         {/* Customers Grid */}
@@ -138,27 +176,54 @@ export default function CustomersPage() {
               {customers.map((customer) => (
                 <div
                   key={customer.id}
-                  className="bg-white shadow rounded-lg p-6 hover:shadow-md transition-shadow"
+                  className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md hover:border-indigo-300 transition-all duration-200 overflow-hidden group"
                 >
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    {customer.name}
-                  </h3>
-                  {customer.email && (
-                    <p className="text-sm text-gray-600 mb-1">📧 {customer.email}</p>
-                  )}
-                  {customer.phone && (
-                    <p className="text-sm text-gray-600 mb-1">📞 {customer.phone}</p>
-                  )}
-                  {customer.address && (
-                    <p className="text-sm text-gray-600 mb-4">📍 {customer.address}</p>
-                  )}
-                  <div className="flex space-x-3">
+                  <div className="p-6">
+                    <div className="flex items-start gap-4 mb-4">
+                      <div className="flex-shrink-0">
+                        <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg">
+                          <UserIcon className="h-6 w-6 text-white" />
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-bold text-gray-900 truncate group-hover:text-indigo-600 transition-colors">
+                          {customer.name}
+                        </h3>
+                      </div>
+                    </div>
+                  <div className="space-y-2">
+                    {customer.email && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <EmailIcon className="w-4 h-4 text-blue-500" />
+                        <a href={`mailto:${customer.email}`} className="hover:text-blue-600 transition-colors">
+                          {customer.email}
+                        </a>
+                      </div>
+                    )}
+                    {customer.phone && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <PhoneIcon className="w-4 h-4 text-green-500" />
+                        <a href={`tel:${customer.phone}`} className="hover:text-green-600 transition-colors">
+                          {customer.phone}
+                        </a>
+                      </div>
+                    )}
+                    {customer.address && (
+                      <div className="flex items-start gap-2 text-sm text-gray-600">
+                        <LocationIcon className="w-4 h-4 text-purple-500 mt-0.5" />
+                        <span>{customer.address}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-4 pt-4 border-t border-gray-200">
                     <Link
                       href={`/customers/${customer.id}`}
-                      className="text-blue-600 hover:text-blue-900 text-sm font-medium"
+                      className="inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-700 group/link transition-colors"
                     >
-                      Voir les détails →
+                      <span>Voir les détails</span>
+                      <ArrowRightIcon className="w-4 h-4 ml-2 group-hover/link:translate-x-1 transition-transform" />
                     </Link>
+                  </div>
                   </div>
                 </div>
               ))}

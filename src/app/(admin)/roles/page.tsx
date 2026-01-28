@@ -3,15 +3,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import Modal from '@/components/Modal';
-import Table, { Column, SortDirection } from '@/components/Table';
 import { useApi, useApiMutation } from '@/hooks/useApi';
 import { useToast } from '@/contexts/ToastContext';
 import { hasPermission } from '@/lib/permissions';
 import { useAuth } from '@/contexts/AuthContext';
 import Pagination from '@/components/Pagination';
-import { SearchIcon, CloseIcon } from '@/components/icons';
-import Autocomplete from '@/components/ui/Autocomplete';
+import { SearchIcon, CloseIcon, PlusIcon, UserIcon } from '@/components/icons';
+import { Autocomplete } from '@/components/ui';
+import { StatisticsCard, ModernTable, SearchFilter, SelectFilter, StatusBadge } from '@/components/ui';
+import type { TableColumn } from '@/types/shared';
 import { apiClient } from '@/lib/api';
+import Table, { type SortDirection, type Column } from '@/components/Table';
 
 interface Permission {
   id: string;
@@ -495,7 +497,13 @@ export default function RolesPage() {
     }
   };
 
-  const columns: Column<Role>[] = useMemo(() => [
+  // Calculate statistics
+  const totalRoles = roles.length;
+  const activeRoles = roles.filter(r => r.isActive).length;
+  const totalUsers = roles.reduce((sum, r) => sum + (r._count?.users || 0), 0);
+  const totalPermissions = roles.reduce((sum, r) => sum + r.permissions.length, 0);
+
+  const columns: TableColumn<Role>[] = useMemo(() => [
     {
       key: 'name',
       label: 'Rôle',
@@ -510,9 +518,10 @@ export default function RolesPage() {
     {
       key: 'description',
       label: 'Description',
-      render: (role) => (
-        <span className="text-sm text-gray-600">{role.description || '—'}</span>
+      render: (role: Role) => (
+        <span className="text-sm text-gray-600 min-w-[200px]">{role.description || '—'}</span>
       ),
+      className: 'min-w-[200px]',
     },
     {
       key: 'users',
@@ -528,11 +537,18 @@ export default function RolesPage() {
       key: 'permissions',
       label: 'Permissions',
       sortable: true,
-      render: (role) => (
-        <span className="text-sm font-medium text-gray-700">
-          {role.permissions.length}
-        </span>
+      render: (role: Role) => (
+        <div className="flex items-center gap-2 min-w-[100px]">
+          <svg className="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+          <span className="text-sm font-semibold text-gray-700">
+            {role.permissions.length}
+          </span>
+        </div>
       ),
+      align: 'center',
+      className: 'text-center min-w-[100px]',
     },
     {
       key: 'isActive',
@@ -666,6 +682,18 @@ export default function RolesPage() {
     },
   ], [handleToggleRoleStatus, handleOpenPermissionsModal, handleOpenUsersModal, handleOpenEditModal, handleOpenDeleteModal, actionLoading, canManage]);
 
+  // Convertir TableColumn en Column pour le composant Table
+  const tableColumns: Column<Role>[] = useMemo(() => {
+    return columns.map((col) => ({
+      key: col.key,
+      label: col.label,
+      sortable: col.sortable,
+      className: col.className,
+      headerClassName: col.headerClassName,
+      render: col.render ? (item: Role) => col.render!(item, 0) : undefined,
+    }));
+  }, [columns]);
+
   if (!canManage) {
     return (
       <div className="px-4 py-6 sm:px-0">
@@ -676,7 +704,7 @@ export default function RolesPage() {
     );
   }
 
-  const permissionColumns: Column<Permission>[] = useMemo(() => [
+  const permissionColumns: TableColumn<Permission>[] = useMemo(() => [
     {
       key: 'isActive',
       label: 'Statut',
@@ -725,9 +753,10 @@ export default function RolesPage() {
       key: 'resource',
       label: 'Ressource',
       sortable: true,
-      render: (permission) => (
-        <span className="text-sm text-gray-600 capitalize">{permission.resource}</span>
+      render: (permission: Permission) => (
+        <span className="text-sm text-gray-600 capitalize min-w-[120px]">{permission.resource}</span>
       ),
+      className: 'min-w-[120px]',
     },
     {
       key: 'action',
@@ -740,9 +769,10 @@ export default function RolesPage() {
     {
       key: 'description',
       label: 'Description',
-      render: (permission) => (
-        <span className="text-sm text-gray-600">{permission.description || '—'}</span>
+      render: (permission: Permission) => (
+        <span className="text-sm text-gray-600 min-w-[200px]">{permission.description || '—'}</span>
       ),
+      className: 'min-w-[200px]',
     },
     {
       key: 'actions',
@@ -793,6 +823,18 @@ export default function RolesPage() {
       ),
     },
   ], [handleTogglePermissionStatus, handleOpenEditPermissionModal, handleOpenDeletePermissionModal, actionLoading]);
+
+  // Convertir TableColumn en Column pour le composant Table (permissions)
+  const tablePermissionColumns: Column<Permission>[] = useMemo(() => {
+    return permissionColumns.map((col) => ({
+      key: col.key,
+      label: col.label,
+      sortable: col.sortable,
+      className: col.className,
+      headerClassName: col.headerClassName,
+      render: col.render ? (item: Permission) => col.render!(item, 0) : undefined,
+    }));
+  }, [permissionColumns]);
 
   // Filtrer les permissions
   const filteredPermissions = useMemo(() => {
@@ -963,51 +1005,27 @@ export default function RolesPage() {
 
         {/* Filtres */}
         {activeTab === 'roles' ? (
-          <div className="bg-white p-4 rounded-lg border border-gray-200 space-y-4">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
             <div className="flex flex-col sm:flex-row gap-4">
-              {/* Recherche */}
-              <div className="flex-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <SearchIcon className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Rechercher un rôle..."
-                  value={roleSearch}
-                  onChange={(e) => {
-                    setRoleSearch(e.target.value);
-                    setRolePage(1);
-                  }}
-                  className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                />
-                {roleSearch && (
-                  <button
-                    onClick={() => {
-                      setRoleSearch('');
-                      setRolePage(1);
-                    }}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  >
-                    <CloseIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                  </button>
-                )}
-              </div>
-
-              {/* Filtre par statut */}
-              <div className="w-full sm:w-auto min-w-[200px]">
-                <Autocomplete
-                  options={roleStatusOptions}
-                  value={roleStatusFilter}
-                  onChange={(value) => {
-                    setRoleStatusFilter(value as any);
-                    setRolePage(1);
-                  }}
-                  placeholder="Tous les statuts"
-                  allowClear={false}
-                />
-              </div>
-
-              {/* Bouton réinitialiser */}
+              <SearchFilter
+                value={roleSearch}
+                onChange={(value) => {
+                  setRoleSearch(value);
+                  setRolePage(1);
+                }}
+                placeholder="Rechercher un rôle..."
+                className="flex-1"
+              />
+              <SelectFilter
+                value={roleStatusFilter}
+                onChange={(value) => {
+                  setRoleStatusFilter(value as any);
+                  setRolePage(1);
+                }}
+                options={roleStatusOptions}
+                placeholder="Tous les statuts"
+                className="w-full sm:w-auto"
+              />
               {(roleSearch || roleStatusFilter !== 'all') && (
                 <button
                   onClick={() => {
@@ -1015,7 +1033,7 @@ export default function RolesPage() {
                     setRoleStatusFilter('all');
                     setRolePage(1);
                   }}
-                  className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap"
                 >
                   Réinitialiser
                 </button>
@@ -1028,65 +1046,37 @@ export default function RolesPage() {
             )}
           </div>
         ) : (
-          <div className="bg-white p-4 rounded-lg border border-gray-200 space-y-4">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
             <div className="flex flex-col sm:flex-row gap-4">
-              {/* Recherche */}
-              <div className="flex-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <SearchIcon className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Rechercher une permission..."
-                  value={permissionSearch}
-                  onChange={(e) => {
-                    setPermissionSearch(e.target.value);
-                    setPermissionPage(1);
-                  }}
-                  className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                />
-                {permissionSearch && (
-                  <button
-                    onClick={() => {
-                      setPermissionSearch('');
-                      setPermissionPage(1);
-                    }}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  >
-                    <CloseIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                  </button>
-                )}
-              </div>
-
-              {/* Filtre par ressource */}
-              <div className="w-full sm:w-auto min-w-[200px]">
-                <Autocomplete
-                  options={permissionResourceOptions}
-                  value={permissionResourceFilter}
-                  onChange={(value) => {
-                    setPermissionResourceFilter(value);
-                    setPermissionPage(1);
-                  }}
-                  placeholder="Toutes les ressources"
-                  allowClear={false}
-                />
-              </div>
-
-              {/* Filtre par action */}
-              <div className="w-full sm:w-auto min-w-[200px]">
-                <Autocomplete
-                  options={permissionActionOptions}
-                  value={permissionActionFilter}
-                  onChange={(value) => {
-                    setPermissionActionFilter(value);
-                    setPermissionPage(1);
-                  }}
-                  placeholder="Toutes les actions"
-                  allowClear={false}
-                />
-              </div>
-
-              {/* Bouton réinitialiser */}
+              <SearchFilter
+                value={permissionSearch}
+                onChange={(value) => {
+                  setPermissionSearch(value);
+                  setPermissionPage(1);
+                }}
+                placeholder="Rechercher une permission..."
+                className="flex-1"
+              />
+              <SelectFilter
+                value={permissionResourceFilter}
+                onChange={(value) => {
+                  setPermissionResourceFilter(value);
+                  setPermissionPage(1);
+                }}
+                options={permissionResourceOptions}
+                placeholder="Toutes les ressources"
+                className="w-full sm:w-auto"
+              />
+              <SelectFilter
+                value={permissionActionFilter}
+                onChange={(value) => {
+                  setPermissionActionFilter(value);
+                  setPermissionPage(1);
+                }}
+                options={permissionActionOptions}
+                placeholder="Toutes les actions"
+                className="w-full sm:w-auto"
+              />
               {(permissionSearch || permissionResourceFilter !== 'all' || permissionActionFilter !== 'all') && (
                 <button
                   onClick={() => {
@@ -1095,7 +1085,7 @@ export default function RolesPage() {
                     setPermissionActionFilter('all');
                     setPermissionPage(1);
                   }}
-                  className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap"
                 >
                   Réinitialiser
                 </button>
@@ -1115,7 +1105,7 @@ export default function RolesPage() {
             <div className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
               <Table
                 data={paginatedRoles}
-                columns={columns}
+                columns={tableColumns}
                 loading={rolesLoading}
                 sortKey={sortKey}
                 sortDirection={sortDirection}
@@ -1142,7 +1132,7 @@ export default function RolesPage() {
             <div className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
               <Table
                 data={paginatedPermissions}
-                columns={permissionColumns}
+                columns={tablePermissionColumns}
                 loading={false}
                 emptyMessage={
                   permissionSearch || permissionResourceFilter !== 'all' || permissionActionFilter !== 'all'

@@ -136,7 +136,7 @@ export default function MovementsPage() {
   // No client-side filtering needed - search is done server-side
   const filteredMovements = movements;
 
-  const columns: Column<StockMovement>[] = [
+  const columns: TableColumn<StockMovement>[] = [
     {
       key: 'createdAt',
       label: 'Date & Heure',
@@ -193,6 +193,7 @@ export default function MovementsPage() {
       key: 'quantity',
       label: 'Quantité',
       sortable: false,
+      align: 'right',
       className: 'text-right',
       render: (movement: StockMovement) => (
         <div className="text-right">
@@ -206,8 +207,6 @@ export default function MovementsPage() {
           </span>
         </div>
       ),
-      align: 'right',
-      className: 'text-right',
     },
     {
       key: 'user',

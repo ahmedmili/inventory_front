@@ -5,9 +5,12 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { apiClient } from '@/lib/api';
 import Link from 'next/link';
 import Pagination from '@/components/Pagination';
-import { SearchIcon } from '@/components/icons';
+import { PlusIcon, TruckIcon, CalendarIcon } from '@/components/icons';
 import RouteGuard from '@/components/guards/RouteGuard';
 import { TableSkeleton } from '@/components/SkeletonLoader';
+import { StatisticsCard, ModernTable, SearchFilter, SelectFilter, StatusBadge } from '@/components/ui';
+import { useUrlSync } from '@/hooks/useUrlSync';
+import type { TableColumn } from '@/types/shared';
 
 interface PurchaseOrder {
   id: string;
@@ -53,15 +56,11 @@ export default function PurchasesPage() {
   }, [searchInput]);
 
   // Synchroniser l'URL avec les filtres et la pagination
-  useEffect(() => {
-    const params = new URLSearchParams();
-    params.set('page', page.toString());
-    params.set('limit', limit.toString());
-    if (search) params.set('search', search);
-    if (statusFilter !== 'all') params.set('status', statusFilter);
-    
-    router.replace(`/purchases?${params.toString()}`, { scroll: false });
-  }, [page, search, statusFilter, limit, router]);
+  useUrlSync({
+    page: page > 1 ? page : undefined,
+    search: search || undefined,
+    status: statusFilter !== 'all' ? statusFilter : undefined,
+  });
 
   useEffect(() => {
     loadOrders();
@@ -96,16 +95,77 @@ export default function PurchasesPage() {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      DRAFT: 'bg-gray-100 text-gray-800',
-      VALIDATED: 'bg-blue-100 text-blue-800',
-      RECEIVED: 'bg-green-100 text-green-800',
-      PARTIAL: 'bg-yellow-100 text-yellow-800',
-      CANCELLED: 'bg-red-100 text-red-800',
-    };
-    return colors[status] || 'bg-gray-100 text-gray-800';
-  };
+  // Calculate statistics
+  const totalOrders = paginationMeta?.total || orders.length;
+  const draftOrders = orders.filter(o => o.status === 'DRAFT').length;
+  const validatedOrders = orders.filter(o => o.status === 'VALIDATED').length;
+  const receivedOrders = orders.filter(o => o.status === 'RECEIVED').length;
+
+  const columns: TableColumn<PurchaseOrder>[] = [
+    {
+      key: 'number',
+      label: 'Numéro de commande',
+      render: (order: PurchaseOrder) => (
+        <div className="font-semibold text-gray-900 min-w-[150px]">{order.number}</div>
+      ),
+      className: 'min-w-[150px]',
+    },
+    {
+      key: 'supplier',
+      label: 'Fournisseur',
+      render: (order: PurchaseOrder) => (
+        <div className="text-gray-700 min-w-[150px]">{order.supplier.name}</div>
+      ),
+      className: 'min-w-[150px]',
+    },
+    {
+      key: 'status',
+      label: 'Statut',
+      render: (order: PurchaseOrder) => (
+        <StatusBadge status={order.status} variant="default" size="sm" />
+      ),
+      align: 'center',
+      className: 'text-center',
+    },
+    {
+      key: 'expectedDate',
+      label: 'Date prévue',
+      render: (order: PurchaseOrder) => (
+        <div className="text-gray-600 min-w-[120px]">
+          {order.expectedDate
+            ? new Date(order.expectedDate).toLocaleDateString('fr-FR')
+            : '-'}
+        </div>
+      ),
+      className: 'min-w-[120px]',
+    },
+    {
+      key: 'createdAt',
+      label: 'Créée le',
+      render: (order: PurchaseOrder) => (
+        <div className="text-gray-600 min-w-[120px]">
+          {new Date(order.createdAt).toLocaleDateString('fr-FR')}
+        </div>
+      ),
+      className: 'min-w-[120px]',
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+      render: (order: PurchaseOrder) => (
+        <div className="flex items-center justify-center">
+          <Link
+            href={`/purchases/${order.id}`}
+            className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-all duration-200"
+          >
+            Voir
+          </Link>
+        </div>
+      ),
+      align: 'center',
+      className: 'text-center',
+    },
+  ];
 
   if (loading && orders.length === 0) {
     return (
@@ -119,45 +179,81 @@ export default function PurchasesPage() {
 
   return (
     <RouteGuard>
-      <div className="px-4 py-6 sm:px-0">
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-          <h2 className="text-2xl font-bold">Commandes d'achat</h2>
-          <Link
-            href="/purchases/new"
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-          >
-            Nouvelle commande
-          </Link>
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl p-6 sm:p-8 border border-orange-100 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Commandes d'achat</h1>
+              <p className="text-sm sm:text-base text-gray-600">Gérez vos commandes d'achat auprès des fournisseurs</p>
+            </div>
+            <Link
+              href="/purchases/new"
+              className="inline-flex items-center px-5 py-3 border border-transparent rounded-xl shadow-lg text-sm font-semibold text-white bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all duration-200 transform hover:scale-105"
+            >
+              <PlusIcon className="w-5 h-5 mr-2" />
+              <span className="hidden sm:inline">Nouvelle commande</span>
+              <span className="sm:hidden">Nouvelle</span>
+            </Link>
+          </div>
         </div>
 
+        {/* Statistics Cards */}
+        {orders.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <StatisticsCard
+              title="Total Commandes"
+              value={totalOrders}
+              icon={<TruckIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
+              colorScheme="orange"
+            />
+            <StatisticsCard
+              title="Brouillons"
+              value={draftOrders}
+              icon={<CalendarIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
+              colorScheme="indigo"
+            />
+            <StatisticsCard
+              title="Validées"
+              value={validatedOrders}
+              icon={<TruckIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
+              colorScheme="blue"
+            />
+            <StatisticsCard
+              title="Reçues"
+              value={receivedOrders}
+              icon={<TruckIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
+              colorScheme="green"
+            />
+          </div>
+        )}
+
         {/* Filters */}
-        <div className="mb-6 bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
           <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1 relative">
-              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Rechercher une commande..."
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <select
+            <SearchFilter
+              value={searchInput}
+              onChange={setSearchInput}
+              placeholder="Rechercher une commande..."
+              className="flex-1"
+            />
+            <SelectFilter
               value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
+              onChange={(value) => {
+                setStatusFilter(value);
                 setPage(1);
               }}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="all">Tous les statuts</option>
-              <option value="DRAFT">Brouillon</option>
-              <option value="VALIDATED">Validée</option>
-              <option value="RECEIVED">Reçue</option>
-              <option value="PARTIAL">Partielle</option>
-              <option value="CANCELLED">Annulée</option>
-            </select>
+              options={[
+                { value: 'all', label: 'Tous les statuts' },
+                { value: 'DRAFT', label: 'Brouillon' },
+                { value: 'VALIDATED', label: 'Validée' },
+                { value: 'RECEIVED', label: 'Reçue' },
+                { value: 'PARTIAL', label: 'Partielle' },
+                { value: 'CANCELLED', label: 'Annulée' },
+              ]}
+              placeholder="Tous les statuts"
+              className="w-full sm:w-auto"
+            />
           </div>
         </div>
 
@@ -166,77 +262,19 @@ export default function PurchasesPage() {
           <TableSkeleton rows={5} cols={6} />
         ) : (
           <>
-            <div className="bg-white shadow overflow-hidden sm:rounded-md">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Numéro de commande
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Fournisseur
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Statut
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date prévue
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Créée le
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {orders.map((order) => (
-                    <tr key={order.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {order.number}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {order.supplier.name}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
-                            order.status,
-                          )}`}
-                        >
-                          {order.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {order.expectedDate
-                          ? new Date(order.expectedDate).toLocaleDateString('fr-FR')
-                          : '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(order.createdAt).toLocaleDateString('fr-FR')}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <Link
-                          href={`/purchases/${order.id}`}
-                          className="text-blue-600 hover:text-blue-900 mr-4"
-                        >
-                          Voir
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {orders.length === 0 && (
-              <div className="text-center py-12 bg-white rounded-lg shadow-sm border border-gray-200 mt-6">
-                <p className="text-gray-500">
-                  {search || statusFilter !== 'all' ? 'Aucune commande trouvée correspondant à vos critères' : 'Aucune commande trouvée'}
-                </p>
-              </div>
-            )}
+            <ModernTable
+              columns={columns}
+              data={orders}
+              headerGradient="from-orange-600 via-orange-500 to-amber-600"
+              striped={true}
+              hoverable={true}
+              emptyMessage={
+                search || statusFilter !== 'all'
+                  ? 'Aucune commande trouvée correspondant à vos critères'
+                  : 'Aucune commande trouvée'
+              }
+              minWidth="1000px"
+            />
 
             {/* Pagination */}
             {paginationMeta && paginationMeta.totalPages > 1 && (

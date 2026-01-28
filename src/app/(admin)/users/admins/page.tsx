@@ -8,6 +8,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { StatisticsCard, ModernTable, SearchFilter, StatusBadge } from '@/components/ui';
 import { UserIcon, PlusIcon } from '@/components/icons';
 import type { TableColumn } from '@/types/shared';
+import { type SortDirection } from '@/components/Table';
 
 interface RoleOption {
   id: string;

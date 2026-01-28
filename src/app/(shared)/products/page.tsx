@@ -9,8 +9,11 @@ import Link from 'next/link';
 import Pagination from '@/components/Pagination';
 import RouteGuard from '@/components/guards/RouteGuard';
 import ProductFormModal from '@/components/products/ProductFormModal';
-import Table, { Column, SortDirection } from '@/components/Table';
-import { EyeIcon, EditIcon, PlusIcon, SearchIcon, CloseIcon, TrashIcon } from '@/components/icons';
+import { EyeIcon, EditIcon, PlusIcon, TrashIcon, PackageIcon } from '@/components/icons';
+import { StatisticsCard, ModernTable, SearchFilter } from '@/components/ui';
+import type { TableColumn } from '@/types/shared';
+import { type SortDirection } from '@/components/Table';
+import { useUrlSync } from '@/hooks/useUrlSync';
 import { useApiMutation } from '@/hooks/useApi';
 import { useToast } from '@/contexts/ToastContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -102,17 +105,13 @@ export default function ProductsPage() {
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  // Update URL when filters or pagination change
-  useEffect(() => {
-    const params = new URLSearchParams();
-    if (page > 1) params.set('page', page.toString());
-    if (search) params.set('search', search);
-    if (sortBy && sortBy !== 'createdAt') params.set('sortBy', sortBy);
-    if (sortOrder && sortOrder !== 'desc') params.set('sortOrder', sortOrder);
-    
-    const newUrl = params.toString() ? `?${params.toString()}` : '';
-    router.replace(`/products${newUrl}`, { scroll: false });
-  }, [page, search, sortBy, sortOrder, router]);
+  // Synchroniser l'URL avec les filtres et la pagination
+  useUrlSync({
+    page: page > 1 ? page : undefined,
+    search: search || undefined,
+    sortBy: sortBy !== 'createdAt' ? sortBy : undefined,
+    sortOrder: sortOrder !== 'desc' ? sortOrder : undefined,
+  });
 
   // Écouter les mises à jour de stock en temps réel
   useProductsRealtime(() => {
@@ -174,9 +173,9 @@ export default function ProductsPage() {
     setProductToDelete(null);
   };
 
-  const handleSort = (key: string, direction: SortDirection) => {
+  const handleSort = (key: string, direction: 'asc' | 'desc' | null) => {
     setSortBy(key);
-    setSortOrder(direction);
+    setSortOrder(direction || 'desc');
     setPage(1); // Reset to first page when sorting changes
   };
 
@@ -207,51 +206,70 @@ export default function ProductsPage() {
     }
   };
 
-  const columns: Column<Product>[] = [
+  // Calculate statistics
+  const totalProducts = data?.meta?.total || data?.data?.length || 0;
+  const lowStockProducts = data?.data?.filter(p => {
+    const totalStock = p.warehouseStock?.reduce((sum, stock) => sum + stock.quantity, 0) || 0;
+    return totalStock <= p.minStock;
+  }).length || 0;
+  const inStockProducts = data?.data?.filter(p => {
+    const totalStock = p.warehouseStock?.reduce((sum, stock) => sum + stock.quantity, 0) || 0;
+    return totalStock > p.minStock;
+  }).length || 0;
+  const outOfStockProducts = data?.data?.filter(p => {
+    const totalStock = p.warehouseStock?.reduce((sum, stock) => sum + stock.quantity, 0) || 0;
+    return totalStock === 0;
+  }).length || 0;
+
+  const columns: TableColumn<Product>[] = [
     {
       key: 'id',
       label: 'ID',
       sortable: false,
-      className: 'font-mono text-xs',
-      render: (product) => (
-        <div className="font-mono text-xs text-gray-500">{product.id.slice(0, 8)}...</div>
+      className: 'font-mono text-xs min-w-[80px]',
+      render: (product: Product) => (
+        <div className="font-mono text-xs text-gray-500 min-w-[80px]">{product.id.slice(0, 8)}...</div>
       ),
     },
     {
       key: 'name',
       label: 'Nom du produit',
       sortable: true,
-      render: (product) => (
-        <div className="font-medium text-gray-900">{product.name}</div>
+      render: (product: Product) => (
+        <div className="font-semibold text-gray-900 min-w-[200px]">{product.name}</div>
       ),
+      className: 'min-w-[200px]',
     },
     {
       key: 'supplier',
       label: 'Fournisseur',
       sortable: true,
-      render: (product) => (
-        <div className="text-gray-600">
+      render: (product: Product) => (
+        <div className="text-gray-600 min-w-[150px]">
           {product.supplier?.name || (
             <span className="text-gray-400 italic">Non assigné</span>
           )}
         </div>
       ),
+      className: 'min-w-[150px]',
     },
     {
       key: 'sku',
       label: 'Référence',
       sortable: true,
-      render: (product) => (
-        <div className="text-gray-600">{product.sku || 'N/A'}</div>
+      render: (product: Product) => (
+        <div className="text-gray-600 font-mono text-sm min-w-[120px]">{product.sku || 'N/A'}</div>
       ),
+      className: 'min-w-[120px]',
     },
     {
       key: 'salePrice',
       label: 'Prix',
       sortable: true,
-      className: 'text-right',
-      render: (product) => (
-        <div className="text-right font-medium text-green-600">
+      align: 'right',
+      className: 'text-right min-w-[100px]',
+      render: (product: Product) => (
+        <div className="text-right font-bold text-green-600 min-w-[100px]">
           {Number(product.salePrice).toFixed(2)}€
         </div>
       ),
@@ -260,30 +278,32 @@ export default function ProductsPage() {
       key: 'description',
       label: 'Description',
       sortable: false,
-      render: (product) => (
-        <div className="text-gray-600 max-w-xs truncate" title={product.description || undefined}>
+      render: (product: Product) => (
+        <div className="text-gray-600 max-w-xs truncate min-w-[200px]" title={product.description || undefined}>
           {product.description || (
             <span className="text-gray-400 italic">Aucune description</span>
           )}
         </div>
       ),
+      className: 'min-w-[200px]',
     },
     {
       key: 'stock',
       label: 'Stock',
       sortable: false,
-      className: 'text-right',
-      render: (product) => {
+      align: 'right',
+      className: 'text-right min-w-[100px]',
+      render: (product: Product) => {
         const totalStock = product.warehouseStock?.reduce((sum, stock) => sum + stock.quantity, 0) || 0;
         const isLowStock = totalStock <= product.minStock;
         return (
-          <div className="text-right">
-            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+          <div className="text-right min-w-[100px]">
+            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-bold ${
               isLowStock 
-                ? 'bg-red-100 text-red-800' 
+                ? 'bg-red-100 text-red-800 border-2 border-red-200' 
                 : totalStock > product.minStock * 1.5
-                ? 'bg-green-100 text-green-800'
-                : 'bg-yellow-100 text-yellow-800'
+                ? 'bg-green-100 text-green-800 border-2 border-green-200'
+                : 'bg-yellow-100 text-yellow-800 border-2 border-yellow-200'
             }`}>
               {totalStock}
             </span>
@@ -295,10 +315,11 @@ export default function ProductsPage() {
       key: 'minStock',
       label: 'Seuil',
       sortable: true,
-      className: 'text-right',
-      render: (product) => (
-        <div className="text-right">
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+      align: 'right',
+      className: 'text-right min-w-[80px]',
+      render: (product: Product) => (
+        <div className="text-right min-w-[80px]">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-800 border border-gray-200">
             {product.minStock}
           </span>
         </div>
@@ -308,13 +329,13 @@ export default function ProductsPage() {
       key: 'actions',
       label: 'Actions',
       sortable: false,
-      className: 'text-right',
-      headerClassName: 'text-right',
-      render: (product) => (
-        <div className="flex items-center justify-end space-x-2">
+      align: 'center',
+      className: 'text-center',
+      render: (product: Product) => (
+        <div className="flex items-center justify-center gap-1">
           <Link
             href={`/products/${product.id}`}
-            className="inline-flex items-center justify-center p-2 text-primary-600 hover:text-primary-900 hover:bg-primary-50 rounded-lg transition-colors"
+            className="inline-flex items-center justify-center p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-all duration-200 hover:scale-110"
             onClick={(e) => e.stopPropagation()}
             title="Voir les détails"
           >
@@ -327,7 +348,7 @@ export default function ProductsPage() {
                 setSelectedProductId(product.id);
                 setIsReservationModalOpen(true);
               }}
-              className="inline-flex items-center justify-center p-2 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 rounded-lg transition-colors"
+              className="inline-flex items-center justify-center p-2 text-green-600 hover:text-green-900 hover:bg-green-50 rounded-lg transition-all duration-200 hover:scale-110"
               title="Réserver"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -341,7 +362,7 @@ export default function ProductsPage() {
                 e.stopPropagation();
                 handleOpenEditModal(product.id);
               }}
-              className="inline-flex items-center justify-center p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+              className="inline-flex items-center justify-center p-2 text-yellow-600 hover:text-yellow-900 hover:bg-yellow-50 rounded-lg transition-all duration-200 hover:scale-110"
               title="Modifier"
             >
               <EditIcon />
@@ -354,7 +375,7 @@ export default function ProductsPage() {
                 handleDeleteClick(product.id, product.name);
               }}
               disabled={deleting}
-              className="inline-flex items-center justify-center p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center justify-center p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg transition-all duration-200 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
               title="Supprimer"
             >
               <TrashIcon />
@@ -404,142 +425,155 @@ export default function ProductsPage() {
         requirePermissions: ['products.read'],
       }}
     >
-        <div className="w-full">
-          <div className="px-4 py-6 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">Produits</h2>
-              {data?.meta && (
-                <p className="mt-1 text-sm text-gray-500">
-                  {data.meta.total} produit{data.meta.total !== 1 ? 's' : ''} au total
+        <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6 sm:p-8 border border-green-100 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Produits</h1>
+                <p className="text-sm sm:text-base text-gray-600">
+                  {data?.meta ? `${data.meta.total} produit${data.meta.total !== 1 ? 's' : ''} au total` : 'Gérez votre catalogue de produits'}
                 </p>
-              )}
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              {canCreate && (
-                <>
-                  <button
-                    onClick={() => setIsImportModalOpen(true)}
-                    className="inline-flex items-center gap-2 bg-gray-600 text-white px-4 py-2.5 rounded-lg hover:bg-gray-700 font-medium transition-colors shadow-sm hover:shadow-md"
-                    title="Importer des produits depuis CSV/Excel"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                    </svg>
-                    Importer
-                  </button>
-                  <ExportDropdown
-                    trigger={
-                      <>
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        Exporter
-                      </>
-                    }
-                    options={[
-                      {
-                        label: 'Exporter en CSV',
-                        description: 'Format texte compatible avec Excel',
-                        icon: (
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {canCreate && (
+                  <>
+                    <button
+                      onClick={() => setIsImportModalOpen(true)}
+                      className="inline-flex items-center gap-2 bg-gray-600 text-white px-4 py-2.5 rounded-lg hover:bg-gray-700 font-medium transition-colors shadow-sm hover:shadow-md"
+                      title="Importer des produits depuis CSV/Excel"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                      </svg>
+                      <span className="hidden sm:inline">Importer</span>
+                    </button>
+                    <ExportDropdown
+                      trigger={
+                        <>
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                           </svg>
-                        ),
-                        onClick: handleExportCSV,
-                      },
-                      {
-                        label: 'Exporter en Excel',
-                        description: 'Format .xlsx avec formatage',
-                        icon: (
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                        ),
-                        onClick: handleExportExcel,
-                      },
-                    ]}
-                  />
-                  <button
-                    onClick={handleOpenCreateModal}
-                    className="inline-flex items-center gap-2 bg-primary-600 text-white px-4 py-2.5 rounded-lg hover:bg-primary-700 font-medium transition-colors shadow-sm hover:shadow-md"
-                    title="Créer un nouveau produit"
-                  >
-                    <PlusIcon />
-                    Ajouter un produit
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Search Bar */}
-        <div className="mb-6">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <SearchIcon className="h-5 w-5 text-gray-400" />
-            </div>
-            <input
-              type="text"
-              placeholder="Rechercher par nom ou référence..."
-              value={searchInput}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-            />
-            {searchInput && (
-              <button
-                type="button"
-                onClick={() => handleSearch('')}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center"
-              >
-                <CloseIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-              </button>
-            )}
-          </div>
-        </div>
-
-        {error ? (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-red-800">Échec du chargement des produits. Veuillez réessayer.</p>
-          </div>
-        ) : (
-          <>
-            <Table
-              data={data?.data || []}
-              columns={columns}
-              onSort={handleSort}
-              sortKey={sortBy}
-              sortDirection={sortOrder}
-              loading={loading}
-              emptyMessage="Aucun produit trouvé"
-              onRowClick={(product) => router.push(`/products/${product.id}`)}
-            />
-
-            {data?.meta && data.meta.total > 0 && (
-              <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="text-sm text-gray-700">
-                  Affichage de <span className="font-medium">{(data.meta.page - 1) * data.meta.limit + 1}</span> à{' '}
-                  <span className="font-medium">
-                    {Math.min(data.meta.page * data.meta.limit, data.meta.total)}
-                  </span>{' '}
-                  sur <span className="font-medium">{data.meta.total}</span> produit{data.meta.total !== 1 ? 's' : ''}
-                </div>
-                {data.meta.totalPages > 1 && (
-                  <Pagination
-                    currentPage={data.meta.page}
-                    totalPages={data.meta.totalPages}
-                    onPageChange={setPage}
-                    hasNext={data.meta.hasNext}
-                    hasPrev={data.meta.hasPrev}
-                  />
+                          <span className="hidden sm:inline">Exporter</span>
+                        </>
+                      }
+                      options={[
+                        {
+                          label: 'Exporter en CSV',
+                          description: 'Format texte compatible avec Excel',
+                          icon: (
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                          ),
+                          onClick: handleExportCSV,
+                        },
+                        {
+                          label: 'Exporter en Excel',
+                          description: 'Format .xlsx avec formatage',
+                          icon: (
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                          ),
+                          onClick: handleExportExcel,
+                        },
+                      ]}
+                    />
+                    <button
+                      onClick={handleOpenCreateModal}
+                      className="inline-flex items-center px-5 py-3 border border-transparent rounded-xl shadow-lg text-sm font-semibold text-white bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 transform hover:scale-105"
+                      title="Créer un nouveau produit"
+                    >
+                      <PlusIcon className="w-5 h-5 mr-2" />
+                      <span className="hidden sm:inline">Ajouter un produit</span>
+                      <span className="sm:hidden">Ajouter</span>
+                    </button>
+                  </>
                 )}
               </div>
-            )}
-          </>
-        )}
+            </div>
+          </div>
+
+          {/* Statistics Cards */}
+          {data?.data && data.data.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <StatisticsCard
+                title="Total Produits"
+                value={totalProducts}
+                icon={<PackageIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
+                colorScheme="green"
+              />
+              <StatisticsCard
+                title="En stock"
+                value={inStockProducts}
+                icon={<PackageIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
+                colorScheme="blue"
+              />
+              <StatisticsCard
+                title="Stock faible"
+                value={lowStockProducts}
+                icon={<PackageIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
+                colorScheme="orange"
+              />
+              <StatisticsCard
+                title="Rupture"
+                value={outOfStockProducts}
+                icon={<PackageIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
+                colorScheme="red"
+              />
+            </div>
+          )}
+
+          {/* Filters */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <SearchFilter
+              value={searchInput}
+              onChange={handleSearch}
+              placeholder="Rechercher par nom ou référence..."
+              className="w-full"
+            />
+          </div>
+
+          {/* Table */}
+          {error ? (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-red-800">Échec du chargement des produits. Veuillez réessayer.</p>
+            </div>
+          ) : (
+            <>
+              <ModernTable
+                columns={columns}
+                data={data?.data || []}
+                headerGradient="from-green-600 via-green-500 to-emerald-600"
+                striped={true}
+                hoverable={true}
+                emptyMessage="Aucun produit trouvé"
+                minWidth="1200px"
+              />
+
+              {data?.meta && data.meta.total > 0 && (
+                <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="text-sm text-gray-700">
+                    Affichage de <span className="font-medium">{(data.meta.page - 1) * data.meta.limit + 1}</span> à{' '}
+                    <span className="font-medium">
+                      {Math.min(data.meta.page * data.meta.limit, data.meta.total)}
+                    </span>{' '}
+                    sur <span className="font-medium">{data.meta.total}</span> produit{data.meta.total !== 1 ? 's' : ''}
+                  </div>
+                  {data.meta.totalPages > 1 && (
+                    <Pagination
+                      currentPage={data.meta.page}
+                      totalPages={data.meta.totalPages}
+                      onPageChange={setPage}
+                      hasNext={data.meta.hasNext}
+                      hasPrev={data.meta.hasPrev}
+                    />
+                  )}
+                </div>
+              )}
+            </>
+          )}
 
         {/* Product Form Modal */}
         <ProductFormModal
@@ -589,7 +623,6 @@ export default function ProductsPage() {
             }}
           />
         )}
-          </div>
         </div>
       </RouteGuard>
     );

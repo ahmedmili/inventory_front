@@ -1,13 +1,16 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiClient } from '@/lib/api';
 import Link from 'next/link';
 import Pagination from '@/components/Pagination';
-import { SearchIcon } from '@/components/icons';
+import { PlusIcon, SalesIcon, CalendarIcon } from '@/components/icons';
 import RouteGuard from '@/components/guards/RouteGuard';
 import { TableSkeleton } from '@/components/SkeletonLoader';
+import { StatisticsCard, ModernTable, SearchFilter, SelectFilter, StatusBadge } from '@/components/ui';
+import { useUrlSync } from '@/hooks/useUrlSync';
+import type { TableColumn } from '@/types/shared';
 
 interface SalesOrder {
   id: string;
@@ -53,21 +56,13 @@ export default function SalesPage() {
   }, [searchInput]);
 
   // Synchroniser l'URL avec les filtres et la pagination
-  useEffect(() => {
-    const params = new URLSearchParams();
-    params.set('page', page.toString());
-    params.set('limit', limit.toString());
-    if (search) params.set('search', search);
-    if (statusFilter !== 'all') params.set('status', statusFilter);
-    
-    router.replace(`/sales?${params.toString()}`, { scroll: false });
-  }, [page, search, statusFilter, limit, router]);
+  useUrlSync({
+    page: page > 1 ? page : undefined,
+    search: search || undefined,
+    status: statusFilter !== 'all' ? statusFilter : undefined,
+  });
 
-  useEffect(() => {
-    loadOrders();
-  }, [page, search, statusFilter]);
-
-  const loadOrders = async () => {
+  const loadOrders = useCallback(async () => {
     try {
       setLoading(true);
       const params: any = {
@@ -94,17 +89,83 @@ export default function SalesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, search, statusFilter]);
 
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      PENDING: 'bg-yellow-100 text-yellow-800',
-      CONFIRMED: 'bg-blue-100 text-blue-800',
-      DELIVERED: 'bg-green-100 text-green-800',
-      CANCELLED: 'bg-red-100 text-red-800',
-    };
-    return colors[status] || 'bg-gray-100 text-gray-800';
-  };
+  useEffect(() => {
+    loadOrders();
+  }, [loadOrders]);
+
+  // Calculate statistics
+  const totalOrders = paginationMeta?.total || orders.length;
+  const pendingOrders = orders.filter(o => o.status === 'PENDING').length;
+  const confirmedOrders = orders.filter(o => o.status === 'CONFIRMED').length;
+  const deliveredOrders = orders.filter(o => o.status === 'DELIVERED').length;
+
+  const columns: TableColumn<SalesOrder>[] = [
+    {
+      key: 'number',
+      label: 'Numéro de commande',
+      render: (order: SalesOrder) => (
+        <div className="font-semibold text-gray-900 min-w-[150px]">{order.number}</div>
+      ),
+      className: 'min-w-[150px]',
+    },
+    {
+      key: 'customer',
+      label: 'Client',
+      render: (order: SalesOrder) => (
+        <div className="text-gray-700 min-w-[150px]">{order.customer.name}</div>
+      ),
+      className: 'min-w-[150px]',
+    },
+    {
+      key: 'status',
+      label: 'Statut',
+      render: (order: SalesOrder) => (
+        <StatusBadge status={order.status} variant="default" size="sm" />
+      ),
+      align: 'center',
+      className: 'text-center',
+    },
+    {
+      key: 'deliveryDate',
+      label: 'Date de livraison',
+      render: (order: SalesOrder) => (
+        <div className="text-gray-600 min-w-[120px]">
+          {order.deliveryDate
+            ? new Date(order.deliveryDate).toLocaleDateString('fr-FR')
+            : '-'}
+        </div>
+      ),
+      className: 'min-w-[120px]',
+    },
+    {
+      key: 'createdAt',
+      label: 'Créée le',
+      render: (order: SalesOrder) => (
+        <div className="text-gray-600 min-w-[120px]">
+          {new Date(order.createdAt).toLocaleDateString('fr-FR')}
+        </div>
+      ),
+      className: 'min-w-[120px]',
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+      render: (order: SalesOrder) => (
+        <div className="flex items-center justify-center">
+          <Link
+            href={`/sales/${order.id}`}
+            className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-all duration-200"
+          >
+            Voir
+          </Link>
+        </div>
+      ),
+      align: 'center',
+      className: 'text-center',
+    },
+  ];
 
   if (loading) {
     return (
@@ -115,15 +176,82 @@ export default function SalesPage() {
   }
 
   return (
-    <div className="px-4 py-6 sm:px-0">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Sales Orders</h2>
-          <Link
-            href="/sales/new"
-            className="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700"
-          >
-            New Sales Order
-          </Link>
+    <RouteGuard>
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-6 sm:p-8 border border-emerald-100 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Commandes de vente</h1>
+              <p className="text-sm sm:text-base text-gray-600">Gérez vos commandes de vente et livraisons</p>
+            </div>
+            <Link
+              href="/sales/new"
+              className="inline-flex items-center px-5 py-3 border border-transparent rounded-xl shadow-lg text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-200 transform hover:scale-105"
+            >
+              <PlusIcon className="w-5 h-5 mr-2" />
+              <span className="hidden sm:inline">Nouvelle commande</span>
+              <span className="sm:hidden">Nouvelle</span>
+            </Link>
+          </div>
+        </div>
+
+        {/* Statistics Cards */}
+        {orders.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <StatisticsCard
+              title="Total Commandes"
+              value={totalOrders}
+              icon={<SalesIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
+              colorScheme="green"
+            />
+            <StatisticsCard
+              title="En attente"
+              value={pendingOrders}
+              icon={<CalendarIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
+              colorScheme="orange"
+            />
+            <StatisticsCard
+              title="Confirmées"
+              value={confirmedOrders}
+              icon={<SalesIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
+              colorScheme="blue"
+            />
+            <StatisticsCard
+              title="Livrées"
+              value={deliveredOrders}
+              icon={<SalesIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
+              colorScheme="green"
+            />
+          </div>
+        )}
+
+        {/* Filters */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <SearchFilter
+              value={searchInput}
+              onChange={setSearchInput}
+              placeholder="Rechercher une commande..."
+              className="flex-1"
+            />
+            <SelectFilter
+              value={statusFilter}
+              onChange={(value) => {
+                setStatusFilter(value);
+                setPage(1);
+              }}
+              options={[
+                { value: 'all', label: 'Tous les statuts' },
+                { value: 'PENDING', label: 'En attente' },
+                { value: 'CONFIRMED', label: 'Confirmée' },
+                { value: 'DELIVERED', label: 'Livrée' },
+                { value: 'CANCELLED', label: 'Annulée' },
+              ]}
+              placeholder="Tous les statuts"
+              className="w-full sm:w-auto"
+            />
+          </div>
         </div>
 
         {/* Table */}
@@ -131,77 +259,19 @@ export default function SalesPage() {
           <TableSkeleton rows={5} cols={6} />
         ) : (
           <>
-            <div className="bg-white shadow overflow-hidden sm:rounded-md">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Numéro de commande
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Client
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Statut
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date de livraison
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Créée le
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {orders.map((order) => (
-                    <tr key={order.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {order.number}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {order.customer.name}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
-                            order.status,
-                          )}`}
-                        >
-                          {order.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {order.deliveryDate
-                          ? new Date(order.deliveryDate).toLocaleDateString('fr-FR')
-                          : '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(order.createdAt).toLocaleDateString('fr-FR')}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <Link
-                          href={`/sales/${order.id}`}
-                          className="text-blue-600 hover:text-blue-900 mr-4"
-                        >
-                          Voir
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {orders.length === 0 && (
-              <div className="text-center py-12 bg-white rounded-lg shadow-sm border border-gray-200 mt-6">
-                <p className="text-gray-500">
-                  {search || statusFilter !== 'all' ? 'Aucune commande trouvée correspondant à vos critères' : 'Aucune commande trouvée'}
-                </p>
-              </div>
-            )}
+            <ModernTable
+              columns={columns}
+              data={orders}
+              headerGradient="from-emerald-600 via-emerald-500 to-teal-600"
+              striped={true}
+              hoverable={true}
+              emptyMessage={
+                search || statusFilter !== 'all'
+                  ? 'Aucune commande trouvée correspondant à vos critères'
+                  : 'Aucune commande trouvée'
+              }
+              minWidth="1000px"
+            />
 
             {/* Pagination */}
             {paginationMeta && paginationMeta.totalPages > 1 && (

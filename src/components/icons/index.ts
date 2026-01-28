@@ -26,4 +26,8 @@ export { default as ProjectIcon } from './ProjectIcon';
 export { default as ChevronDownIcon } from './ChevronDownIcon';
 export { default as ChevronUpIcon } from './ChevronUpIcon';
 export { default as TruckIcon } from './TruckIcon';
+export { default as EmailIcon } from './EmailIcon';
+export { default as PhoneIcon } from './PhoneIcon';
+export { default as LocationIcon } from './LocationIcon';
+export { default as ArrowRightIcon } from './ArrowRightIcon';
 

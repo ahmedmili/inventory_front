@@ -192,7 +192,6 @@ export default function UpdateReservationModal({
             value={formData.projectId}
             onChange={(value) => setFormData({ ...formData, projectId: value || '' })}
             placeholder="Sélectionner un projet (optionnel)"
-            loading={loadingOptions}
           />
         </div>
 

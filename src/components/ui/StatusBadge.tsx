@@ -28,6 +28,15 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   MANAGER: { label: 'Manager', className: 'bg-indigo-100 text-indigo-800 border-indigo-200' },
   EMPLOYEE: { label: 'Employé', className: 'bg-green-100 text-green-800 border-green-200' },
   STOCK_KEEPER: { label: 'Gestionnaire', className: 'bg-blue-100 text-blue-800 border-blue-200' },
+  
+  // Purchase order statuses
+  DRAFT: { label: 'Brouillon', className: 'bg-gray-100 text-gray-800 border-gray-200' },
+  VALIDATED: { label: 'Validée', className: 'bg-blue-100 text-blue-800 border-blue-200' },
+  RECEIVED: { label: 'Reçue', className: 'bg-green-100 text-green-800 border-green-200' },
+  PARTIAL: { label: 'Partielle', className: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+  
+  // Sales order statuses
+  DELIVERED: { label: 'Livrée', className: 'bg-green-100 text-green-800 border-green-200' },
 };
 
 const sizeClasses = {

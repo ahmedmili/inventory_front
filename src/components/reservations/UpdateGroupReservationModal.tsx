@@ -123,7 +123,7 @@ export default function UpdateGroupReservationModal({
       
       // If we have a projectId but projects just loaded, ensure the form data is set correctly
       if (group && group.project?.id && projectsData.length > 0) {
-        const projectExists = projectsData.some(p => p.id === group.project?.id);
+        const projectExists = projectsData.some((p: Project) => p.id === group.project?.id);
         if (!projectExists) {
           // Project might not be active, try to load it anyway
           try {
@@ -247,7 +247,6 @@ export default function UpdateGroupReservationModal({
             value={formData.projectId}
             onChange={(value) => setFormData({ ...formData, projectId: value || '' })}
             placeholder="Sélectionner un projet (optionnel)"
-            loading={loadingOptions}
           />
         </div>
 
