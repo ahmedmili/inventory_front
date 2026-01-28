@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { useSearchParams } from 'next/navigation';
 import Modal from '@/components/Modal';
 import { useApi, useApiMutation } from '@/hooks/useApi';
 import { useToast } from '@/contexts/ToastContext';
@@ -9,6 +10,8 @@ import { StatisticsCard, ModernTable, SearchFilter, StatusBadge } from '@/compon
 import { UserIcon, PlusIcon } from '@/components/icons';
 import type { TableColumn } from '@/types/shared';
 import { type SortDirection } from '@/components/Table';
+import Pagination from '@/components/Pagination';
+import { useUrlSync } from '@/hooks/useUrlSync';
 
 interface RoleOption {
   id: string;
@@ -48,32 +51,45 @@ const dateFormatter = new Intl.DateTimeFormat('fr-FR', {
 
 export default function AdminsPage() {
   const toast = useToast();
-  const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [includeDeleted, setIncludeDeleted] = useState(false);
+  const searchParams = useSearchParams();
+  const [searchInput, setSearchInput] = useState(searchParams?.get('search') || '');
+  const [search, setSearch] = useState(searchParams?.get('search') || '');
+  const [includeDeleted, setIncludeDeleted] = useState(searchParams?.get('includeDeleted') === 'true');
+  const [page, setPage] = useState(Number(searchParams?.get('page')) || 1);
   const [isInviteModalOpen, setInviteModalOpen] = useState(false);
   const [actionUserId, setActionUserId] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<string>('createdAt');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const limit = 20;
 
+  // Debounce search input - wait 500ms after user stops typing
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedSearch(search.trim());
-    }, 350);
+      setSearch(searchInput);
+      setPage(1); // Reset to first page on search
+    }, 500);
+
     return () => clearTimeout(timer);
-  }, [search]);
+  }, [searchInput]);
+
+  // Synchroniser l'URL avec les filtres et la pagination
+  useUrlSync({
+    page: page > 1 ? page : undefined,
+    search: search || undefined,
+    includeDeleted: includeDeleted ? 'true' : undefined,
+  });
 
   const queryString = useMemo(() => {
     const params = new URLSearchParams();
-    if (debouncedSearch) {
-      params.set('search', debouncedSearch);
+    if (search) {
+      params.set('search', search);
     }
     if (includeDeleted) {
       params.set('includeDeleted', 'true');
     }
     const query = params.toString();
     return query ? `?${query}` : '';
-  }, [debouncedSearch, includeDeleted]);
+  }, [search, includeDeleted]);
 
   const {
     data: adminsData,
@@ -234,6 +250,15 @@ export default function AdminsPage() {
     setSortKey(direction ? key : '');
     setSortDirection(direction);
   };
+
+  // Pagination côté client
+  const paginatedAdmins = useMemo(() => {
+    const start = (page - 1) * limit;
+    const end = start + limit;
+    return sortedAdmins.slice(start, end);
+  }, [sortedAdmins, page, limit]);
+
+  const totalPages = Math.ceil(sortedAdmins.length / limit);
 
   const columns: TableColumn<AdminUser>[] = [
     {
@@ -442,8 +467,11 @@ export default function AdminsPage() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 w-full">
             <SearchFilter
-              value={search}
-              onChange={setSearch}
+              value={searchInput}
+              onChange={(value) => {
+                setSearchInput(value);
+                setPage(1);
+              }}
               placeholder="Rechercher par nom ou email..."
               className="flex-1"
             />
@@ -452,7 +480,10 @@ export default function AdminsPage() {
                 type="checkbox"
                 className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                 checked={includeDeleted}
-                onChange={(event) => setIncludeDeleted(event.target.checked)}
+                onChange={(event) => {
+                  setIncludeDeleted(event.target.checked);
+                  setPage(1);
+                }}
               />
               Inclure les comptes désactivés
             </label>
@@ -463,17 +494,33 @@ export default function AdminsPage() {
       {/* Table */}
       <ModernTable
         columns={columns}
-        data={sortedAdmins}
+        data={paginatedAdmins}
         headerGradient="from-purple-600 via-purple-500 to-indigo-600"
         striped={true}
         hoverable={true}
         emptyMessage={
-          debouncedSearch
+          search
             ? 'Aucun administrateur ne correspond à votre recherche.'
             : 'Aucun administrateur enregistré pour le moment.'
         }
         minWidth="1000px"
       />
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="mt-6">
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            hasNext={page < totalPages}
+            hasPrev={page > 1}
+            onPageChange={(newPage) => {
+              setPage(newPage);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          />
+        </div>
+      )}
 
       <Modal
         isOpen={isInviteModalOpen}
