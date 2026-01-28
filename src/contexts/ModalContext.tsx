@@ -5,14 +5,14 @@ import { Modal, ModalOptions, ModalType } from '@/types/modal.types';
 
 interface ModalContextType {
   modals: Modal[];
-  showModal: (options: ModalOptions | string) => string;
+  showModal: (options: ModalOptions) => string;
   closeModal: (id: string) => void;
   closeAllModals: () => void;
-  confirm: (options: Omit<ModalOptions, 'type'>) => Promise<boolean>;
   info: (options: Omit<ModalOptions, 'type'>) => string;
   success: (options: Omit<ModalOptions, 'type'>) => string;
   error: (options: Omit<ModalOptions, 'type'>) => string;
   warning: (options: Omit<ModalOptions, 'type'>) => string;
+  confirm: (options: Omit<ModalOptions, 'type'> & { onConfirm: () => void | Promise<void> }) => Promise<boolean>;
 }
 
 const ModalContext = createContext<ModalContextType | undefined>(undefined);
@@ -24,8 +24,6 @@ const defaultOptions: Partial<ModalOptions> = {
   showCloseButton: true,
   closeOnBackdrop: true,
   closeOnEscape: true,
-  confirmText: 'Confirmer',
-  cancelText: 'Annuler',
 };
 
 export function ModalProvider({ children }: { children: ReactNode }) {
@@ -35,23 +33,18 @@ export function ModalProvider({ children }: { children: ReactNode }) {
     return `modal-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
   }, []);
 
-  const showModal = useCallback((options: ModalOptions | string): string => {
-    const modalOptions: ModalOptions =
-      typeof options === 'string'
-        ? { content: options }
-        : options;
-
-    const id = modalOptions.id || generateId();
+  const showModal = useCallback((options: ModalOptions): string => {
+    const id = options.id || generateId();
     const modal: Modal = {
       ...defaultOptions,
-      ...modalOptions,
+      ...options,
       id,
       createdAt: Date.now(),
     };
 
     setModals((prev) => {
       // Éviter les doublons si un ID est fourni
-      if (modalOptions.id) {
+      if (options.id) {
         const existingIndex = prev.findIndex((m) => m.id === id);
         if (existingIndex >= 0) {
           const updated = [...prev];
@@ -86,29 +79,6 @@ export function ModalProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const confirm = useCallback(async (options: Omit<ModalOptions, 'type'>): Promise<boolean> => {
-    return new Promise((resolve) => {
-      const id = showModal({
-        ...options,
-        type: 'confirm',
-        onConfirm: async () => {
-          if (options.onConfirm) {
-            await options.onConfirm();
-          }
-          closeModal(id);
-          resolve(true);
-        },
-        onClose: () => {
-          if (options.onClose) {
-            options.onClose();
-          }
-          closeModal(id);
-          resolve(false);
-        },
-      });
-    });
-  }, [showModal, closeModal]);
-
   const createTypeMethod = useCallback(
     (type: ModalType) =>
       (options: Omit<ModalOptions, 'type'>): string => {
@@ -117,28 +87,40 @@ export function ModalProvider({ children }: { children: ReactNode }) {
     [showModal]
   );
 
-  const info = useCallback(createTypeMethod('info'), [createTypeMethod]);
-  const success = useCallback(createTypeMethod('success'), [createTypeMethod]);
-  const error = useCallback(createTypeMethod('error'), [createTypeMethod]);
-  const warning = useCallback(createTypeMethod('warning'), [createTypeMethod]);
-
-  return (
-    <ModalContext.Provider
-      value={{
-        modals,
-        showModal,
-        closeModal,
-        closeAllModals,
-        confirm,
-        info,
-        success,
-        error,
-        warning,
-      }}
-    >
-      {children}
-    </ModalContext.Provider>
+  const confirm = useCallback(
+    async (options: Omit<ModalOptions, 'type'> & { onConfirm: () => void | Promise<void> }): Promise<boolean> => {
+      return new Promise((resolve) => {
+        const id = showModal({
+          ...options,
+          type: 'confirm',
+          onConfirm: async () => {
+            await options.onConfirm();
+            closeModal(id);
+            resolve(true);
+          },
+          onClose: () => {
+            closeModal(id);
+            resolve(false);
+          },
+        });
+      });
+    },
+    [showModal, closeModal]
   );
+
+  const value: ModalContextType = {
+    modals,
+    showModal,
+    closeModal,
+    closeAllModals,
+    info: createTypeMethod('info'),
+    success: createTypeMethod('success'),
+    error: createTypeMethod('error'),
+    warning: createTypeMethod('warning'),
+    confirm,
+  };
+
+  return <ModalContext.Provider value={value}>{children}</ModalContext.Provider>;
 }
 
 export function useModal() {
@@ -148,4 +130,3 @@ export function useModal() {
   }
   return context;
 }
-

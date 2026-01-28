@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ReactNode } from 'react';
 import { NavigationItem } from './navigationConfig';
 import { useLoading } from '@/contexts/LoadingContext';
+import { useNavigationModal } from '@/contexts/NavigationModalContext';
 
 interface NavItemProps {
   item: NavigationItem;
@@ -27,6 +28,7 @@ export default function NavItem({
   onToggle,
 }: NavItemProps) {
   const { showLoader } = useLoading();
+  const { openModal } = useNavigationModal();
   const hasChildren = Boolean(item.children?.length);
   const paddingLeft = isMinimized ? undefined : depth * 16;
 
@@ -66,7 +68,17 @@ export default function NavItem({
     </div>
   );
 
-  const row = hasChildren || !item.href ? (
+  const handleClick = () => {
+    if (item.modalType) {
+      openModal(item.modalType);
+      if (onNavigate) onNavigate();
+    } else if (item.href) {
+      showLoader('Navigation en cours...');
+      if (onNavigate) onNavigate();
+    }
+  };
+
+  const row = hasChildren || (!item.href && !item.modalType) ? (
     <button
       type="button"
       onClick={onToggle}
@@ -80,13 +92,24 @@ export default function NavItem({
         </div>
       )}
     </button>
+  ) : item.modalType ? (
+    <button
+      type="button"
+      onClick={handleClick}
+      className={`${baseClasses} ${activeClasses}`}
+    >
+      {content}
+      {isMinimized && (
+        <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2.5 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[60] transition-opacity duration-200 shadow-lg">
+          {item.name}
+          <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900" />
+        </div>
+      )}
+    </button>
   ) : (
     <Link
-      href={item.href}
-      onClick={() => {
-        showLoader('Navigation en cours...');
-        if (onNavigate) onNavigate();
-      }}
+      href={item.href!}
+      onClick={handleClick}
       className={`${baseClasses} ${activeClasses}`}
     >
       {content}

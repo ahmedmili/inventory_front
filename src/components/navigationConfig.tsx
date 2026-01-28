@@ -22,6 +22,7 @@ export interface NavigationItem {
   icon: ReactNode;
   exact?: boolean;
   children?: NavigationItem[];
+  modalType?: 'suppliers'; // Type of modal to open instead of navigating
   // Access control
   requireAuth?: boolean; // Default: true
   requireRoles?: string[]; // Role codes (e.g., ['ADMIN', 'MANAGER'])
@@ -87,7 +88,7 @@ export const navigationItems: NavigationItem[] = [
       // },
       {
         name: 'Fournisseurs',
-        href: '/suppliers',
+        modalType: 'suppliers',
         icon: <BuildingIcon />,
         requireRoles: ['ADMIN'],
         requirePermissions: ['suppliers.read'],
