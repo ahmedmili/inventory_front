@@ -88,7 +88,7 @@ export const navigationItems: NavigationItem[] = [
       // },
       {
         name: 'Fournisseurs',
-        modalType: 'suppliers',
+        href: '/suppliers',
         icon: <BuildingIcon />,
         requireRoles: ['ADMIN'],
         requirePermissions: ['suppliers.read'],
