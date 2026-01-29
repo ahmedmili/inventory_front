@@ -235,6 +235,7 @@ export default function ProductFormModal({
       isOpen={isOpen}
       onClose={handleClose}
       title={isEditMode ? 'Modifier le produit' : 'Nouveau produit'}
+      variant="form"
       size="xl"
     >
       {loadingProduct ? (

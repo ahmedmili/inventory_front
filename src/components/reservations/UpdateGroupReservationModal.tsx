@@ -234,6 +234,7 @@ export default function UpdateGroupReservationModal({
       isOpen={isOpen}
       onClose={handleClose}
       title="Modifier le groupe de réservations"
+      variant="form"
       size="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-6">

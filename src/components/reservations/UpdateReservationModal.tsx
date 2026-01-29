@@ -151,6 +151,7 @@ export default function UpdateReservationModal({
       isOpen={isOpen}
       onClose={handleClose}
       title="Modifier la réservation"
+      variant="form"
       size="md"
     >
       <form onSubmit={handleSubmit} className="space-y-4">

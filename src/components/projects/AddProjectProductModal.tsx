@@ -94,7 +94,7 @@ export default function AddProjectProductModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Ajouter un produit" size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Ajouter un produit" size="md" variant="form">
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Product Selection */}
         <div>

@@ -103,6 +103,7 @@ export default function StockMovementModal({
       isOpen={isOpen}
       onClose={onClose}
       title={title}
+      variant="form"
       size="md"
       animation="scale"
     >

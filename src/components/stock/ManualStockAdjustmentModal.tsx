@@ -116,7 +116,7 @@ export default function ManualStockAdjustmentModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Ajustement manuel de stock">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Ajustement manuel de stock" variant="form">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Product Selection */}
         <div>

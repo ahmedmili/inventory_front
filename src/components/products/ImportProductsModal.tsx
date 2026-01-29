@@ -146,7 +146,7 @@ export default function ImportProductsModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Importer des produits" size="lg">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Importer des produits" size="lg" variant="form">
       <div className="space-y-4">
         {/* File Selection */}
         <div>

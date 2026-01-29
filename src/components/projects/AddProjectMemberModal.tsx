@@ -93,7 +93,7 @@ export default function AddProjectMemberModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Ajouter un membre" size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Ajouter un membre" size="md" variant="form">
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* User Selection */}
         <div>

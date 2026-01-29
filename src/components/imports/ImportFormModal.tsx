@@ -292,6 +292,7 @@ export default function ImportFormModal({
         isOpen={isOpen}
         onClose={onClose}
         title="Nouvelle Importation"
+        variant="form"
         size="xl"
       >
         <form onSubmit={handleSubmit} className="space-y-6">

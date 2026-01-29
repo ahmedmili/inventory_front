@@ -1159,6 +1159,7 @@ export default function RolesPage() {
           isOpen={isCreateModalOpen}
           onClose={() => setCreateModalOpen(false)}
           title="Créer un nouveau rôle"
+          variant="form"
         >
           <form onSubmit={handleSubmitCreate(handleCreateRole)} className="space-y-4">
             <div>
@@ -1268,6 +1269,7 @@ export default function RolesPage() {
             setEditModalOpen(false);
             setEditingRole(null);
           }}
+          variant="form"
           title="Modifier le rôle"
         >
           <form onSubmit={handleSubmitEdit(handleUpdateRole)} className="space-y-4">
@@ -1397,6 +1399,7 @@ export default function RolesPage() {
             setRoleUsers([]);
             setSelectedUserIds([]);
           }}
+          variant="info"
           title={`Utilisateurs assignés au rôle : ${editingRole?.name}`}
         >
           <div className="space-y-4">
@@ -1520,6 +1523,7 @@ export default function RolesPage() {
             setRoleToDelete(null);
           }}
           title="Supprimer le rôle"
+          variant="error"
         >
           <div className="space-y-4">
             <p className="text-sm text-gray-600">
@@ -1563,6 +1567,7 @@ export default function RolesPage() {
           isOpen={isCreatePermissionModalOpen}
           onClose={() => setCreatePermissionModalOpen(false)}
           title="Créer une nouvelle permission"
+          variant="form"
         >
           <form onSubmit={handleSubmitCreatePermission(handleCreatePermission)} className="space-y-4">
             <div>
@@ -1684,6 +1689,7 @@ export default function RolesPage() {
             setEditPermissionModalOpen(false);
             setEditingPermission(null);
           }}
+          variant="form"
           title="Modifier la permission"
         >
           <form onSubmit={handleSubmitEditPermission(handleUpdatePermission)} className="space-y-4">
@@ -1835,8 +1841,8 @@ export default function RolesPage() {
             </div>
           </div>
         </Modal>
-      </>
-    );
+    </>
+  );
   }
 
 // Permissions Management Modal Component
@@ -1913,7 +1919,7 @@ function PermissionsModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={`Permissions - ${role.name}`}>
+    <Modal isOpen={isOpen} onClose={onClose} title={`Permissions - ${role.name}`} variant="info">
       <div className="space-y-4">
         <div>
           <input

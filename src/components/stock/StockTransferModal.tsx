@@ -166,7 +166,7 @@ export default function StockTransferModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Transfert de stock">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Transfert de stock" variant="form">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Product Selection */}
         <div>

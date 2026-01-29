@@ -54,8 +54,17 @@ export default function ConfirmModal({
     type === 'warning' ? 'Confirmer la suppression' :
     'Confirmer l\'action';
 
+  const variant = type === 'danger' ? 'error' : type === 'warning' ? 'warning' : 'confirm';
+  
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title || defaultTitle} size="md" animation="scale">
+    <Modal 
+      isOpen={isOpen} 
+      onClose={onClose} 
+      title={title || defaultTitle} 
+      size="md" 
+      animation="scale"
+      variant={variant}
+    >
       <div className="space-y-6">
         <div className="flex items-start space-x-4">
           <div className={`flex-shrink-0 ${styles.iconBg} rounded-xl p-3.5 shadow-sm`}>

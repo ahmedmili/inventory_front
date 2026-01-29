@@ -110,6 +110,7 @@ export default function ProjectFormModal({
       isOpen={isOpen}
       onClose={onClose}
       title={projectId ? 'Modifier le projet' : 'Nouveau projet'}
+      variant="form"
       size="lg"
       animation="scale"
     >

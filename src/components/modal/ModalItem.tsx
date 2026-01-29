@@ -200,7 +200,7 @@ export default function ModalItem({ modal, onClose }: ModalItemProps) {
   };
 
   const getModalClasses = () => {
-    const baseClasses = `relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full ${sizeClasses[size]} transform transition-all ${durationClass} border border-gray-200/50 dark:border-gray-700 ring-1 ring-black/5 dark:ring-white/10 ${modal.className || ''}`;
+    const baseClasses = `relative bg-white dark:bg-gray-800 rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] w-full ${sizeClasses[size]} transform transition-all ${durationClass} border border-gray-200/40 dark:border-gray-700/50 ring-1 ring-black/5 dark:ring-white/10 backdrop-blur-sm ${modal.className || ''}`;
 
     if (animation === 'none') {
       return `${baseClasses} ${isAnimating ? 'opacity-100' : 'opacity-0'}`;
@@ -240,7 +240,7 @@ export default function ModalItem({ modal, onClose }: ModalItemProps) {
   const renderContent = (): ReactNode => {
     if (modal.content) {
       return typeof modal.content === 'string' ? (
-        <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">{modal.content}</p>
+        <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line leading-relaxed">{modal.content}</p>
       ) : (
         modal.content
       );
@@ -255,12 +255,12 @@ export default function ModalItem({ modal, onClose }: ModalItemProps) {
 
     if (modal.type === 'confirm' && modal.onConfirm) {
       return (
-        <div className="flex justify-end gap-3 pt-5 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex justify-end gap-3 pt-5 border-t border-gray-200/60 dark:border-gray-700/50">
           <button
             type="button"
             onClick={handleClose}
             disabled={modal.loading}
-            className="px-5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gradient-to-br hover:from-gray-50 hover:to-white dark:hover:from-gray-700 dark:hover:to-gray-800 font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
           >
             {modal.cancelText || 'Annuler'}
           </button>
@@ -278,7 +278,7 @@ export default function ModalItem({ modal, onClose }: ModalItemProps) {
               }
             }}
             disabled={modal.loading || actionLoading.confirm}
-            className={`px-5 py-2.5 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-white ${colors.button}`}
+            className={`px-5 py-2.5 rounded-xl font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-white shadow-md hover:shadow-lg transform hover:scale-[1.02] active:scale-[0.98] ${colors.button}`}
           >
             {modal.loading || actionLoading.confirm ? (
               <span className="flex items-center">
@@ -298,7 +298,7 @@ export default function ModalItem({ modal, onClose }: ModalItemProps) {
 
     if (modal.actions && modal.actions.length > 0) {
       return (
-        <div className="flex justify-end gap-3 pt-5 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex justify-end gap-3 pt-5 border-t border-gray-200/60 dark:border-gray-700/50">
           {modal.actions.map((action, index) => (
             <button
               key={index}
@@ -306,7 +306,7 @@ export default function ModalItem({ modal, onClose }: ModalItemProps) {
               onClick={() => handleActionClick(action, index)}
               disabled={action.loading || actionLoading[index]}
               className={`
-                px-5 py-2.5 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed
+                px-5 py-2.5 rounded-xl font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg transform hover:scale-[1.02] active:scale-[0.98]
                 ${
                   action.style === 'primary'
                     ? 'bg-blue-600 hover:bg-blue-700 text-white'
@@ -338,9 +338,9 @@ export default function ModalItem({ modal, onClose }: ModalItemProps) {
 
   const modalContent = (
     <div className="fixed inset-0 z-[9999] overflow-y-auto">
-      {/* Backdrop */}
+      {/* Backdrop with enhanced blur and gradient */}
       <div
-        className={`fixed inset-0 bg-gradient-to-br from-black/70 via-black/60 to-black/70 backdrop-blur-md ${getBackdropClasses()}`}
+        className={`fixed inset-0 bg-gradient-to-br from-black/80 via-black/70 to-black/80 backdrop-blur-xl ${getBackdropClasses()}`}
         onClick={handleBackdropClick}
         aria-hidden="true"
       />
@@ -366,22 +366,27 @@ export default function ModalItem({ modal, onClose }: ModalItemProps) {
           {/* Header */}
           {(modal.title || modal.showCloseButton !== false) && (
             <div
-              className={`relative flex items-center justify-between px-6 py-5 bg-gradient-to-r from-gray-50 via-white to-gray-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800 border-b border-gray-200/80 dark:border-gray-700 rounded-t-xl shadow-sm ${
+              className={`relative flex items-center justify-between px-6 py-6 bg-gradient-to-br from-gray-50 via-white to-gray-50/80 dark:from-gray-800 dark:via-gray-900/80 dark:to-gray-800 border-b border-gray-200/80 dark:border-gray-700/50 rounded-t-2xl overflow-hidden ${
                 modal.draggable ? 'cursor-move select-none' : ''
               }`}
               onMouseDown={modal.draggable ? handleDragStart : undefined}
             >
-              {/* Decorative accent line */}
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 rounded-t-xl"></div>
-              <div className="flex items-center gap-3 flex-1">
+              {/* Decorative accent line with shimmer effect */}
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-pulse"></div>
+              
+              {/* Background pattern */}
+              <div className="absolute inset-0 opacity-[0.02] bg-[radial-gradient(circle_at_1px_1px,rgb(0,0,0)_1px,transparent_0)] [background-size:20px_20px]"></div>
+              
+              <div className="relative flex items-center gap-3 flex-1">
                 {Icon && (
-                  <div className={`flex-shrink-0 ${colors.iconBg} rounded-lg p-2`}>
-                    <Icon className={`w-6 h-6 ${colors.icon}`} />
+                  <div className={`flex-shrink-0 h-10 w-10 ${colors.iconBg} rounded-xl flex items-center justify-center shadow-lg ring-2 ring-opacity-20 ${colors.icon.replace('text-', 'ring-')}`}>
+                    <Icon className={`w-5 h-5 ${colors.icon}`} />
                   </div>
                 )}
                 {modal.icon && <div className="flex-shrink-0">{modal.icon}</div>}
                 {modal.title && (
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight ml-1">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight leading-tight">
                     {modal.title}
                   </h3>
                 )}
@@ -389,18 +394,18 @@ export default function ModalItem({ modal, onClose }: ModalItemProps) {
               {modal.showCloseButton !== false && (
                 <button
                   onClick={handleClose}
-                  className="group relative text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 rounded-lg p-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  className="group relative flex-shrink-0 text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-white/80 dark:hover:bg-gray-700/80 active:bg-white dark:active:bg-gray-700 rounded-xl p-2.5 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 shadow-sm hover:shadow-md border border-transparent hover:border-gray-200 dark:hover:border-gray-600"
                   aria-label="Close modal"
                   title="Fermer"
                 >
-                  <XMarkIcon className="w-5 h-5 transition-transform duration-200 group-hover:rotate-90" />
+                  <XMarkIcon className="w-5 h-5 transition-all duration-300 group-hover:rotate-90 group-hover:scale-110" />
                 </button>
               )}
             </div>
           )}
 
           {/* Content */}
-          <div className={`px-6 py-6 max-h-[calc(100vh-220px)] overflow-y-auto bg-white dark:bg-gray-800 rounded-b-xl scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400 ${modal.contentClassName || ''}`}>
+          <div className={`px-6 py-6 max-h-[calc(100vh-220px)] overflow-y-auto bg-gradient-to-b from-white to-gray-50/30 dark:from-gray-800 dark:to-gray-900/30 rounded-b-xl scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400 ${modal.contentClassName || ''}`}>
             {renderContent()}
             {renderFooter()}
           </div>
