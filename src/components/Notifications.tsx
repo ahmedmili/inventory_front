@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useApi } from '@/hooks/useApi';
 import { useApiMutation } from '@/hooks/useApi';
 import { useToast } from '@/contexts/ToastContext';
@@ -169,13 +170,16 @@ export default function Notifications() {
         )}
       </button>
 
+      {isOpen && typeof document !== 'undefined' && createPortal(
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setIsOpen(false)}
+          aria-hidden="true"
+        />,
+        document.body
+      )}
       {isOpen && (
-        <>
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setIsOpen(false)}
-          />
-          <div className="absolute right-0 mt-2 w-96 rounded-lg shadow-xl bg-white ring-1 ring-black ring-opacity-5 z-50">
+        <div className="absolute right-0 mt-2 w-96 rounded-lg shadow-xl bg-white ring-1 ring-black ring-opacity-5 z-50">
             {/* Header */}
             <div className="p-4 border-b border-gray-200">
               <div className="flex justify-between items-center mb-3">
@@ -305,7 +309,6 @@ export default function Notifications() {
               </div>
             )}
           </div>
-        </>
       )}
     </div>
   );

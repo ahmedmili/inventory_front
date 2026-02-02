@@ -24,18 +24,26 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+};
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
-        <Providers>
-          <NavigationLoaderHandler />
-          <LayoutSelector>{children}</LayoutSelector>
-        </Providers>
+    <html lang="en" className="overflow-x-hidden max-w-full">
+      <body className={`${inter.className} overflow-x-hidden max-w-full min-w-0`}>
+        <div className="min-w-0 max-w-full overflow-x-hidden">
+          <Providers>
+            <NavigationLoaderHandler />
+            <LayoutSelector>{children}</LayoutSelector>
+          </Providers>
+        </div>
       </body>
     </html>
   );

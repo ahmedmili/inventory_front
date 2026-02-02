@@ -122,10 +122,10 @@ export default function ImportsPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
+    <div className="max-w-7xl mx-auto min-w-0 w-full p-4 sm:p-6 space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
+      <div className="min-w-0 overflow-hidden flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="min-w-0 flex-1">
           <h1 className="text-3xl font-bold text-gray-900">Importations</h1>
           <p className="text-sm text-gray-600 mt-1">Gérer les importations de produits depuis les fournisseurs</p>
         </div>

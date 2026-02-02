@@ -92,7 +92,7 @@ export default function ModalItem({ modal, onClose }: ModalItemProps) {
     document.body.style.overflow = 'hidden';
 
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = '';
     };
   }, [animation]);
 
@@ -122,7 +122,7 @@ export default function ModalItem({ modal, onClose }: ModalItemProps) {
       setShouldRender(false);
       onClose();
     }
-    document.body.style.overflow = 'unset';
+    document.body.style.overflow = '';
   };
 
   const handleBackdropClick = () => {

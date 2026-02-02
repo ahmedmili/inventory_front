@@ -257,7 +257,7 @@ export default function MovementsPage() {
         requirePermissions: ['stock.read', 'products.read'], // Allow either stock.read or products.read
       }}
     >
-      <div className="px-4 py-6 sm:px-0">
+      <div className="min-w-0 w-full px-4 py-6 sm:px-0">
         {/* Header */}
         <PageHeader
           title="Mouvements de stock"

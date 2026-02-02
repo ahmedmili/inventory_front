@@ -344,62 +344,43 @@ export default function EmployeesPage() {
     {
       key: 'actions',
       label: 'Actions',
+      className: 'min-w-0 w-28',
       render: (user) => (
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 flex-shrink items-center gap-2">
           <button
+            type="button"
             onClick={() => handleToggleRole(user)}
             disabled={actionLoading && actionUserId === user.id}
-            className="inline-flex items-center justify-center rounded-full border border-primary-200 bg-white p-2 text-primary-600 hover:bg-primary-50 hover:text-primary-800 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex flex-shrink-0 items-center justify-center rounded-full border border-primary-200 bg-white p-2 text-primary-600 hover:bg-primary-50 hover:text-primary-800 disabled:opacity-50 disabled:cursor-not-allowed"
             title={user.role?.code === 'EMPLOYEE' ? 'Basculer en Stock Keeper' : 'Basculer en Employé'}
+            aria-label={user.role?.code === 'EMPLOYEE' ? 'Basculer en Stock Keeper' : 'Basculer en Employé'}
           >
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              viewBox="0 0 24 24"
-            >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 7h13M4 17h13" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 3l6 4-6 4M15 21l6-4-6-4" />
             </svg>
-            <span className="sr-only">
-              {user.role?.code === 'EMPLOYEE' ? 'Basculer en Stock Keeper' : 'Basculer en Employé'}
-            </span>
           </button>
           <button
+            type="button"
             onClick={() => (user.deletedAt ? handleRestore(user) : handleDeactivate(user))}
             disabled={actionLoading && actionUserId === user.id}
-            className={`inline-flex items-center justify-center rounded-full border p-2 ${
+            className={`inline-flex flex-shrink-0 items-center justify-center rounded-full border p-2 ${
               user.deletedAt
                 ? 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100'
                 : 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100'
             } disabled:opacity-50 disabled:cursor-not-allowed`}
             title={user.deletedAt ? 'Restaurer le compte' : 'Désactiver le compte'}
+            aria-label={user.deletedAt ? 'Restaurer le compte' : 'Désactiver le compte'}
           >
             {user.deletedAt ? (
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                viewBox="0 0 24 24"
-              >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 12h16M4 12l5 5M4 12l5-5" />
               </svg>
             ) : (
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                viewBox="0 0 24 24"
-              >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             )}
-            <span className="sr-only">
-              {user.deletedAt ? 'Restaurer le compte' : 'Désactiver le compte'}
-            </span>
           </button>
         </div>
       ),
@@ -413,11 +394,11 @@ export default function EmployeesPage() {
   const inactiveEmployees = totalEmployees - activeEmployees;
 
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
+    <div className="max-w-7xl mx-auto min-w-0 w-full p-4 sm:p-6 space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 sm:p-8 border border-blue-100 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
+      <div className="min-w-0 overflow-hidden bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 sm:p-8 border border-blue-100 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 min-w-0">
+          <div className="min-w-0 flex-1">
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Employés</h1>
             <p className="text-sm sm:text-base text-gray-600">
               Gérez les comptes des employés et des gestionnaires de stock

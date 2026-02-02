@@ -341,13 +341,16 @@ export default function AdminsPage() {
     {
       key: 'actions',
       label: 'Actions',
+      className: 'min-w-0 w-28',
       render: (user) => (
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 flex-shrink items-center gap-2">
           <button
+            type="button"
             onClick={() => handleToggleRole(user)}
             disabled={actionLoading && actionUserId === user.id}
-            className="inline-flex items-center justify-center rounded-full border border-primary-200 bg-white p-2 text-primary-600 hover:bg-primary-50 hover:text-primary-800 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex flex-shrink-0 items-center justify-center rounded-full border border-primary-200 bg-white p-2 text-primary-600 hover:bg-primary-50 hover:text-primary-800 disabled:opacity-50 disabled:cursor-not-allowed"
             title={user.role?.code === 'ADMIN' ? 'Basculer en Manager' : 'Basculer en Admin'}
+            aria-label={user.role?.code === 'ADMIN' ? 'Basculer en Manager' : 'Basculer en Admin'}
           >
             <svg
               className="h-4 w-4"
@@ -355,48 +358,33 @@ export default function AdminsPage() {
               stroke="currentColor"
               strokeWidth={2}
               viewBox="0 0 24 24"
+              aria-hidden
             >
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 7h13M4 17h13" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 3l6 4-6 4M15 21l6-4-6-4" />
             </svg>
-            <span className="sr-only">
-              {user.role?.code === 'ADMIN' ? 'Basculer en Manager' : 'Basculer en Admin'}
-            </span>
           </button>
           <button
+            type="button"
             onClick={() => (user.deletedAt ? handleRestore(user) : handleDeactivate(user))}
             disabled={actionLoading && actionUserId === user.id}
-            className={`inline-flex items-center justify-center rounded-full border p-2 ${
+            className={`inline-flex flex-shrink-0 items-center justify-center rounded-full border p-2 ${
               user.deletedAt
                 ? 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100'
                 : 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100'
             } disabled:opacity-50 disabled:cursor-not-allowed`}
             title={user.deletedAt ? 'Restaurer le compte' : 'Désactiver le compte'}
+            aria-label={user.deletedAt ? 'Restaurer le compte' : 'Désactiver le compte'}
           >
             {user.deletedAt ? (
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                viewBox="0 0 24 24"
-              >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 12h16M4 12l5 5M4 12l5-5" />
               </svg>
             ) : (
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                viewBox="0 0 24 24"
-              >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             )}
-            <span className="sr-only">
-              {user.deletedAt ? 'Restaurer le compte' : 'Désactiver le compte'}
-            </span>
           </button>
         </div>
       ),
@@ -410,31 +398,31 @@ export default function AdminsPage() {
   const inactiveAdmins = totalAdmins - activeAdmins;
 
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
+    <div className="max-w-7xl mx-auto min-w-0 w-full overflow-x-hidden p-4 sm:p-6 space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl p-6 sm:p-8 border border-purple-100 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Administrateurs</h1>
-            <p className="text-sm sm:text-base text-gray-600">
+      <div className="min-w-0 overflow-hidden bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl p-6 sm:p-8 border border-purple-100 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 min-w-0">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-2 break-words">Administrateurs</h1>
+            <p className="text-sm sm:text-base text-gray-600 break-words">
               Suivez et pilotez les accès sensibles. Seuls les rôles Admin et Manager sont listés ici.
             </p>
           </div>
           <button
             onClick={() => setInviteModalOpen(true)}
-            className="inline-flex items-center px-5 py-3 border border-transparent rounded-xl shadow-lg text-sm font-semibold text-white bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-200 transform hover:scale-105"
+            className="inline-flex items-center justify-center px-4 py-3 border border-transparent rounded-xl shadow-lg text-sm font-semibold text-white bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-200 flex-shrink-0 whitespace-nowrap"
             title="Inviter un nouvel administrateur ou manager"
           >
-            <PlusIcon className="w-5 h-5 mr-2" />
-            <span className="hidden sm:inline">Inviter un administrateur</span>
-            <span className="sm:hidden">Inviter</span>
+            <PlusIcon className="w-5 h-5 sm:mr-2 flex-shrink-0" />
+            <span className="hidden lg:inline">Inviter un administrateur</span>
+            <span className="lg:hidden">Inviter</span>
           </button>
         </div>
       </div>
 
       {/* Statistics Cards */}
       {admins.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 min-w-0">
           <StatisticsCard
             title="Comptes actifs"
             value={activeAdmins}
@@ -463,9 +451,9 @@ export default function AdminsPage() {
       )}
 
       {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 w-full">
+      <div className="min-w-0 overflow-hidden bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between min-w-0">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 w-full min-w-0">
             <SearchFilter
               value={searchInput}
               onChange={(value) => {
@@ -473,9 +461,9 @@ export default function AdminsPage() {
                 setPage(1);
               }}
               placeholder="Rechercher par nom ou email..."
-              className="flex-1"
+              className="flex-1 min-w-0"
             />
-            <label className="inline-flex items-center gap-2 text-sm text-gray-600 whitespace-nowrap">
+            <label className="inline-flex items-center gap-2 text-sm text-gray-600 sm:whitespace-nowrap">
               <input
                 type="checkbox"
                 className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
@@ -491,20 +479,22 @@ export default function AdminsPage() {
         </div>
       </div>
 
-      {/* Table */}
-      <ModernTable
-        columns={columns}
-        data={paginatedAdmins}
-        headerGradient="from-purple-600 via-purple-500 to-indigo-600"
-        striped={true}
-        hoverable={true}
-        emptyMessage={
-          search
-            ? 'Aucun administrateur ne correspond à votre recherche.'
-            : 'Aucun administrateur enregistré pour le moment.'
-        }
-        minWidth="1000px"
-      />
+      {/* Table: scroll container so horizontal scroll stays here, not on viewport */}
+      <div className="min-w-0 w-full overflow-x-auto">
+        <ModernTable
+          columns={columns}
+          data={paginatedAdmins}
+          headerGradient="from-purple-600 via-purple-500 to-indigo-600"
+          striped={true}
+          hoverable={true}
+          emptyMessage={
+            search
+              ? 'Aucun administrateur ne correspond à votre recherche.'
+              : 'Aucun administrateur enregistré pour le moment.'
+          }
+          minWidth="1000px"
+        />
+      </div>
 
       {/* Pagination */}
       {totalPages > 1 && (

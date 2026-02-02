@@ -31,14 +31,14 @@ export default function ModernTable({
 }: ModernTableProps) {
   if (data.length === 0) {
     return (
-      <div className="text-center py-12 bg-white rounded-xl border-2 border-gray-200">
+      <div className="min-w-0 max-w-full text-center py-12 bg-white rounded-xl border-2 border-gray-200">
         <p className="text-gray-500">{emptyMessage}</p>
       </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border-2 border-gray-300 bg-white shadow-xl">
+    <div className="w-full min-w-0 max-w-full overflow-x-auto rounded-xl border-2 border-gray-300 bg-white shadow-xl">
       <table className="w-full" style={{ minWidth }}>
         <thead className={`bg-gradient-to-r ${headerGradient}`}>
           <tr>
@@ -64,9 +64,11 @@ export default function ModernTable({
               {columns.map((column, colIndex) => (
                 <td
                   key={column.key || colIndex}
-                  className={`px-4 py-4 text-${column.align || 'left'} ${column.className || ''}`}
+                  className={`min-w-0 px-4 py-4 text-${column.align || 'left'} ${column.className || ''}`}
                 >
-                  {column.render ? column.render(item, rowIndex) : item[column.key]}
+                  <div className="min-w-0 max-w-full">
+                    {column.render ? column.render(item, rowIndex) : item[column.key]}
+                  </div>
                 </td>
               ))}
             </tr>

@@ -16,7 +16,16 @@
   }
 }
 
+html {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip !important;
+}
+
 body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip !important;
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(
       to bottom,

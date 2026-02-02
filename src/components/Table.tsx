@@ -112,8 +112,8 @@ export default function Table<T extends { id: string }>({
   }
 
   return (
-    <div className="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-200">
-      <div className="overflow-x-auto">
+    <div className="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-200 w-full min-w-0">
+      <div className="w-full min-w-0 overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>

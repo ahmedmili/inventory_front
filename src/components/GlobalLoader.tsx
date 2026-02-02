@@ -1,5 +1,6 @@
 'use client';
 
+import { createPortal } from 'react-dom';
 import { useLoading } from '@/contexts/LoadingContext';
 
 export default function GlobalLoader() {
@@ -9,7 +10,7 @@ export default function GlobalLoader() {
     return null;
   }
 
-  return (
+  const content = (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/30 backdrop-blur-sm">
       <div className="bg-white rounded-xl shadow-lg px-8 py-6 flex flex-col items-center gap-3">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600" />
@@ -19,6 +20,11 @@ export default function GlobalLoader() {
       </div>
     </div>
   );
+
+  if (typeof document !== 'undefined') {
+    return createPortal(content, document.body);
+  }
+  return content;
 }
 
 

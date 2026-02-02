@@ -309,7 +309,7 @@ export default function ProductDetailPage() {
       }}
     >
       <div className="w-full">
-        <div className="px-4 py-6 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="px-4 py-6 sm:px-6 lg:px-8 max-w-7xl mx-auto min-w-0 w-full">
         {/* Header */}
         <div className="mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">

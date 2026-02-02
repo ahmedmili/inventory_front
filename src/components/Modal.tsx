@@ -71,16 +71,16 @@ export default function Modal({
         const timer = setTimeout(() => {
           setShouldRender(false);
         }, animationDuration);
-        document.body.style.overflow = 'unset';
+        document.body.style.overflow = '';
         return () => clearTimeout(timer);
       } else {
         setShouldRender(false);
-        document.body.style.overflow = 'unset';
+        document.body.style.overflow = '';
       }
     }
 
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = '';
     };
   }, [isOpen, animation, animationDuration]);
 

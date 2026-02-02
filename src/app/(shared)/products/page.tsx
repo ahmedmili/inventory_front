@@ -425,11 +425,11 @@ export default function ProductsPage() {
         requirePermissions: ['products.read'],
       }}
     >
-        <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
+        <div className="max-w-7xl mx-auto min-w-0 w-full p-4 sm:p-6 space-y-6">
           {/* Header */}
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6 sm:p-8 border border-green-100 shadow-sm">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
+          <div className="min-w-0 overflow-hidden bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6 sm:p-8 border border-green-100 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 min-w-0">
+              <div className="min-w-0 flex-1">
                 <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Produits</h1>
                 <p className="text-sm sm:text-base text-gray-600">
                   {data?.meta ? `${data.meta.total} produit${data.meta.total !== 1 ? 's' : ''} au total` : 'Gérez votre catalogue de produits'}

@@ -160,7 +160,7 @@ export default function ModalTemplate({
   const content = (
     <>
           {/* Header */}
-          <div className={`relative flex items-center justify-between px-6 py-6 bg-gradient-to-br ${config.headerBg} border-b border-gray-200/80 rounded-t-2xl overflow-hidden ${headerClassName}`}>
+          <div className={`relative flex items-center justify-between px-4 sm:px-6 py-4 sm:py-6 bg-gradient-to-br ${config.headerBg} border-b border-gray-200/80 rounded-t-2xl overflow-hidden ${headerClassName}`}>
             {/* Decorative accent line */}
             <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${config.accentGradient}`}></div>
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-pulse"></div>
@@ -211,7 +211,7 @@ export default function ModalTemplate({
           </div>
 
       {/* Content */}
-      <div className={`px-6 py-6 max-h-[calc(100vh-220px)] overflow-y-auto bg-gradient-to-b from-white to-gray-50/30 rounded-b-xl scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400 ${contentClassName}`}>
+      <div className={`px-4 sm:px-6 py-4 sm:py-6 max-h-[min(100vh-12rem,calc(100vh-220px))] overflow-y-auto bg-gradient-to-b from-white to-gray-50/30 rounded-b-xl scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400 ${contentClassName}`}>
         {children}
       </div>
     </>

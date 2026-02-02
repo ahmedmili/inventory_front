@@ -76,7 +76,7 @@ export default function Layout({ children }: LayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen min-w-0 max-w-full overflow-x-hidden bg-gray-50 flex">
       <Sidebar
         isOpen={sidebarOpen}
         onClose={handleSidebarClose}
@@ -97,11 +97,8 @@ export default function Layout({ children }: LayoutProps) {
         onToggleOpen={handleSidebarToggle}
       />
 
-      <div 
-        className="flex-1 flex flex-col min-w-0 w-full transition-all duration-300 lg:ml-0"
-        style={{
-          marginLeft: isDesktop ? (isMinimized ? '5rem' : '16rem') : undefined
-        }}
+      <div
+        className={`flex-1 flex flex-col min-w-0 w-full max-w-full overflow-x-hidden transition-all duration-300 ml-0 ${isMinimized ? 'lg:ml-20' : 'lg:ml-64'}`}
       >
         <TopHeader user={user} />
         <MainContent>{children}</MainContent>
