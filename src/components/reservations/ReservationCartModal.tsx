@@ -227,10 +227,12 @@ export default function ReservationCartModal({
         })),
       };
 
-      // Always include projectId if provided (from initialProjectId or user selection)
-      if (formData.projectId || initialProjectId) {
-        payload.projectId = formData.projectId || initialProjectId;
+      const projectId = formData.projectId || initialProjectId;
+      if (!projectId) {
+        toast.error('Le projet est obligatoire pour créer une réservation');
+        return;
       }
+      payload.projectId = projectId;
 
       if (formData.expiresAt) {
         payload.expiresAt = new Date(formData.expiresAt).toISOString();
@@ -416,33 +418,29 @@ export default function ReservationCartModal({
               {/* Project Selection */}
               <div>
                 <label htmlFor="projectId" className="block text-sm font-medium text-gray-700 mb-2">
-                  Projet {initialProjectId ? '(pré-sélectionné)' : '(optionnel)'}
+                  Projet {initialProjectId ? '(obligatoire, lié à ce projet)' : ' (obligatoire)'}
+                  {!initialProjectId && <span className="text-red-500">*</span>}
                 </label>
                 {initialProjectId ? (
-                  // Display selected project (read-only) when opened from project page
+                  // Champ verrouillé : réservation depuis la fiche projet
                   <div className="bg-blue-50 border border-blue-200 rounded-md px-3 py-2">
                     <p className="text-sm font-medium text-blue-900">
                       {projects.find(p => p.id === initialProjectId)?.name || 'Projet sélectionné'}
                     </p>
                     <p className="text-xs text-blue-600 mt-1">
-                      Ce projet est automatiquement associé à cette réservation
+                      Ce projet est automatiquement associé à cette réservation et ne peut pas être modifié.
                     </p>
                   </div>
                 ) : (
-                  // Allow selection if no initial project - using Autocomplete
                   <Autocomplete
-                    options={[
-                      { value: '', label: 'Aucun projet' },
-                      ...projects.map((project) => ({
-                        value: project.id,
-                        label: project.name,
-                      })),
-                    ]}
+                    options={projects.map((project) => ({
+                      value: project.id,
+                      label: project.name,
+                    }))}
                     value={formData.projectId || ''}
                     onChange={(value) => setFormData({ ...formData, projectId: value || '' })}
                     placeholder="Rechercher un projet..."
                     className="w-full"
-                    allowClear={true}
                   />
                 )}
               </div>

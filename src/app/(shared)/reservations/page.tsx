@@ -75,6 +75,7 @@ export default function ReservationsPage() {
   const limit = 20;
   const canCreate = hasPermission(user, 'reservations.create');
   const canCancel = hasPermission(user, 'reservations.cancel');
+  const canFulfill = hasPermission(user, 'reservations.fulfill');
   const canManage = hasPermission(user, 'reservations.manage');
   const userRoleCode = getUserRoleCode(user);
   const isAdmin = userRoleCode === 'ADMIN' || userRoleCode === 'MANAGER';
@@ -252,6 +253,20 @@ export default function ReservationsPage() {
     } catch (error: any) {
       console.error('Failed to release reservation:', error);
       toast.error(error.response?.data?.message || 'Erreur lors de la libération');
+    }
+  };
+
+  const handleFulfill = async (id: string) => {
+    if (!confirm('Valider cette réservation ?')) {
+      return;
+    }
+    try {
+      await apiClient.patch(`/reservations/${id}/fulfill`, {});
+      toast.success('Réservation validée avec succès');
+      loadReservations();
+    } catch (error: any) {
+      console.error('Failed to fulfill reservation:', error);
+      toast.error(error.response?.data?.message || 'Erreur lors de la validation');
     }
   };
 
@@ -687,6 +702,8 @@ export default function ReservationsPage() {
                           setIsUpdateModalOpen(true);
                         }}
                         onRelease={handleRelease}
+                        onFulfill={handleFulfill}
+                        canFulfill={canFulfill}
                         formatDate={formatDate}
                       />
                     </div>
@@ -702,6 +719,8 @@ export default function ReservationsPage() {
                           setIsUpdateModalOpen(true);
                         }}
                         onRelease={handleRelease}
+                        onFulfill={handleFulfill}
+                        canFulfill={canFulfill}
                         formatDate={formatDate}
                       />
                     </div>

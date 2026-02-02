@@ -16,6 +16,7 @@ import AddProjectProductModal from '@/components/projects/AddProjectProductModal
 import AddProjectMemberModal from '@/components/projects/AddProjectMemberModal';
 import ConfirmModal from '@/components/ConfirmModal';
 import ReservationCartModal from '@/components/reservations/ReservationCartModal';
+import ProjectExitSlipModal from '@/components/projects/ProjectExitSlipModal';
 import Pagination from '@/components/Pagination';
 import ExportDropdown from '@/components/ui/ExportDropdown';
 import { exportProjectsToCSV, downloadCSV, exportProductsToCSV } from '@/lib/csv-utils';
@@ -76,6 +77,7 @@ export default function ProjectDetailPage() {
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
   const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
   const [isReservationModalOpen, setIsReservationModalOpen] = useState(false);
+  const [isExitSlipModalOpen, setIsExitSlipModalOpen] = useState(false);
   
   // Reservations state
   const [reservations, setReservations] = useState<any[]>([]);
@@ -516,13 +518,27 @@ export default function ProjectDetailPage() {
               </select>
               
               {canCreateReservation && (
-                <button
-                  onClick={() => setIsReservationModalOpen(true)}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-semibold shadow-md hover:shadow-lg transform hover:scale-105 text-sm"
-                >
-                  <ReservationIcon className="w-4 h-4" />
-                  <span>Nouvelle réservation</span>
-                </button>
+                <>
+                  <button
+                    onClick={() => setIsReservationModalOpen(true)}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-semibold shadow-md hover:shadow-lg transform hover:scale-105 text-sm"
+                  >
+                    <ReservationIcon className="w-4 h-4" />
+                    <span>Nouvelle réservation</span>
+                  </button>
+                  {canUpdate && (
+                    <button
+                      onClick={() => setIsExitSlipModalOpen(true)}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-600 to-amber-700 text-white rounded-xl hover:from-amber-700 hover:to-amber-800 transition-all duration-200 font-semibold shadow-md hover:shadow-lg transform hover:scale-105 text-sm"
+                      title="Sortie de stock immédiate et définitive, liée au projet"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8 4-8-4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                      </svg>
+                      <span>Bon de sortie</span>
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -718,15 +734,29 @@ export default function ProjectDetailPage() {
               </div>
               <p className="text-lg font-semibold text-gray-900 mb-2">Aucun produit réservé</p>
               <p className="text-sm text-gray-600 mb-6">Commencez par créer une réservation pour ce projet</p>
-              {canCreateReservation && (
-                <button
-                  onClick={() => setIsReservationModalOpen(true)}
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105"
-                >
-                  <ReservationIcon className="w-5 h-5" />
-                  <span>Créer une réservation</span>
-                </button>
-              )}
+              <div className="flex flex-wrap gap-3 justify-center">
+                {canCreateReservation && (
+                  <button
+                    onClick={() => setIsReservationModalOpen(true)}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105"
+                  >
+                    <ReservationIcon className="w-5 h-5" />
+                    <span>Créer une réservation</span>
+                  </button>
+                )}
+                {canUpdate && (
+                  <button
+                    onClick={() => setIsExitSlipModalOpen(true)}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-600 to-amber-700 text-white rounded-xl hover:from-amber-700 hover:to-amber-800 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105"
+                    title="Sortie de stock immédiate et définitive"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8 4-8-4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>
+                    <span>Créer un bon de sortie</span>
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -791,6 +821,19 @@ export default function ProjectDetailPage() {
             onSuccess={() => {
               loadReservations();
               setIsReservationModalOpen(false);
+            }}
+          />
+        )}
+
+        {isExitSlipModalOpen && project && (
+          <ProjectExitSlipModal
+            isOpen={isExitSlipModalOpen}
+            onClose={() => setIsExitSlipModalOpen(false)}
+            projectId={projectId}
+            projectName={project.name}
+            onSuccess={() => {
+              mutate();
+              setIsExitSlipModalOpen(false);
             }}
           />
         )}

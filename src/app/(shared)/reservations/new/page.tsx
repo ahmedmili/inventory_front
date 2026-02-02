@@ -258,9 +258,12 @@ export default function NewReservationPage() {
         })),
       };
 
-      if (formData.projectId) {
-        payload.projectId = formData.projectId;
+      if (!formData.projectId) {
+        toast.error('Le projet est obligatoire pour créer une réservation');
+        setLoading(false);
+        return;
       }
+      payload.projectId = formData.projectId;
 
       if (formData.expiresAt) {
         payload.expiresAt = new Date(formData.expiresAt).toISOString();
@@ -457,24 +460,20 @@ export default function NewReservationPage() {
                   Détails de la Réservation
                 </h2>
 
-                {/* Project Selection (Optional) */}
+                {/* Project Selection (Required) */}
                 <div>
                   <label htmlFor="projectId" className="block text-sm font-medium text-gray-700 mb-2">
-                    Projet (optionnel)
+                    Projet <span className="text-red-500">*</span>
                   </label>
                   <Autocomplete
-                    options={[
-                      { value: '', label: 'Aucun projet' },
-                      ...projects.map((project) => ({
-                        value: project.id,
-                        label: project.name,
-                      })),
-                    ]}
+                    options={projects.map((project) => ({
+                      value: project.id,
+                      label: project.name,
+                    }))}
                     value={formData.projectId}
                     onChange={(value) => setFormData({ ...formData, projectId: value })}
                     placeholder="Rechercher un projet..."
                     className="w-full"
-                    allowClear={true}
                   />
                 </div>
 

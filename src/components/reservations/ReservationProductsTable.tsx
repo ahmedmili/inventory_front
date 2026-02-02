@@ -8,9 +8,11 @@ interface ReservationProductsTableProps {
   items: ReservationItem[];
   canManage?: boolean;
   canCancel?: boolean;
+  canFulfill?: boolean;
   isAdmin?: boolean;
   onUpdate?: (item: ReservationItem) => void;
   onRelease?: (itemId: string) => void;
+  onFulfill?: (itemId: string) => void;
   formatDate: (date?: string) => string;
 }
 
@@ -18,9 +20,11 @@ export default function ReservationProductsTable({
   items,
   canManage = false,
   canCancel = false,
+  canFulfill = false,
   isAdmin = false,
   onUpdate,
   onRelease,
+  onFulfill,
   formatDate,
 }: ReservationProductsTableProps) {
   const columns = [
@@ -115,6 +119,15 @@ export default function ReservationProductsTable({
               title="Modifier"
             >
               Modifier
+            </button>
+          )}
+          {canFulfill && item.status === 'RESERVED' && onFulfill && (
+            <button
+              onClick={() => onFulfill(item.id)}
+              className="text-green-600 hover:text-green-800 text-xs px-2.5 py-1.5 border-2 border-green-300 rounded-lg hover:bg-gradient-to-r hover:from-green-50 hover:to-green-100 hover:border-green-400 transition-all duration-200 font-bold shadow-sm hover:shadow-md transform hover:scale-110 active:scale-95 whitespace-nowrap"
+              title="Valider (sortie définitive du stock)"
+            >
+              Valider
             </button>
           )}
           {canCancel && item.status === 'RESERVED' && onRelease && (
