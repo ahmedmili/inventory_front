@@ -34,7 +34,7 @@ export default function AdminSidebar({
   return (
     <aside
       className={`
-        fixed top-0 bottom-0 left-0 z-40 ${width} bg-white shadow-xl border-r border-gray-100 transform transition-all duration-300 ease-in-out
+        fixed top-0 bottom-0 left-0 z-40 ${width} max-w-full overflow-x-hidden bg-white shadow-xl border-r border-gray-100 transform transition-all duration-300 ease-in-out
         lg:translate-x-0 lg:z-auto lg:h-screen
         ${isMinimized ? 'translate-x-0' : (isOpen ? 'translate-x-0' : '-translate-x-full')}
         flex flex-col h-screen
