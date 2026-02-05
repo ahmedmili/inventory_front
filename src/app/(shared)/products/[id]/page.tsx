@@ -22,7 +22,8 @@ import { useToast } from '@/contexts/ToastContext';
 
 // Stock Movements History Component
 function ProductMovementsHistory({ productId }: { productId: string }) {
-  const { data: movements, loading, mutate } = useApi<any[]>(`/stock-movements?productId=${productId}`);
+  const { data: response, loading, mutate } = useApi<{ data: any[]; meta?: { total: number } }>(`/stock-movements?productId=${productId}`);
+  const movements = response?.data ?? [];
 
   const getTypeColor = (type: string) => {
     const colors: Record<string, string> = {
@@ -72,7 +73,7 @@ function ProductMovementsHistory({ productId }: { productId: string }) {
         </div>
       </div>
       <div className="px-6 py-5">
-        {movements && movements.length > 0 ? (
+        {movements.length > 0 ? (
           <div className="space-y-3">
             {movements.slice(0, 10).map((movement: any) => (
               <div
@@ -194,6 +195,9 @@ interface Product {
     name: string;
   };
   images?: string[] | null;
+  /** API actuelle : stock unique par produit */
+  stock?: { id: string; quantity: number } | null;
+  /** Ancien format multi-entrepôts (conservé pour compatibilité) */
   warehouseStock?: Array<{
     id: string;
     quantity: number;
@@ -206,6 +210,13 @@ interface Product {
   }>;
   createdAt: string;
   updatedAt: string;
+}
+
+function getProductQuantity(p: Product): number {
+  if (p.stock != null && typeof p.stock.quantity === 'number') {
+    return p.stock.quantity;
+  }
+  return p.warehouseStock?.reduce((sum, s) => sum + s.quantity, 0) ?? 0;
 }
 
 export default function ProductDetailPage() {
@@ -298,7 +309,7 @@ export default function ProductDetailPage() {
   }
 
   const images = product.images && Array.isArray(product.images) ? product.images : [];
-  const totalStock = product.warehouseStock?.reduce((sum, stock) => sum + stock.quantity, 0) || 0;
+  const totalStock = getProductQuantity(product);
   const isLowStock = totalStock <= product.minStock;
 
   return (

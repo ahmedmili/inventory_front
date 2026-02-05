@@ -111,6 +111,10 @@ export interface StockMovement {
     id: string;
     name: string;
     sku?: string;
+    /** Stock actuel (API actuelle) */
+    stock?: { quantity: number } | null;
+    /** Ancien format multi-entrepôts */
+    warehouseStock?: Array<{ quantity: number }>;
   };
   user?: User;
   createdAt: string;

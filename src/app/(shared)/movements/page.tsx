@@ -115,6 +115,12 @@ export default function MovementsPage() {
     return labels[type] || type;
   };
 
+  const getMovementProductStock = (movement: StockMovement): number => {
+    const p = movement.product;
+    if (p.stock != null && typeof p.stock.quantity === 'number') return p.stock.quantity;
+    return p.warehouseStock?.reduce((sum, s) => sum + s.quantity, 0) ?? 0;
+  };
+
   const getTypeIcon = (type: string) => {
     if (type === 'IN') {
       return (
@@ -207,6 +213,21 @@ export default function MovementsPage() {
           </span>
         </div>
       ),
+    },
+    {
+      key: 'stock',
+      label: 'Stock actuel',
+      sortable: false,
+      align: 'right',
+      className: 'text-right',
+      render: (movement: StockMovement) => {
+        const currentStock = getMovementProductStock(movement);
+        return (
+          <div className="text-right font-medium text-gray-900">
+            {currentStock} unités
+          </div>
+        );
+      },
     },
     {
       key: 'user',
