@@ -97,14 +97,9 @@ export default function StockTransferModal({
   const loadOptions = async () => {
     setLoadingOptions(true);
     try {
-      const [productsRes, warehousesRes] = await Promise.all([
-        apiClient.get('/products'),
-        // COMMENTED: Multiple warehouses - transfer not available with single warehouse
-        apiClient.get('/warehouses'), // Still loading but transfer disabled
-      ]);
+      const productsRes = await apiClient.get('/products');
       setProducts(extractCollection<Product>(productsRes.data));
-      // COMMENTED: Multiple warehouses - storing but transfer disabled
-      setWarehouses(extractCollection<Warehouse>(warehousesRes.data));
+      setWarehouses([]); // Warehouses feature removed - transfer disabled
     } catch (error) {
       console.error('Failed to load options:', error);
       toast.error('Échec du chargement des options');

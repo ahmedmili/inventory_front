@@ -1,16 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import Modal from '../Modal';
-import { useApi, useApiMutation } from '@/hooks/useApi';
+import { useApiMutation } from '@/hooks/useApi';
 import { useToast } from '@/contexts/ToastContext';
-
-interface Warehouse {
-  id: string;
-  name: string;
-  code: string;
-}
 
 interface StockMovementModalProps {
   isOpen: boolean;
@@ -19,7 +13,7 @@ interface StockMovementModalProps {
   productId: string;
   productName: string;
   type: 'IN' | 'OUT'; // 'IN' for dispose, 'OUT' for withdraw
-  defaultWarehouseId?: string; // Optional default warehouse from product's existing stock
+  defaultWarehouseId?: string; // Deprecated: warehouses removed, kept for prop compatibility
 }
 
 interface FormData {
@@ -38,13 +32,7 @@ export default function StockMovementModal({
   defaultWarehouseId,
 }: StockMovementModalProps) {
   const toast = useToast();
-  // COMMENTED: Multiple warehouses - using only MAIN warehouse
-  const { data: warehouses } = useApi<Warehouse[]>('/warehouses');
   const { mutate: createMovement, loading } = useApiMutation();
-  
-  // Get MAIN warehouse or use default
-  const mainWarehouse = warehouses?.find(w => w.code === 'MAIN');
-  const warehouseId = defaultWarehouseId || mainWarehouse?.id || warehouses?.[0]?.id;
   const {
     register,
     handleSubmit,
@@ -59,20 +47,10 @@ export default function StockMovementModal({
   }, [isOpen, reset]);
 
   const onSubmit = async (data: FormData) => {
-    // COMMENTED: Multiple warehouses - always use MAIN
-    const mainWarehouseId = mainWarehouse?.id || warehouseId;
-    if (!mainWarehouseId) {
-      toast.error('L\'entrepôt principal (MAIN) est introuvable. Veuillez le créer d\'abord.');
-      return;
-    }
-
     try {
-      // Use dedicated endpoints for dispose and withdraw
       const endpoint = type === 'IN' ? '/stock-movements/dispose' : '/stock-movements/withdraw';
-      
       await createMovement(endpoint, 'POST', {
         productId,
-        warehouseId: mainWarehouseId, // Always use MAIN warehouse
         quantity: Number(data.quantity),
         reason: data.reason || undefined,
         reference: data.reference || undefined,
