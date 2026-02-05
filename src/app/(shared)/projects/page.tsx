@@ -450,15 +450,24 @@ export default function ProjectsPage() {
             />
 
             {/* Pagination */}
-            {data?.meta && data.meta.totalPages > 1 && (
-              <div className="mt-6">
-                <Pagination
-                  currentPage={data.meta.page}
-                  totalPages={data.meta.totalPages}
-                  hasNext={data.meta.hasNext}
-                  hasPrev={data.meta.hasPrev}
-                  onPageChange={setPage}
-                />
+            {data?.meta && data.meta.total > 0 && (
+              <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="text-sm text-gray-700">
+                  Affichage de <span className="font-medium">{(data.meta.page - 1) * data.meta.limit + 1}</span> à{' '}
+                  <span className="font-medium">
+                    {Math.min(data.meta.page * data.meta.limit, data.meta.total)}
+                  </span>{' '}
+                  sur <span className="font-medium">{data.meta.total}</span> projet{data.meta.total !== 1 ? 's' : ''}
+                </div>
+                {data.meta.totalPages > 1 && (
+                  <Pagination
+                    currentPage={data.meta.page}
+                    totalPages={data.meta.totalPages}
+                    onPageChange={setPage}
+                    hasNext={data.meta.hasNext}
+                    hasPrev={data.meta.hasPrev}
+                  />
+                )}
               </div>
             )}
           </>

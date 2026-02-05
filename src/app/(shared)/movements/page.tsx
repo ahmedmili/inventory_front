@@ -388,15 +388,24 @@ export default function MovementsPage() {
               minWidth="1200px"
             />
             {/* Pagination */}
-            {paginationMeta && paginationMeta.totalPages > 1 && (
-              <div className="mt-6">
-                <Pagination
-                  currentPage={page}
-                  totalPages={paginationMeta.totalPages}
-                  onPageChange={setPage}
-                  hasNext={paginationMeta.hasNext}
-                  hasPrev={paginationMeta.hasPrev}
-                />
+            {paginationMeta && paginationMeta.total > 0 && (
+              <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="text-sm text-gray-700">
+                  Affichage de <span className="font-medium">{(paginationMeta.page - 1) * paginationMeta.limit + 1}</span> à{' '}
+                  <span className="font-medium">
+                    {Math.min(paginationMeta.page * paginationMeta.limit, paginationMeta.total)}
+                  </span>{' '}
+                  sur <span className="font-medium">{paginationMeta.total}</span> mouvement{paginationMeta.total !== 1 ? 's' : ''}
+                </div>
+                {paginationMeta.totalPages > 1 && (
+                  <Pagination
+                    currentPage={page}
+                    totalPages={paginationMeta.totalPages}
+                    onPageChange={setPage}
+                    hasNext={paginationMeta.hasNext}
+                    hasPrev={paginationMeta.hasPrev}
+                  />
+                )}
               </div>
             )}
           </>

@@ -426,10 +426,10 @@ export default function ProductDetailPage() {
           </div>
         </div>
 
-        {/* Main Content Grid */}
+        {/* Main Content Grid: row 1 = Product (8) + Statistics (4), row 2 = Full-width movements */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left Column - Main Information (8 columns) */}
-          <div className="lg:col-span-8 space-y-6">
+          {/* Left Column - Product information only (8 columns) */}
+          <div className="lg:col-span-8">
             {/* Product Info Card */}
             <div className="bg-white shadow-sm rounded-xl overflow-hidden border border-gray-200">
               <div className="px-6 py-5 bg-gradient-to-r from-gray-50 via-white to-gray-50 border-b border-gray-200">
@@ -543,7 +543,7 @@ export default function ProductDetailPage() {
 
             {/* Images Section */}
             {images.length > 0 && (
-              <div className="bg-white shadow-sm rounded-xl overflow-hidden border border-gray-200">
+              <div className="mt-6 bg-white shadow-sm rounded-xl overflow-hidden border border-gray-200">
                 <div className="px-6 py-4 bg-gradient-to-r from-gray-50 via-white to-gray-50 border-b border-gray-200">
                   <h3 className="text-lg font-semibold text-gray-900">Images du produit</h3>
                 </div>
@@ -567,13 +567,10 @@ export default function ProductDetailPage() {
                 </div>
               </div>
             )}
-
-            {/* Stock Movements Section */}
-            <ProductMovementsHistory key={movementRefreshKey} productId={product.id} />
           </div>
 
-          {/* Right Column - Sidebar (4 columns) */}
-          <div className="lg:col-span-4">
+          {/* Right Column - Statistics sidebar (4 columns) */}
+          <div className="lg:col-span-4 lg:border-l lg:border-gray-200 lg:pl-6">
             <div className="lg:sticky lg:top-6 space-y-6">
               {/* COMMENTED: Stock by Warehouse - Removed from view (using MAIN warehouse silently) */}
               {/* Stock display removed - warehouse information hidden from user */}
@@ -631,6 +628,11 @@ export default function ProductDetailPage() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Full-width row: Historique des mouvements */}
+          <div className="lg:col-span-12 pt-6 mt-2 border-t border-gray-200">
+            <ProductMovementsHistory key={movementRefreshKey} productId={product.id} />
           </div>
         </div>
 
