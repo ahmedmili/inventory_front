@@ -19,7 +19,9 @@ describe('Pagination', () => {
       />,
     );
 
-    expect(screen.getByText('Page 1 of 5')).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: /pagination/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /page précédente/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /page suivante/i })).toBeInTheDocument();
   });
 
   it('calls onPageChange when next button is clicked', () => {
@@ -33,7 +35,7 @@ describe('Pagination', () => {
       />,
     );
 
-    const nextButton = screen.getByText('Next');
+    const nextButton = screen.getByRole('button', { name: /page suivante/i });
     nextButton.click();
 
     expect(mockOnPageChange).toHaveBeenCalledWith(2);
@@ -50,7 +52,7 @@ describe('Pagination', () => {
       />,
     );
 
-    const prevButton = screen.getByText('Previous');
+    const prevButton = screen.getByRole('button', { name: /page précédente/i });
     prevButton.click();
 
     expect(mockOnPageChange).toHaveBeenCalledWith(1);
@@ -67,7 +69,7 @@ describe('Pagination', () => {
       />,
     );
 
-    const nextButton = screen.getByText('Next');
+    const nextButton = screen.getByRole('button', { name: /page suivante/i });
     expect(nextButton).toBeDisabled();
   });
 
@@ -82,7 +84,7 @@ describe('Pagination', () => {
       />,
     );
 
-    const prevButton = screen.getByText('Previous');
+    const prevButton = screen.getByRole('button', { name: /page précédente/i });
     expect(prevButton).toBeDisabled();
   });
 });

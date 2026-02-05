@@ -34,15 +34,21 @@ interface Product {
   salePrice: number | string; // Prix
   minStock: number; // Seuil
   supplier?: { name: string }; // Fournisseur
+  /** API actuelle : stock unique par produit */
+  stock?: { id: string; quantity: number } | null;
+  /** Ancien format multi-entrepôts (conservé pour compatibilité) */
   warehouseStock?: Array<{
     id: string;
     quantity: number;
     warehouseId: string;
   }>;
-  // Commented out fields - can be restored later
-  // barcode: string;
-  // purchasePrice: number | string;
-  // category?: { name: string };
+}
+
+function getProductQuantity(p: Product): number {
+  if (p.stock != null && typeof p.stock.quantity === 'number') {
+    return p.stock.quantity;
+  }
+  return p.warehouseStock?.reduce((sum, s) => sum + s.quantity, 0) ?? 0;
 }
 
 interface ProductsResponse {
@@ -209,15 +215,15 @@ export default function ProductsPage() {
   // Calculate statistics
   const totalProducts = data?.meta?.total || data?.data?.length || 0;
   const lowStockProducts = data?.data?.filter(p => {
-    const totalStock = p.warehouseStock?.reduce((sum, stock) => sum + stock.quantity, 0) || 0;
+    const totalStock = getProductQuantity(p);
     return totalStock <= p.minStock;
   }).length || 0;
   const inStockProducts = data?.data?.filter(p => {
-    const totalStock = p.warehouseStock?.reduce((sum, stock) => sum + stock.quantity, 0) || 0;
+    const totalStock = getProductQuantity(p);
     return totalStock > p.minStock;
   }).length || 0;
   const outOfStockProducts = data?.data?.filter(p => {
-    const totalStock = p.warehouseStock?.reduce((sum, stock) => sum + stock.quantity, 0) || 0;
+    const totalStock = getProductQuantity(p);
     return totalStock === 0;
   }).length || 0;
 
@@ -294,7 +300,7 @@ export default function ProductsPage() {
       align: 'right',
       className: 'text-right min-w-[100px]',
       render: (product: Product) => {
-        const totalStock = product.warehouseStock?.reduce((sum, stock) => sum + stock.quantity, 0) || 0;
+        const totalStock = getProductQuantity(product);
         const isLowStock = totalStock <= product.minStock;
         return (
           <div className="text-right min-w-[100px]">
