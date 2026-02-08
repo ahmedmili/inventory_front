@@ -13,8 +13,7 @@ import { hasPermission } from '@/lib/permissions';
 import ManualStockAdjustmentModal from '@/components/stock/ManualStockAdjustmentModal';
 import Pagination from '@/components/Pagination';
 import { SkeletonLoader } from '@/components/SkeletonLoader';
-import { PageHeader, SearchFilter, SelectFilter, StatisticsCard, ModernTable } from '@/components/ui';
-import { PackageIcon, UserIcon, CalendarIcon } from '@/components/icons';
+import { SearchFilter, SelectFilter, ModernTable } from '@/components/ui';
 import type { TableColumn } from '@/types/shared';
 import { useUrlSync } from '@/hooks/useUrlSync';
 import type { StockMovement, PaginationMeta, ApiListResponse } from '@/types/shared';
@@ -86,12 +85,16 @@ export default function MovementsPage() {
         params.set('endDate', endDate);
       }
       const response = await apiClient.get(`/stock-movements?${params.toString()}`);
-      const data: MovementsResponse = response.data;
-      setMovements(data.data || []);
-      setPaginationMeta(data.meta || null);
+      const raw = response.data;
+      // API returns { data: [], meta: {} }; fallback if shape differs
+      const data = raw && typeof raw === 'object' && 'data' in raw ? raw : { data: Array.isArray(raw) ? raw : [], meta: null };
+      setMovements(Array.isArray(data.data) ? data.data : []);
+      setPaginationMeta(data.meta && typeof data.meta === 'object' ? data.meta : null);
     } catch (error: any) {
       console.error('Failed to load movements:', error);
       toast.error('Erreur lors du chargement des mouvements');
+      setMovements([]);
+      setPaginationMeta(null);
     } finally {
       setLoading(false);
     }
@@ -116,8 +119,12 @@ export default function MovementsPage() {
   };
 
   const getMovementProductStock = (movement: StockMovement): number => {
-    const p = movement.product;
-    if (p.stock != null && typeof p.stock.quantity === 'number') return p.stock.quantity;
+    const p = movement.product as { stock?: { quantity?: number } | null; warehouseStock?: Array<{ quantity: number }> };
+    if (p.stock != null) {
+      const q = p.stock.quantity;
+      if (typeof q === 'number') return q;
+      if (typeof q === 'string') return Number(q) || 0;
+    }
     return p.warehouseStock?.reduce((sum, s) => sum + s.quantity, 0) ?? 0;
   };
 
@@ -271,34 +278,40 @@ export default function MovementsPage() {
     },
   ];
 
+  const totalCount = paginationMeta?.total ?? movements.length;
+  const showPagination = paginationMeta != null;
+
   return (
     <RouteGuard
       requirements={{
         requireAuth: true,
-        requirePermissions: ['stock.read', 'products.read'], // Allow either stock.read or products.read
+        requirePermissions: ['stock.read', 'products.read'],
       }}
     >
-      <div className="min-w-0 w-full px-4 py-6 sm:px-0">
+      <div className="max-w-7xl mx-auto min-w-0 w-full p-4 sm:p-6 space-y-6">
         {/* Header */}
-        <PageHeader
-          title="Mouvements de stock"
-          description={paginationMeta ? `${paginationMeta.total} mouvement${paginationMeta.total !== 1 ? 's' : ''}` : undefined}
-          actions={
-            canCreateStock ? (
+        <div className="min-w-0 overflow-hidden bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 sm:p-8 border border-blue-100 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 min-w-0">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Mouvements de stock</h1>
+              <p className="text-sm sm:text-base text-gray-600">
+                {showPagination ? `${totalCount} mouvement${totalCount !== 1 ? 's' : ''} au total` : 'Historique des entrées et sorties de stock'}
+              </p>
+            </div>
+            {canCreateStock && (
               <button
                 onClick={() => setIsAdjustmentModalOpen(true)}
-                className="inline-flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 font-medium transition-colors"
+                className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-xl hover:bg-blue-700 font-medium transition-colors shadow-sm"
               >
                 <PlusIcon className="w-5 h-5" />
                 Ajustement manuel
               </button>
-            ) : undefined
-          }
-        />
+            )}
+          </div>
+        </div>
 
         {/* Filters */}
-        <div className="mb-6 space-y-4">
-          {/* First Row: Search and Type */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
           <div className="flex flex-col sm:flex-row gap-4">
             <SearchFilter
               value={searchInput}
@@ -323,15 +336,13 @@ export default function MovementsPage() {
                 { value: 'ADJUSTMENT', label: 'Adjustment' },
               ]}
               placeholder="Tous les types"
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto min-w-[180px]"
             />
           </div>
-
-          {/* Second Row: Date Range */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex gap-2 flex-1">
-              <div className="flex-1">
-                <label className="block text-xs text-gray-500 mb-1">Date début</label>
+          <div className="flex flex-col sm:flex-row gap-4 pt-2 border-t border-gray-100">
+            <div className="flex gap-2 flex-1 flex-wrap">
+              <div className="flex-1 min-w-[140px]">
+                <label className="block text-xs font-medium text-gray-500 mb-1">Date début</label>
                 <input
                   type="date"
                   value={startDate}
@@ -342,8 +353,8 @@ export default function MovementsPage() {
                   className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 />
               </div>
-              <div className="flex-1">
-                <label className="block text-xs text-gray-500 mb-1">Date fin</label>
+              <div className="flex-1 min-w-[140px]">
+                <label className="block text-xs font-medium text-gray-500 mb-1">Date fin</label>
                 <input
                   type="date"
                   value={endDate}
@@ -378,24 +389,26 @@ export default function MovementsPage() {
           <SkeletonLoader />
         ) : (
           <>
-            <ModernTable
-              columns={columns}
-              data={filteredMovements}
-              headerGradient="from-blue-600 via-blue-500 to-indigo-600"
-              striped={true}
-              hoverable={true}
-              emptyMessage="Aucun mouvement de stock trouvé"
-              minWidth="1200px"
-            />
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <ModernTable
+                columns={columns}
+                data={filteredMovements}
+                headerGradient="from-blue-600 via-blue-500 to-indigo-600"
+                striped={true}
+                hoverable={true}
+                emptyMessage="Aucun mouvement de stock trouvé"
+                minWidth="1200px"
+              />
+            </div>
             {/* Pagination */}
-            {paginationMeta && paginationMeta.total > 0 && (
-              <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            {showPagination && paginationMeta && (
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="text-sm text-gray-700">
-                  Affichage de <span className="font-medium">{(paginationMeta.page - 1) * paginationMeta.limit + 1}</span> à{' '}
+                  Affichage de <span className="font-medium">{totalCount === 0 ? 0 : (paginationMeta.page - 1) * (paginationMeta.limit || 20) + 1}</span> à{' '}
                   <span className="font-medium">
-                    {Math.min(paginationMeta.page * paginationMeta.limit, paginationMeta.total)}
+                    {totalCount === 0 ? 0 : Math.min(paginationMeta.page * (paginationMeta.limit || 20), totalCount)}
                   </span>{' '}
-                  sur <span className="font-medium">{paginationMeta.total}</span> mouvement{paginationMeta.total !== 1 ? 's' : ''}
+                  sur <span className="font-medium">{totalCount}</span> mouvement{totalCount !== 1 ? 's' : ''}
                 </div>
                 {paginationMeta.totalPages > 1 && (
                   <Pagination
