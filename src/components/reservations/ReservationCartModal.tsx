@@ -7,7 +7,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { hasPermission } from '@/lib/permissions';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
-import { useRouter } from 'next/navigation';
 import { useReservationCart } from '@/hooks/useReservationCart';
 
 interface Product {
@@ -48,7 +47,6 @@ export default function ReservationCartModal({
   initialProjectId,
   onSuccess,
 }: ReservationCartModalProps) {
-  const router = useRouter();
   const { user } = useAuth();
   const toast = useToast();
   const [loading, setLoading] = useState(false);
@@ -106,7 +104,7 @@ export default function ReservationCartModal({
         : apiClient.get('/projects?status=ACTIVE');
       
       const [productsRes, projectsRes] = await Promise.all([
-        apiClient.get('/products?limit=1000'),
+        apiClient.get('/products?limit=1000&sortBy=name&sortOrder=asc'),
         projectsPromise,
       ]);
 
@@ -253,9 +251,6 @@ export default function ReservationCartModal({
       if (onSuccess) {
         onSuccess();
       }
-      
-      // Navigate to reservations page
-      router.push('/reservations');
     } catch (error: any) {
       console.error('Failed to create reservation:', error);
       toast.error(error.response?.data?.message || 'Erreur lors de la création de la réservation');
@@ -286,10 +281,14 @@ export default function ReservationCartModal({
                 Produit <span className="text-red-500">*</span>
               </label>
               <Autocomplete
-                options={products.map((product) => ({
-                  value: product.id,
-                  label: `${product.name}${product.sku ? ` (${product.sku})` : ''}`,
-                }))}
+                options={products.map((product) => {
+                  const qty = product.stock?.quantity ?? 0;
+                  const baseLabel = `${product.name}${product.sku ? ` (${product.sku})` : ''}`;
+                  return {
+                    value: product.id,
+                    label: `${baseLabel} · ${qty} en stock`,
+                  };
+                })}
                 value={formData.productId}
                 onChange={(value) => setFormData({ ...formData, productId: value })}
                 placeholder="Rechercher un produit..."

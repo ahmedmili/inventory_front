@@ -54,8 +54,9 @@ export default function ProjectExitSlipModal({
   const loadProducts = async () => {
     try {
       setLoadingProducts(true);
-      const response = await apiClient.get('/products?limit=1000');
+      const response = await apiClient.get('/products?limit=1000&sortBy=name&sortOrder=asc');
       const productsData = response.data?.data || response.data || [];
+      productsData.sort((a: Product, b: Product) => (a.name || '').localeCompare(b.name || '', 'fr'));
       setProducts(productsData);
     } catch (error: any) {
       console.error('Failed to load products:', error);
@@ -136,6 +137,7 @@ export default function ProjectExitSlipModal({
       title="Créer un bon de sortie"
       variant="form"
       size="lg"
+      contentClassName="min-h-[420px] max-h-[75vh]"
     >
       <p className="text-sm text-gray-600 mb-4">
         Sortie de stock immédiate et définitive, liée au projet <strong>{projectName}</strong>.

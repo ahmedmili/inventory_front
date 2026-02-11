@@ -164,7 +164,7 @@ export default function ReservationCard({
                 <span className="hidden sm:inline">PDF</span>
               </button>
             )}
-            {hasMultipleItems && (
+            {group.totalItems >= 1 && (
               <button
                 onClick={onToggle}
                 className="inline-flex items-center gap-1.5 px-4 sm:px-5 py-2.5 border-2 border-gray-300 rounded-xl hover:border-blue-400 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-blue-50 hover:to-blue-100 text-gray-700 hover:text-blue-700 transition-all duration-300 text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transform hover:scale-110 active:scale-95"

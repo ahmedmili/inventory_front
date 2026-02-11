@@ -108,11 +108,15 @@ export default function ProjectReservedProductsTable({
                   <th className="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">
                     Nombre de réservations
                   </th>
+                  <th className="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">
+                    Statut
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white">
                 {productReservations.map((entry, index) => {
                   const isExpanded = expandedProducts.has(entry.product.id);
+                  const uniqueStatuses = [...new Set(entry.groups.map((g: any) => g.status).filter(Boolean))];
                   const reservationsByGroup = entry.groups.map((group) => ({
                     group,
                     items: entry.reservations.filter((r: any) => r.groupId === group.groupId),
@@ -174,10 +178,21 @@ export default function ProjectReservedProductsTable({
                             {entry.reservations.length}
                           </span>
                         </td>
+                        <td className="px-4 py-4">
+                          <div className="flex flex-wrap items-center justify-center gap-1.5">
+                            {uniqueStatuses.length > 0 ? (
+                              uniqueStatuses.map((status: string) => (
+                                <StatusBadge key={status} status={status} variant="default" size="sm" />
+                              ))
+                            ) : (
+                              <span className="text-xs text-gray-500">—</span>
+                            )}
+                          </div>
+                        </td>
                       </tr>
                       {isExpanded && (
                         <tr>
-                          <td colSpan={4} className="px-4 py-5 bg-gradient-to-br from-purple-50/50 via-gray-50 to-pink-50/50">
+                          <td colSpan={5} className="px-4 py-5 bg-gradient-to-br from-purple-50/50 via-gray-50 to-pink-50/50">
                             <div className="space-y-4 animate-in slide-in-from-top-2 duration-300">
                               <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
                                 <div className="h-px flex-1 bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>

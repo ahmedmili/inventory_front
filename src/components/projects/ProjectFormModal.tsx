@@ -88,11 +88,16 @@ export default function ProjectFormModal({
   const onSubmit = async (data: ProjectFormData) => {
     setLoading(true);
     try {
+      const payload = {
+        ...data,
+        startDate: data.startDate?.trim() || undefined,
+        endDate: data.endDate?.trim() || undefined,
+      };
       if (projectId) {
-        await apiClient.put(`/projects/${projectId}`, data);
+        await apiClient.post(`/projects/${projectId}`, payload);
         toast.success('Projet mis à jour avec succès!');
       } else {
-        await apiClient.post('/projects', data);
+        await apiClient.post('/projects', payload);
         toast.success('Projet créé avec succès!');
       }
       onSuccess?.();
