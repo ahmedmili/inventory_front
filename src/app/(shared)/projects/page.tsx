@@ -170,7 +170,10 @@ export default function ProjectsPage() {
       label: 'Nom du projet',
       render: (project: ProjectWithCounts) => (
         <div className="min-w-[200px]">
-          <div className="font-semibold text-gray-900 mb-1">{project.name}</div>
+          <div className="font-semibold text-gray-900 mb-1">
+            {project.code && <span className="text-gray-500 font-normal mr-2">{project.code}</span>}
+            {project.name}
+          </div>
           {project.description && (
             <div className="text-xs text-gray-500 line-clamp-2">{project.description}</div>
           )}

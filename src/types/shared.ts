@@ -57,6 +57,7 @@ export interface Supplier {
 // Types de projet
 export interface Project {
   id: string;
+  code?: string | null;
   name: string;
   description?: string | null;
   status: ProjectStatus;

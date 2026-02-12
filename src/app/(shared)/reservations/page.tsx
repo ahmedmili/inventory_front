@@ -8,6 +8,7 @@ import { hasPermission, getUserRoleCode } from '@/lib/permissions';
 import { apiClient } from '@/lib/api';
 import { SkeletonLoader } from '@/components/SkeletonLoader';
 import { useToast } from '@/contexts/ToastContext';
+import { useModal } from '@/contexts/ModalContext';
 import Pagination from '@/components/Pagination';
 import { useReservationsRealtime } from '@/hooks/useReservationsRealtime';
 import UpdateReservationModal from '@/components/reservations/UpdateReservationModal';
@@ -51,6 +52,7 @@ export default function ReservationsPage() {
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
   const toast = useToast();
+  const modal = useModal();
   const [reservations, setReservations] = useState<ReservationGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>(searchParams?.get('status') || 'all');
@@ -135,6 +137,15 @@ export default function ReservationsPage() {
       setUserSearch('');
     }
   }, [userFilter]);
+
+  // Synchroniser l'URL avec les filtres et la pagination (rafraîchir = même résultat)
+  useUrlSync({
+    page: page > 1 ? page : undefined,
+    status: statusFilter !== 'all' ? statusFilter : undefined,
+    projectId: projectFilter !== 'all' ? projectFilter : undefined,
+    productId: productFilter !== 'all' ? productFilter : undefined,
+    userId: isAdmin && userFilter !== 'all' ? userFilter : undefined,
+  });
 
   // Filter suggestions based on search
   const filteredProjects = projects.filter(p =>
@@ -240,34 +251,43 @@ export default function ReservationsPage() {
   };
 
   const handleRelease = async (id: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir libérer cette réservation ?')) {
-      return;
-    }
-
-    try {
-      await apiClient.patch(`/reservations/${id}/release`, {
-        notes: 'Libéré par l\'utilisateur',
-      });
-      toast.success('Réservation libérée avec succès');
-      loadReservations();
-    } catch (error: any) {
-      console.error('Failed to release reservation:', error);
-      toast.error(error.response?.data?.message || 'Erreur lors de la libération');
-    }
+    modal.confirm({
+      title: 'Refuser la réservation',
+      content: 'Êtes-vous sûr de vouloir refuser cette réservation ? Les produits seront remis en stock.',
+      confirmText: 'Refuser',
+      cancelText: 'Annuler',
+      onConfirm: async () => {
+        try {
+          await apiClient.patch(`/reservations/${id}/release`, {
+            notes: 'Libéré par l\'utilisateur',
+          });
+          toast.success('Réservation refusée avec succès');
+          loadReservations();
+        } catch (error: any) {
+          console.error('Failed to release reservation:', error);
+          toast.error(error.response?.data?.message || 'Erreur lors du refus');
+        }
+      },
+    });
   };
 
   const handleFulfill = async (id: string) => {
-    if (!confirm('Valider cette réservation ?')) {
-      return;
-    }
-    try {
-      await apiClient.patch(`/reservations/${id}/fulfill`, {});
-      toast.success('Réservation validée avec succès');
-      loadReservations();
-    } catch (error: any) {
-      console.error('Failed to fulfill reservation:', error);
-      toast.error(error.response?.data?.message || 'Erreur lors de la validation');
-    }
+    modal.confirm({
+      title: 'Valider la réservation',
+      content: 'Valider cette réservation ? Les produits sortiront définitivement du stock.',
+      confirmText: 'Valider',
+      cancelText: 'Annuler',
+      onConfirm: async () => {
+        try {
+          await apiClient.post(`/reservations/${id}/fulfill`, {});
+          toast.success('Réservation validée avec succès');
+          loadReservations();
+        } catch (error: any) {
+          console.error('Failed to fulfill reservation:', error);
+          toast.error(error.response?.data?.message || 'Erreur lors de la validation');
+        }
+      },
+    });
   };
 
   const handleDownloadGroupPDF = async (groupId: string) => {
@@ -311,7 +331,7 @@ export default function ReservationsPage() {
     const colors: Record<string, string> = {
       RESERVED: 'bg-blue-100 text-blue-800 border-blue-200',
       FULFILLED: 'bg-green-100 text-green-800 border-green-200',
-      RELEASED: 'bg-gray-100 text-gray-800 border-gray-200',
+      RELEASED: 'bg-red-100 text-red-800 border-red-200',
       CANCELLED: 'bg-red-100 text-red-800 border-red-200',
     };
     return colors[status] || 'bg-gray-100 text-gray-800 border-gray-200';
@@ -319,9 +339,9 @@ export default function ReservationsPage() {
 
   const getStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
-      RESERVED: 'Réservé',
-      FULFILLED: 'Rempli',
-      RELEASED: 'Libéré',
+      RESERVED: 'En attente',
+      FULFILLED: 'Validé',
+      RELEASED: 'Annulé',
       CANCELLED: 'Annulé',
     };
     return labels[status] || status;
@@ -405,13 +425,13 @@ export default function ReservationsPage() {
             colorScheme="green"
           />
           <StatisticsCard
-            title="En Attente"
+            title="En attente"
             value={reservedCount}
             icon={<CalendarIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
             colorScheme="purple"
           />
           <StatisticsCard
-            title="Remplies"
+            title="Validées"
             value={fulfilledCount}
             icon={<PackageIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
             colorScheme="orange"
@@ -427,8 +447,8 @@ export default function ReservationsPage() {
             value={statusFilter}
             onChange={setStatusFilter}
             options={[
-              { value: 'RESERVED', label: 'Réservé' },
-              { value: 'FULFILLED', label: 'Rempli' },
+              { value: 'RESERVED', label: 'En attente' },
+              { value: 'FULFILLED', label: 'Validé' },
               { value: 'RELEASED', label: 'Libéré' },
               { value: 'CANCELLED', label: 'Annulé' },
             ]}
@@ -652,8 +672,9 @@ export default function ReservationsPage() {
         ) : (
           reservations.map((group) => {
             const isExpanded = expandedGroups.has(group.groupId);
-            const hasMultipleItems = group.totalItems > 1;
             const allReserved = group.items.every(item => item.status === 'RESERVED');
+            const hasReservedItems = group.items.some(item => item.status === 'RESERVED');
+            const isGroupInProgress = group.status === 'RESERVED';
             const daysAgo = Math.floor((new Date().getTime() - new Date(group.createdAt).getTime()) / (1000 * 60 * 60 * 24));
 
             return (
@@ -662,36 +683,74 @@ export default function ReservationsPage() {
                 group={group}
                 isExpanded={isExpanded}
                 onToggle={() => toggleGroup(group.groupId)}
-                onUpdateGroup={allReserved && (canManage || isAdmin) ? () => {
+                onUpdateGroup={isGroupInProgress && (canManage || isAdmin) ? () => {
                   setSelectedGroup(group);
                   setIsUpdateGroupModalOpen(true);
                 } : undefined}
                 onDownloadPDF={() => handleDownloadGroupPDF(group.groupId)}
-                onRelease={canCancel && allReserved ? () => {
-                  if (confirm('Êtes-vous sûr de vouloir libérer toutes les réservations de ce groupe ?')) {
-                    Promise.all(
-                      group.items.map(item => 
-                        apiClient.patch(`/reservations/${item.id}/release`, {
-                          notes: 'Libéré par l\'utilisateur',
-                        })
-                      )
-                    ).then(() => {
-                      toast.success('Toutes les réservations libérées avec succès');
-                      loadReservations();
-                    }).catch((error: any) => {
-                      toast.error('Erreur lors de la libération');
-                      console.error(error);
-                    });
+                onRelease={canCancel && hasReservedItems && isGroupInProgress ? () => {
+                  const toRelease = group.items.filter((item) => item.status === 'RESERVED');
+                  if (toRelease.length === 0) {
+                    toast.info('Aucune réservation à refuser dans ce groupe');
+                    return;
                   }
+                  modal.confirm({
+                    title: 'Refuser toute la réservation',
+                    content: `Les ${toRelease.length} produit(s) seront remis en stock. Confirmer ?`,
+                    confirmText: 'Refuser',
+                    cancelText: 'Annuler',
+                    onConfirm: async () => {
+                      try {
+                        await Promise.all(
+                          toRelease.map((item) =>
+                            apiClient.patch(`/reservations/${item.id}/release`, {
+                              notes: 'Libéré par l\'utilisateur',
+                            })
+                          )
+                        );
+                        toast.success('Réservation refusée avec succès');
+                        loadReservations();
+                      } catch (error: any) {
+                        toast.error('Erreur lors du refus');
+                        console.error(error);
+                      }
+                    },
+                  });
+                } : undefined}
+                onFulfill={canFulfill && hasReservedItems && isGroupInProgress ? () => {
+                  const toFulfill = group.items.filter((item) => item.status === 'RESERVED');
+                  if (toFulfill.length === 0) {
+                    toast.info('Aucun produit à valider dans cette réservation');
+                    return;
+                  }
+                  modal.confirm({
+                    title: 'Valider toute la réservation',
+                    content: `Les ${toFulfill.length} produit(s) sortiront définitivement du stock. Confirmer ?`,
+                    confirmText: 'Valider',
+                    cancelText: 'Annuler',
+                    onConfirm: async () => {
+                      try {
+                        await Promise.all(
+                          toFulfill.map((item) => apiClient.post(`/reservations/${item.id}/fulfill`, {}))
+                        );
+                        toast.success('Réservation validée avec succès');
+                        loadReservations();
+                      } catch (error: any) {
+                        toast.error(error.response?.data?.message || 'Erreur lors de la validation');
+                        console.error(error);
+                      }
+                    },
+                  });
                 } : undefined}
                 canManage={canManage}
                 canCancel={canCancel}
+                canFulfill={canFulfill}
                 isAdmin={isAdmin}
                 formatDate={formatDate}
                 daysAgo={daysAgo}
                 expandedContent={
-                  isExpanded && hasMultipleItems ? (
-                    <div className="p-5 sm:p-7">
+                  isExpanded ? (
+                    <div className="border-t border-gray-100 bg-gray-50/30">
                       <ReservationProductsTable
                         items={group.items}
                         canManage={canManage}
@@ -705,23 +764,7 @@ export default function ReservationsPage() {
                         onFulfill={handleFulfill}
                         canFulfill={canFulfill}
                         formatDate={formatDate}
-                      />
-                    </div>
-                  ) : !hasMultipleItems ? (
-                    <div className="p-5 sm:p-7">
-                      <ReservationProductsTable
-                        items={group.items}
-                        canManage={canManage}
-                        canCancel={canCancel}
-                        isAdmin={isAdmin}
-                        onUpdate={(item) => {
-                          setSelectedReservation(item);
-                          setIsUpdateModalOpen(true);
-                        }}
-                        onRelease={handleRelease}
-                        onFulfill={handleFulfill}
-                        canFulfill={canFulfill}
-                        formatDate={formatDate}
+                        asList
                       />
                     </div>
                   ) : undefined

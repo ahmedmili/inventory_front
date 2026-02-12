@@ -5,6 +5,7 @@ import Modal from '../Modal';
 import Autocomplete from '../ui/Autocomplete';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
+import { useModal } from '@/contexts/ModalContext';
 
 interface Project {
   id: string;
@@ -14,6 +15,7 @@ interface Project {
 interface ReservationItem {
   id: string;
   quantity: number;
+  status?: string;
   product: {
     id: string;
     name: string;
@@ -46,9 +48,14 @@ export default function UpdateGroupReservationModal({
   onSuccess,
 }: UpdateGroupReservationModalProps) {
   const toast = useToast();
+  const modal = useModal();
   const [loading, setLoading] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [products, setProducts] = useState<Array<{ id: string; name: string; sku?: string }>>([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
+  const [addProductId, setAddProductId] = useState('');
+  const [addQuantity, setAddQuantity] = useState(1);
+  const [addingProduct, setAddingProduct] = useState(false);
   const [formData, setFormData] = useState({
     projectId: '',
     expiresAt: '',
@@ -116,9 +123,14 @@ export default function UpdateGroupReservationModal({
   const loadOptions = async () => {
     try {
       setLoadingOptions(true);
-      const projectsRes = await apiClient.get('/projects?status=ACTIVE');
+      const [projectsRes, productsRes] = await Promise.all([
+        apiClient.get('/projects?status=ACTIVE'),
+        apiClient.get('/products?limit=500&sortBy=name&sortOrder=asc'),
+      ]);
       const projectsData = projectsRes.data?.data || projectsRes.data || [];
       setProjects(projectsData);
+      const productsData = productsRes.data?.data || productsRes.data || [];
+      setProducts(Array.isArray(productsData) ? productsData : []);
       console.log('Projects loaded:', projectsData.length);
       
       // If we have a projectId but projects just loaded, ensure the form data is set correctly
@@ -153,6 +165,54 @@ export default function UpdateGroupReservationModal({
           : item
       ),
     }));
+  };
+
+  const handleRemoveItem = (item: ReservationItem) => {
+    if (item.status && item.status !== 'RESERVED') {
+      toast.info('Seules les lignes en attente peuvent être retirées');
+      return;
+    }
+    modal.confirm({
+      title: 'Retirer le produit',
+      content: `Retirer « ${item.product.name} » de la réservation ? La quantité sera remise en stock.`,
+      confirmText: 'Retirer',
+      cancelText: 'Annuler',
+      onConfirm: async () => {
+        try {
+          await apiClient.patch(`/reservations/${item.id}/release`, {
+            notes: 'Retiré du groupe par l\'utilisateur',
+          });
+          toast.success('Produit retiré de la réservation');
+          onSuccess?.();
+          onClose();
+        } catch (error: any) {
+          toast.error(error.response?.data?.message || 'Erreur lors du retrait');
+        }
+      },
+    });
+  };
+
+  const handleAddProduct = async () => {
+    if (!group || !addProductId || addQuantity < 1) {
+      toast.info('Sélectionnez un produit et une quantité');
+      return;
+    }
+    try {
+      setAddingProduct(true);
+      await apiClient.post(`/reservations/group/${group.groupId}/add`, {
+        productId: addProductId,
+        quantity: addQuantity,
+      });
+      toast.success('Produit ajouté à la réservation');
+      setAddProductId('');
+      setAddQuantity(1);
+      onSuccess?.();
+      onClose();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Erreur lors de l\'ajout du produit');
+    } finally {
+      setAddingProduct(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -204,7 +264,7 @@ export default function UpdateGroupReservationModal({
 
       await apiClient.post(`/reservations/group/${group.groupId}/update`, payload);
 
-      toast.success('Groupe de réservations mis à jour avec succès');
+      toast.success('Réservation mise à jour avec succès');
       onClose();
       if (onSuccess) {
         onSuccess();
@@ -212,7 +272,7 @@ export default function UpdateGroupReservationModal({
     } catch (error: any) {
       console.error('Failed to update reservation group:', error);
       const errorMessage =
-        error.response?.data?.message || 'Erreur lors de la mise à jour du groupe de réservations';
+        error.response?.data?.message || 'Erreur lors de la mise à jour de la réservation';
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -233,7 +293,7 @@ export default function UpdateGroupReservationModal({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Modifier le groupe de réservations"
+      title="Modifier la réservation"
       variant="form"
       size="lg"
     >
@@ -275,11 +335,45 @@ export default function UpdateGroupReservationModal({
             rows={3}
             maxLength={250}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Notes sur le groupe de réservations (optionnel)"
+            placeholder="Notes (optionnel)"
           />
           <p className="mt-1 text-xs text-gray-500">
             {formData.notes.length}/250 caractères
           </p>
+        </div>
+
+        {/* Add product */}
+        <div className="p-3 bg-blue-50/50 rounded-lg border border-blue-100">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Ajouter un produit
+          </label>
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="flex-1 min-w-[180px]">
+              <Autocomplete
+                options={products.map((p) => ({ value: p.id, label: p.sku ? `${p.name} (${p.sku})` : p.name }))}
+                value={addProductId}
+                onChange={(v) => setAddProductId(v || '')}
+                placeholder="Choisir un produit"
+              />
+            </div>
+            <div className="w-24">
+              <input
+                type="number"
+                min={1}
+                value={addQuantity}
+                onChange={(e) => setAddQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleAddProduct}
+              disabled={addingProduct || !addProductId}
+              className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {addingProduct ? 'Ajout...' : 'Ajouter'}
+            </button>
+          </div>
         </div>
 
         {/* Products Quantities */}
@@ -289,32 +383,50 @@ export default function UpdateGroupReservationModal({
           </label>
           <div className="space-y-3 max-h-64 overflow-y-auto">
             {group.items.map((item) => {
-              const formItem = formData.items.find(i => i.reservationId === item.id);
-              return (
-                <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex-1">
-                    <div className="text-sm font-medium text-gray-900">
-                      {item.product.name}
-                      {item.product.sku && (
-                        <span className="text-xs text-gray-500 ml-2">({item.product.sku})</span>
+                const formItem = formData.items.find(i => i.reservationId === item.id);
+                const isReserved = item.status === 'RESERVED' || item.status === undefined;
+                return (
+                  <div key={item.id} className="flex items-center justify-between gap-3 p-3 bg-gray-50 rounded-lg">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-gray-900">
+                        {item.product.name}
+                        {item.product.sku && (
+                          <span className="text-xs text-gray-500 ml-2">({item.product.sku})</span>
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        Quantité actuelle: {item.quantity}
+                        {item.status && !isReserved && (
+                          <span className="ml-2 text-gray-400">· {item.status === 'FULFILLED' ? 'Validé' : 'Annulé'}</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {isReserved ? (
+                        <>
+                          <input
+                            type="number"
+                            min="1"
+                            value={formItem?.quantity ?? item.quantity}
+                            onChange={(e) => handleQuantityChange(item.id, parseInt(e.target.value) || 1)}
+                            className="w-20 border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveItem(item)}
+                            className="px-2 py-1 text-xs font-medium text-red-700 border border-red-200 rounded-lg hover:bg-red-50"
+                            title="Retirer ce produit de la réservation"
+                          >
+                            Retirer
+                          </button>
+                        </>
+                      ) : (
+                        <span className="text-xs text-gray-400">—</span>
                       )}
                     </div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      Quantité actuelle: {item.quantity}
-                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      min="1"
-                      value={formItem?.quantity || item.quantity}
-                      onChange={(e) => handleQuantityChange(item.id, parseInt(e.target.value) || 1)}
-                      className="w-20 border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
         </div>
 
@@ -333,7 +445,7 @@ export default function UpdateGroupReservationModal({
             disabled={loading}
             className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Mise à jour...' : 'Mettre à jour le groupe'}
+            {loading ? 'Mise à jour...' : 'Mettre à jour'}
           </button>
         </div>
       </form>

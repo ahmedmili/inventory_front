@@ -1,6 +1,5 @@
 import React from 'react';
 import { CalendarIcon, PackageIcon } from '@/components/icons';
-import StatusBadge from '@/components/ui/StatusBadge';
 import ModernTable from '@/components/ui/ModernTable';
 import type { ReservationItem } from '@/types/shared';
 
@@ -14,6 +13,10 @@ interface ReservationProductsTableProps {
   onRelease?: (itemId: string) => void;
   onFulfill?: (itemId: string) => void;
   formatDate: (date?: string) => string;
+  /** Style adapté quand le tableau est affiché dans une carte (header plus discret) */
+  nested?: boolean;
+  /** Afficher en liste (lignes) au lieu d'un tableau — pour l'intérieur d'une carte */
+  asList?: boolean;
 }
 
 export default function ReservationProductsTable({
@@ -26,7 +29,44 @@ export default function ReservationProductsTable({
   onRelease,
   onFulfill,
   formatDate,
+  nested = false,
+  asList = false,
 }: ReservationProductsTableProps) {
+  if (asList) {
+    if (items.length === 0) {
+      return <p className="text-sm text-gray-500 py-4 px-4">Aucun produit dans cette réservation</p>;
+    }
+    return (
+      <ul className="divide-y divide-gray-100">
+        {items.map((item, index) => (
+          <li
+            key={item.id}
+            className="flex flex-wrap items-center gap-3 py-3 px-4 hover:bg-gray-50/50 transition-colors"
+          >
+            <span className="flex-shrink-0 w-7 h-7 rounded bg-slate-100 text-slate-600 flex items-center justify-center text-xs font-semibold">
+              {index + 1}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-gray-900 truncate">{item.product.name}</p>
+              <div className="flex flex-wrap items-center gap-2 mt-0.5 text-xs text-gray-500">
+                {item.product.sku && <span className="font-mono">{item.product.sku}</span>}
+                {item.expiresAt && (
+                  <span className="flex items-center gap-1">
+                    <CalendarIcon className="w-3 h-3" />
+                    {formatDate(item.expiresAt)}
+                  </span>
+                )}
+              </div>
+            </div>
+            <span className="inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 rounded text-sm font-semibold bg-blue-100 text-blue-800">
+              {item.quantity}
+            </span>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
   const columns = [
     {
       key: 'index',
@@ -84,13 +124,6 @@ export default function ReservationProductsTable({
       ),
     },
     {
-      key: 'status',
-      label: 'Statut',
-      align: 'center' as const,
-      width: '28',
-      render: (item: ReservationItem) => <StatusBadge status={item.status} variant="default" size="sm" />,
-    },
-    {
       key: 'expiresAt',
       label: 'Expiration',
       align: 'left' as const,
@@ -105,57 +138,18 @@ export default function ReservationProductsTable({
           <span className="text-xs text-gray-400 italic">-</span>
         ),
     },
-    {
-      key: 'actions',
-      label: 'Actions',
-      align: 'center' as const,
-      width: '32',
-      render: (item: ReservationItem) => (
-        <div className="flex items-center justify-center gap-1.5">
-          {(canManage || isAdmin) && item.status === 'RESERVED' && onUpdate && (
-            <button
-              onClick={() => onUpdate(item)}
-              className="text-blue-600 hover:text-blue-800 text-xs px-2.5 py-1.5 border-2 border-blue-300 rounded-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 hover:border-blue-400 transition-all duration-200 font-bold shadow-sm hover:shadow-md transform hover:scale-110 active:scale-95 whitespace-nowrap"
-              title="Modifier"
-            >
-              Modifier
-            </button>
-          )}
-          {canFulfill && item.status === 'RESERVED' && onFulfill && (
-            <button
-              onClick={() => onFulfill(item.id)}
-              className="text-green-600 hover:text-green-800 text-xs px-2.5 py-1.5 border-2 border-green-300 rounded-lg hover:bg-gradient-to-r hover:from-green-50 hover:to-green-100 hover:border-green-400 transition-all duration-200 font-bold shadow-sm hover:shadow-md transform hover:scale-110 active:scale-95 whitespace-nowrap"
-              title="Valider (sortie définitive du stock)"
-            >
-              Valider
-            </button>
-          )}
-          {canCancel && item.status === 'RESERVED' && onRelease && (
-            <button
-              onClick={() => onRelease(item.id)}
-              className="text-red-600 hover:text-red-800 text-xs px-2.5 py-1.5 border-2 border-red-300 rounded-lg hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100 hover:border-red-400 transition-all duration-200 font-bold shadow-sm hover:shadow-md transform hover:scale-110 active:scale-95 whitespace-nowrap"
-              title="Libérer"
-            >
-              Libérer
-            </button>
-          )}
-          {(!canManage && !isAdmin && !canCancel) || item.status !== 'RESERVED' ? (
-            <span className="text-xs text-gray-400 italic">Aucune action</span>
-          ) : null}
-        </div>
-      ),
-    },
   ];
 
   return (
     <ModernTable
       columns={columns}
       data={items}
-      headerGradient="from-blue-600 via-blue-500 to-indigo-600"
+      headerGradient={nested ? 'from-slate-600 to-slate-500' : 'from-blue-600 via-blue-500 to-indigo-600'}
       striped={true}
       hoverable={true}
       emptyMessage="Aucun produit dans cette réservation"
       minWidth="600px"
+      nested={nested}
     />
   );
 }

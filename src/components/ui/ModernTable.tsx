@@ -18,6 +18,8 @@ interface ModernTableProps {
   hoverable?: boolean;
   emptyMessage?: string;
   minWidth?: string;
+  /** Style plus discret quand le tableau est dans une carte */
+  nested?: boolean;
 }
 
 export default function ModernTable({
@@ -28,17 +30,18 @@ export default function ModernTable({
   hoverable = true,
   emptyMessage = 'Aucune donnée disponible',
   minWidth = '600px',
+  nested = false,
 }: ModernTableProps) {
   if (data.length === 0) {
     return (
-      <div className="min-w-0 max-w-full text-center py-12 bg-white rounded-xl border-2 border-gray-200">
-        <p className="text-gray-500">{emptyMessage}</p>
+      <div className={`min-w-0 max-w-full text-center py-8 bg-white ${nested ? 'rounded-lg border border-gray-200' : 'rounded-xl border-2 border-gray-200'}`}>
+        <p className="text-gray-500 text-sm">{emptyMessage}</p>
       </div>
     );
   }
 
   return (
-    <div className="w-full min-w-0 max-w-full overflow-x-auto rounded-xl border-2 border-gray-300 bg-white shadow-xl">
+    <div className={`w-full min-w-0 max-w-full overflow-x-auto bg-white ${nested ? 'rounded-lg border border-gray-200 shadow-sm' : 'rounded-xl border-2 border-gray-300 shadow-xl'}`}>
       <table className="w-full" style={{ minWidth }}>
         <thead className={`bg-gradient-to-r ${headerGradient}`}>
           <tr>
