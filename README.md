@@ -6,6 +6,7 @@ Interface utilisateur moderne et réactive pour la gestion de stock, construite 
 
 ## 📋 Table des Matières
 
+- [Aperçu (captures d'écran)](#-aperçu-captures-décran)
 - [Fonctionnalités](#-fonctionnalités)
 - [Technologies](#-technologies)
 - [Prérequis](#-prérequis)
@@ -20,69 +21,72 @@ Interface utilisateur moderne et réactive pour la gestion de stock, construite 
 
 ---
 
+## 📸 Aperçu (captures d'écran)
+
+Aperçu de l'interface **Gestion de Stock Pro** :
+
+| | |
+|---|---|
+| ![Capture 1](presentaion/Capture.PNG) | ![Capture 2](presentaion/Capture2.PNG) |
+| ![Capture 3](presentaion/Capture3.PNG) | ![Capture 4](presentaion/Capture4.PNG) |
+| ![Capture 5](presentaion/Capture5.PNG) | ![Capture 6](presentaion/Capture6.PNG) |
+| ![Capture 7](presentaion/Capture7.PNG) | ![Capture 8](presentaion/Capture8.PNG) |
+| ![Capture 9](presentaion/Capture9.PNG) | ![Capture 10](presentaion/Capture10.PNG) |
+| ![Capture 11](presentaion/Capture11.PNG) | ![Capture 12](presentaion/Capture12.PNG) |
+
+*Images du dossier `presentaion/`.*
+
+---
+
 ## ✨ Fonctionnalités
 
-### 🎨 Interface Utilisateur
-- **Design moderne** avec Tailwind CSS
-- **Responsive** : Mobile, tablette, desktop
-- **Composants réutilisables** : Tables, formulaires, modals, toasts
-- **Chargement optimisé** : Skeleton loaders, lazy loading
-- **Gestion d'images** : Upload multiple, preview, lazy loading
+### 🎨 Interface
+- **Design** : Tailwind CSS, responsive (mobile, tablette, desktop)
+- **Composants** : Tables (ModernTable, Table), modals (système ModalContext + NavigationModalContext), toasts, formulaires (React Hook Form + Zod)
+- **Chargement** : Skeleton loaders, GlobalLoader, lazy loading images (LazyImage)
+- **Upload** : Images multiples avec preview (ImageUpload)
 
-### 📊 Tableaux de Bord
-- Vue d'ensemble avec statistiques en temps réel
-- Graphiques et visualisations (Recharts)
-- Alertes de stock faible
-- Notifications en temps réel
+### 📊 Tableaux de bord
+- **Dashboard Admin** : statistiques, graphiques (Recharts), alertes stock
+- **Dashboard Employé** : vue simplifiée selon rôle
+- **Temps réel** : WebSocket (Socket.io) pour notifications et mises à jour
 
-### 📦 Gestion des Produits
-- Liste paginée avec recherche et filtres
-- Création/édition avec formulaire validé
-- Upload d'images multiples
-- Affichage des niveaux de stock par entrepôt
-- Génération automatique de codes-barres
+### 📦 Produits & Catalogue
+- Liste paginée, recherche et filtres (SearchFilter, SelectFilter), sync URL (useUrlSync)
+- CRUD produits (liste, détail, création, édition)
+- Upload d'images multiples, affichage stock par entrepôt
+- Catégories : CRUD complet
 
-### 🏢 Entrepôts
-- Gestion multi-entrepôts
-- Vue du stock par entrepôt
-- Transferts entre entrepôts
-- Historique des mouvements
+### 🏢 Entrepôts & Stock
+- Multi-entrepôts (liste, détail, création, édition)
+- Mouvements de stock (liste, filtres), ajustement manuel (ManualStockAdjustmentModal), transferts (StockTransferModal)
 
 ### 🛒 Achats & Ventes
-- Création de commandes d'achat/vente
-- Workflow complet (brouillon → validé → reçu/livré)
-- Réception partielle des commandes
-- Génération et téléchargement de PDF
+- Commandes d'achat : liste, détail, création, workflow (brouillon → validé → reçu), réception (page dédiée), PDF
+- Commandes de vente : liste, détail, création, workflow (brouillon → validé → livré), livraison (page dédiée), PDF
+
+### 📋 Réservations & Projets
+- Réservations : liste, création (dont depuis un projet), panier (ReservationCartModal), modification/annulation/validation, PDF
+- Projets : liste, fiche projet (détail, membres, produits réservés), création réservation depuis projet, **bon de sortie** (ProjectExitSlipModal) pour sortie immédiate sans réservation
 
 ### 👥 Fournisseurs & Clients
-- Gestion complète des contacts
-- Historique des transactions
-- Informations détaillées
-- Modal pour gestion des fournisseurs (accessible depuis la navigation)
+- **Fournisseurs** : ouverture en modal depuis la navigation (SuppliersModal), pagination, recherche
+- **Clients** : liste, détail, création, édition
+
+### 👤 Utilisateurs & Rôles
+- **Administrateurs** : page dédiée (/users/admins), pagination, recherche, sync URL
+- **Employés** : page dédiée (/users/employees), pagination, recherche, sync URL
+- **Rôles** : page gestion des rôles et permissions (/roles, accès admin)
 
 ### 🔔 Notifications
-- Badge de notifications non lues
-- Liste des notifications
-- Marquage comme lu
-- Notifications en temps réel
+- Centre de notifications, badge non lues, marquage comme lu
+- Temps réel via WebSocket (RealtimeContext, useNotificationsRealtime)
 
-### 📈 Rapports
-- Valeur de l'inventaire
-- Produits en rupture
-- Meilleurs vendeurs
-- Analytics avec graphiques
-
-### 👤 Gestion des Utilisateurs
-- Page administrateurs avec pagination et recherche
-- Page employés avec pagination et recherche
-- Modal d'ajout d'administrateurs
-- Gestion des rôles et permissions
-- Activation/désactivation de comptes
+### 📈 Rapports (admin)
+- Valeur inventaire, produits en rupture, meilleurs vendeurs, analytics avec graphiques
 
 ### 📦 Importations
-- Gestion des importations de produits
-- Association avec fournisseurs
-- Suivi des réceptions
+- Liste des importations, création (ImportFormModal), association fournisseurs
 
 ---
 
@@ -91,24 +95,27 @@ Interface utilisateur moderne et réactive pour la gestion de stock, construite 
 | Composant | Technologie |
 |-----------|-------------|
 | **Framework** | Next.js 14 (App Router) |
-| **Langage** | TypeScript |
+| **Langage** | TypeScript 5.4 |
 | **UI** | React 18 |
-| **Styling** | Tailwind CSS |
-| **Formulaires** | react-hook-form + Zod |
-| **Data Fetching** | SWR (React Hooks) |
+| **Styling** | Tailwind CSS, clsx, tailwind-merge |
+| **Formulaires** | react-hook-form + Zod + @hookform/resolvers |
+| **Data Fetching** | SWR |
 | **HTTP Client** | Axios |
-| **Graphiques** | Recharts (lazy loaded) |
-| **Icons** | Heroicons |
+| **Graphiques** | Recharts |
+| **Temps réel** | socket.io-client |
+| **Icons** | Composants personnalisés (`src/components/icons`) |
 | **Date** | date-fns |
+| **Export** | xlsx (Excel), csv-utils / excel-utils (lib) |
+| **Cookies** | js-cookie |
 | **Tests** | Jest + React Testing Library |
 
 ---
 
 ## 📦 Prérequis
 
-- **Node.js** 18+ et npm
+- **Node.js** 20+ et npm
 - **Backend API** en cours d'exécution (voir [backend/README.md](../backend/README.md))
-- **Docker** & Docker Compose (optionnel, pour déploiement)
+- **Docker** (optionnel, pour déploiement)
 
 ---
 
@@ -128,9 +135,10 @@ Créez un fichier `.env.local` :
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:4000
 NEXT_PUBLIC_IMAGES_BASE_URL=http://localhost:4000
+NEXT_PUBLIC_WS_URL=ws://localhost:4000
 ```
 
-**Important** : Les variables commençant par `NEXT_PUBLIC_` sont exposées au client.
+Les variables `NEXT_PUBLIC_*` sont exposées au client.
 
 ### 3. Démarrer le Serveur de Développement
 
@@ -171,50 +179,50 @@ Le fichier `next.config.js` inclut :
 ```
 frontend/
 ├── src/
-│   ├── app/                    # App Router (Next.js 14)
-│   │   ├── layout.tsx         # Layout racine
-│   │   ├── page.tsx           # Page d'accueil
-│   │   ├── login/             # Page de connexion
-│   │   ├── dashboard/         # Tableau de bord
-│   │   ├── products/          # Gestion produits
-│   │   │   ├── page.tsx      # Liste produits
-│   │   │   ├── [id]/         # Détails produit
-│   │   │   ├── new/          # Créer produit
-│   │   │   └── [id]/edit/    # Éditer produit
-│   │   ├── warehouses/        # Gestion entrepôts
-│   │   ├── purchases/         # Commandes d'achat
-│   │   ├── sales/             # Commandes de vente
-│   │   ├── suppliers/         # Fournisseurs
-│   │   ├── customers/         # Clients
-│   │   ├── categories/        # Catégories
-│   │   ├── movements/         # Mouvements de stock
-│   │   └── reports/           # Rapports
-│   ├── components/            # Composants réutilisables
-│   │   ├── Layout.tsx         # Layout avec navigation
-│   │   ├── Pagination.tsx    # Pagination
-│   │   ├── ImageUpload.tsx    # Upload d'images
-│   │   ├── LazyImage.tsx      # Image lazy loading
-│   │   ├── SkeletonLoader.tsx # Skeleton loaders
-│   │   ├── Toast.tsx          # Notifications toast
-│   │   ├── Notifications.tsx  # Notifications utilisateur
-│   │   ├── ErrorBoundary.tsx  # Gestion d'erreurs
-│   │   └── Providers.tsx      # Providers (SWR, Auth, Toast)
-│   ├── contexts/              # Contextes React
-│   │   ├── AuthContext.tsx    # État authentification
-│   │   └── ToastContext.tsx   # Gestion toasts
-│   ├── hooks/                 # Hooks personnalisés
-│   │   ├── useApi.ts          # Hook SWR pour API
-│   │   ├── useToastForm.ts    # Hook pour formulaires
-│   │   └── useErrorHandler.ts # Gestion d'erreurs
-│   ├── lib/                   # Utilitaires
-│   │   ├── api.ts             # Client Axios configuré
-│   │   ├── auth.ts            # Service authentification
-│   │   ├── utils.ts           # Utilitaires (cn, etc.)
-│   │   └── pdf.ts             # Helpers PDF
-│   └── types/                 # Types TypeScript
-├── public/                     # Assets statiques
-├── Dockerfile                  # Image Docker
-├── docker-compose.yml         # Orchestration
+│   ├── app/
+│   │   ├── layout.tsx              # Layout racine (Providers, LayoutSelector)
+│   │   ├── page.tsx                # Page d'accueil (redirection)
+│   │   ├── login/page.tsx          # Connexion
+│   │   ├── (shared)/               # Routes partagées (avec garde par rôle)
+│   │   │   ├── dashboard/          # Tableau de bord (Admin ou Employee selon rôle)
+│   │   │   ├── products/           # Liste, [id], new, [id]/edit
+│   │   │   ├── categories/         # Liste, new, [id]/edit
+│   │   │   ├── warehouses/         # Liste, [id], new, [id]/edit
+│   │   │   ├── movements/          # Mouvements de stock
+│   │   │   ├── purchases/          # Liste, [id], new, [id]/receive
+│   │   │   ├── sales/              # Liste, [id], new, [id]/deliver
+│   │   │   ├── suppliers/          # (modal) + pages new, [id], [id]/edit
+│   │   │   ├── customers/          # Liste, [id], new, [id]/edit
+│   │   │   ├── reservations/       # Liste, new
+│   │   │   ├── projects/           # Liste, [id]
+│   │   │   ├── imports/            # Liste, new
+│   │   │   └── notifications/      # Centre de notifications
+│   │   └── (admin)/                # Routes réservées admin / permissions
+│   │       ├── users/              # users, admins, employees
+│   │       └── reports/            # Rapports
+│   ├── components/
+│   │   ├── Layout.tsx, MainContent, Sidebar, SidebarNavigation, NavItem
+│   │   ├── layouts/                # AdminLayout, EmployeeLayout, LayoutSelector
+│   │   ├── sidebars/               # AdminSidebar, EmployeeSidebar
+│   │   ├── headers/                # AdminTopHeader, EmployeeTopHeader, TopHeader
+│   │   ├── modal/                  # ModalTemplate, ModalContainer, ModalItem
+│   │   ├── toast/                  # ToastContainer, ToastItem
+│   │   ├── navigation/             # NavigationModalContainer (modals depuis nav)
+│   │   ├── ui/                     # ModernTable, PageHeader, SearchFilter, SelectFilter, StatusBadge, etc.
+│   │   ├── dashboards/             # AdminDashboard, EmployeeDashboard
+│   │   ├── reservations/           # ReservationCartModal, UpdateReservationModal, etc.
+│   │   ├── projects/               # ProjectExitSlipModal, AddProjectMemberModal, etc.
+│   │   ├── suppliers/              # SuppliersModal
+│   │   ├── guards/                 # RouteGuard
+│   │   ├── Providers.tsx, ErrorBoundary, ConfirmModal, Pagination, ImageUpload, LazyImage, SkeletonLoader
+│   │   └── icons/                 # Icônes personnalisées
+│   ├── contexts/                  # AuthContext, ToastContext, ModalContext, NavigationModalContext, LoadingContext, RealtimeContext
+│   ├── hooks/                     # useApi, useUrlSync, useRouteGuard, useReservationCart, useToastForm, useErrorHandler, useNotificationsRealtime, useStockAlerts, useMedia, etc.
+│   ├── lib/                       # api, auth, utils, pdf, permissions, csv-utils, excel-utils, realtime, images, local-storage
+│   └── types/                     # api, shared, modal, toast
+├── public/                        # Assets (logo, etc.)
+├── presentaion/                   # Captures d'écran pour le README
+├── Dockerfile, docker-compose.yml (optionnel)
 └── package.json
 ```
 
@@ -225,10 +233,12 @@ frontend/
 | `npm run dev` | Serveur de développement |
 | `npm run build` | Build de production |
 | `npm run start` | Serveur de production (après build) |
-| `npm run lint` | Linter ESLint |
-| `npm run test` | Tests unitaires (Jest) |
+| `npm run lint` | ESLint |
+| `npm run type-check` | Vérification TypeScript (tsc --noEmit) |
+| `npm run test` | Tests Jest |
 | `npm run test:watch` | Tests en mode watch |
-| `npm run test:coverage` | Tests avec couverture |
+| `npm run test:coverage` | Couverture de tests |
+| `npm run test:components` | Tests des composants (Jest) |
 
 ### Workflow de Développement
 
@@ -299,10 +309,16 @@ await mutate('/products', 'POST', newProduct);
 
 ### Contextes React
 
-- **AuthContext** : État d'authentification global
-- **ToastContext** : Notifications toast globales
+| Contexte | Rôle |
+|----------|------|
+| **AuthContext** | Utilisateur connecté, login, logout, refresh token |
+| **ToastContext** | Notifications toast (success, error, info) |
+| **ModalContext** | Ouverture/fermeture des modals génériques |
+| **NavigationModalContext** | Ouverture des modals depuis la navigation (ex. fournisseurs) |
+| **LoadingContext** | État de chargement global (GlobalLoader) |
+| **RealtimeContext** | Connexion WebSocket (notifications, présence) |
 
-### Exemple d'Utilisation
+### Exemple
 
 ```typescript
 import { useAuth } from '@/contexts/AuthContext';
@@ -311,13 +327,12 @@ import { useToast } from '@/contexts/ToastContext';
 function MyComponent() {
   const { user, logout } = useAuth();
   const toast = useToast();
-  
   const handleAction = async () => {
     try {
-      // ... action
+      // ...
       toast.success('Action réussie !');
     } catch (error) {
-      toast.error('Erreur lors de l\'action');
+      toast.error('Erreur');
     }
   };
 }
@@ -335,111 +350,35 @@ function MyComponent() {
 4. **Refresh** : Le refresh token est automatiquement utilisé pour renouveler l'access token
 5. **Logout** : Nettoyage des tokens et redirection
 
-### Protection des Routes
+### Protection des routes
 
-Les routes protégées vérifient l'authentification côté client et serveur.
-
-### Exemple
-
-```typescript
-'use client';
-
-import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
-
-export default function ProtectedPage() {
-  const { user, loading } = useAuth();
-  const router = useRouter();
-  
-  if (loading) return <div>Chargement...</div>;
-  if (!user) {
-    router.push('/login');
-    return null;
-  }
-  
-  return <div>Contenu protégé</div>;
-}
-```
+- **RouteGuard** (`components/guards/RouteGuard`) : affiche les enfants si l'utilisateur a les rôles/permissions requis, sinon redirection ou fallback.
+- **useRouteGuard** : hook pour vérifier l'accès (rôles, permissions) et décider de la redirection.
+- Les routes sont organisées en groupes `(admin)` et `(shared)` ; le layout (AdminLayout / EmployeeLayout) et la navigation (navigationConfig) filtrent les liens selon les permissions.
 
 ---
 
-## 🎨 Composants Principaux
+## 🎨 Composants principaux
 
-### Layout
-
-Le composant `Layout` fournit :
-- Navigation principale
-- Informations utilisateur
-- Notifications
-- Logout
-
-### Pagination
-
-Composant réutilisable pour la pagination :
-
-```typescript
-<Pagination
-  currentPage={page}
-  totalPages={totalPages}
-  onPageChange={setPage}
-  hasNext={hasNext}
-  hasPrev={hasPrev}
-/>
-```
-
-### ImageUpload
-
-Upload d'images multiples avec preview :
-
-```typescript
-<ImageUpload
-  value={images}
-  onChange={setImages}
-  maxFiles={5}
-/>
-```
-
-### SkeletonLoader
-
-Skeleton loaders pour améliorer l'UX pendant le chargement :
-
-```typescript
-<TableSkeleton rows={5} cols={4} />
-<CardSkeleton count={3} />
-```
+- **Layout** : Layout principal avec Sidebar (AdminSidebar / EmployeeSidebar selon rôle), TopHeader, Notifications.
+- **LayoutSelector** : Choisit AdminLayout ou EmployeeLayout selon l'utilisateur.
+- **ModernTable** : Tableau avec colonnes configurables, tri, pagination (voir `components/ui`).
+- **PageHeader** : En-tête de page avec titre et bouton d'action optionnel.
+- **SearchFilter / SelectFilter** : Filtres de liste (recherche, select) avec sync URL possible.
+- **Modal** : ModalTemplate, ModalContainer ; modals métier (ConfirmModal, ProductFormModal, ReservationCartModal, SuppliersModal, ProjectExitSlipModal, etc.).
+- **Pagination** : `currentPage`, `totalPages`, `onPageChange`, `hasNext`, `hasPrev`.
+- **ImageUpload** : Images multiples, preview, `value` / `onChange` / `maxFiles`.
+- **SkeletonLoader** : TableSkeleton, CardSkeleton pour états de chargement.
+- **RouteGuard** : Protection des pages par authentification et permissions (voir `components/guards`).
+- **ErrorBoundary** : Capture des erreurs React et affichage d'un fallback.
 
 ---
 
 ## 🧪 Tests
 
-### Tests Unitaires
-
-```bash
-npm run test
-```
-
-Les tests utilisent Jest et React Testing Library.
-
-### Exemple de Test
-
-```typescript
-import { render, screen } from '@testing-library/react';
-import Pagination from '@/components/Pagination';
-
-test('renders pagination correctly', () => {
-  render(
-    <Pagination
-      currentPage={1}
-      totalPages={5}
-      onPageChange={jest.fn()}
-      hasNext={true}
-      hasPrev={false}
-    />
-  );
-  
-  expect(screen.getByText('1')).toBeInTheDocument();
-});
-```
+- **Jest** + **React Testing Library** ; configuration dans le projet.
+- **Lancer** : `npm run test` ; `npm run test:watch` ; `npm run test:coverage` ; `npm run test:components`.
+- **Exemples de tests présents** : `Pagination`, `SidebarOverlay`, `SkeletonLoader`, `ModernTable` (voir `src/components/__tests__/` et `src/components/ui/__tests__/`).
 
 ---
 
@@ -474,11 +413,7 @@ npm run build
 
 ## 📖 Ressources
 
-- [Documentation Next.js](https://nextjs.org/docs)
-- [Documentation React](https://react.dev/)
-- [Documentation Tailwind CSS](https://tailwindcss.com/docs)
-- [Documentation SWR](https://swr.vercel.app/)
-- [Documentation React Hook Form](https://react-hook-form.com/)
+- [Documentation Next.js](https://nextjs.org/docs) · [React](https://react.dev/) · [Tailwind CSS](https://tailwindcss.com/docs) · [SWR](https://swr.vercel.app/) · [React Hook Form](https://react-hook-form.com/)
 
 ---
 
@@ -488,16 +423,4 @@ Ce projet fait partie de **Gestion de Stock Pro**.
 
 ---
 
----
-
-## ✨ Améliorations Récentes (Janvier 2025)
-
-- ✅ Pagination et synchronisation URL pour pages admins et employees
-- ✅ Modal SuppliersModal pour gestion des fournisseurs
-- ✅ NavigationModalContext pour gestion des modals depuis la navigation
-- ✅ Amélioration de la gestion d'URL avec useUrlSync sur toutes les pages principales
-- ✅ Correction des erreurs TypeScript et amélioration du build
-
----
-
-**Développé avec ❤️ en utilisant Next.js et React**
+**Dernière mise à jour du README :** Février 2025 — aligné avec la structure et les fonctionnalités actuelles du frontend.
