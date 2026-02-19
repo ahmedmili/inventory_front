@@ -50,7 +50,7 @@ export default function EditSupplierPage() {
     setError('');
 
     try {
-      await mutate(`/suppliers/${id}`, 'PUT', data);
+      await mutate(`/suppliers/${id}`, 'POST', data);
       router.push(`/suppliers/${id}`);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to update supplier');

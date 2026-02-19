@@ -179,7 +179,7 @@ export default function UpdateGroupReservationModal({
       cancelText: 'Annuler',
       onConfirm: async () => {
         try {
-          await apiClient.patch(`/reservations/${item.id}/release`, {
+          await apiClient.post(`/reservations/${item.id}/release`, {
             notes: 'Retiré du groupe par l\'utilisateur',
           });
           toast.success('Produit retiré de la réservation');

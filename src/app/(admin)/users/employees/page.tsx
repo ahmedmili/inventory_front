@@ -201,7 +201,7 @@ export default function EmployeesPage() {
 
     setActionUserId(user.id);
     try {
-      await sendUserAction(`/users/${user.id}/role`, 'PATCH', { role: targetRole.id });
+      await sendUserAction(`/users/${user.id}/role`, 'POST', { role: targetRole.id });
       toast.success(`Rôle mis à jour (${targetRole.name})`);
       refreshEmployees();
     } catch (error: any) {

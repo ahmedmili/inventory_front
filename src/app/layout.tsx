@@ -4,6 +4,7 @@ import './globals.css';
 import { Providers } from '@/components/Providers';
 import LayoutSelector from '@/components/layouts/LayoutSelector';
 import NavigationLoaderHandler from '@/components/NavigationLoaderHandler';
+import GoogleAnalytics from '@/components/GoogleAnalytics';
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -38,6 +39,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="overflow-x-hidden max-w-full">
       <body className={`${inter.className} overflow-x-hidden max-w-full min-w-0`}>
+        <GoogleAnalytics />
         <div className="min-w-0 max-w-full overflow-x-hidden">
           <Providers>
             <NavigationLoaderHandler />

@@ -199,7 +199,7 @@ export default function ProductFormModal({
 
       let createdProductId: string | undefined;
       if (isEditMode && productId) {
-        await apiClient.put(`/products/${productId}`, payload);
+        await apiClient.post(`/products/${productId}`, payload);
         toast.success('Produit mis à jour avec succès!');
       } else {
         const response = await apiClient.post<Product>('/products', payload);

@@ -330,7 +330,7 @@ export default function RolesPage() {
   const handleUpdateRole = async (data: CreateRoleForm) => {
     if (!editingRole) return;
     try {
-      await sendAction(`/roles/${editingRole.id}`, 'PUT', data);
+      await sendAction(`/roles/${editingRole.id}`, 'POST', data);
       toast.success('Rôle mis à jour avec succès');
       setEditModalOpen(false);
       setEditingRole(null);
@@ -403,7 +403,7 @@ export default function RolesPage() {
   const handleUpdatePermissions = async (permissionIds: string[]) => {
     if (!editingRole) return;
     try {
-      await sendAction(`/roles/${editingRole.id}/permissions`, 'PUT', { permissionIds });
+      await sendAction(`/roles/${editingRole.id}/permissions`, 'POST', { permissionIds });
       toast.success('Permissions mises à jour avec succès');
       setPermissionsModalOpen(false);
       setEditingRole(null);
@@ -452,7 +452,7 @@ export default function RolesPage() {
   const handleUpdatePermission = async (data: CreatePermissionForm) => {
     if (!editingPermission) return;
     try {
-      await sendAction(`/roles/permissions/${editingPermission.id}`, 'PUT', data);
+      await sendAction(`/roles/permissions/${editingPermission.id}`, 'POST', data);
       toast.success('Permission mise à jour avec succès');
       setEditPermissionModalOpen(false);
       setEditingPermission(null);

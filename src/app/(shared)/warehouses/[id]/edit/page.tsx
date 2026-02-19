@@ -48,7 +48,7 @@ export default function EditWarehousePage() {
     setError('');
 
     try {
-      await mutate(`/warehouses/${id}`, 'PUT', data);
+      await mutate(`/warehouses/${id}`, 'POST', data);
       router.push(`/warehouses/${id}`);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to update warehouse');

@@ -74,7 +74,7 @@ export default function EditCategoryPage() {
         name: data.name,
         parentId: data.parentId || undefined,
       };
-      await mutate(`/categories/${id}`, 'PUT', payload);
+      await mutate(`/categories/${id}`, 'POST', payload);
       router.push('/categories');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to update category');

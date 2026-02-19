@@ -258,7 +258,7 @@ export default function ReservationsPage() {
       cancelText: 'Annuler',
       onConfirm: async () => {
         try {
-          await apiClient.patch(`/reservations/${id}/release`, {
+          await apiClient.post(`/reservations/${id}/release`, {
             notes: 'Libéré par l\'utilisateur',
           });
           toast.success('Réservation refusée avec succès');
@@ -703,7 +703,7 @@ export default function ReservationsPage() {
                       try {
                         await Promise.all(
                           toRelease.map((item) =>
-                            apiClient.patch(`/reservations/${item.id}/release`, {
+                            apiClient.post(`/reservations/${item.id}/release`, {
                               notes: 'Libéré par l\'utilisateur',
                             })
                           )

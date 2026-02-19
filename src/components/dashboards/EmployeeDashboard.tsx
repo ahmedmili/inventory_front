@@ -2,16 +2,56 @@
 
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUserRoleCode, hasPermission } from '@/lib/permissions';
 import { useApi } from '@/hooks/useApi';
 import { SkeletonLoader } from '@/components/SkeletonLoader';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
+
+const DashboardChart = dynamic(
+  () =>
+    import('recharts').then((mod) => {
+      const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } = mod;
+      return function Chart({ data }: { data: Array<{ name: string; value: number }> }) {
+        return (
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart data={data} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+              <YAxis tick={{ fontSize: 12 }} />
+              <Tooltip />
+              <Bar dataKey="value" fill="#10b981" radius={[4, 4, 0, 0]} name="Quantité" />
+            </BarChart>
+          </ResponsiveContainer>
+        );
+      };
+    }),
+  { ssr: false, loading: () => <div className="h-[240px] flex items-center justify-center text-gray-500">Chargement...</div> },
+);
 
 interface DashboardStats {
   products: number;
   lowStock: number;
   sales: number;
   purchases: number;
+}
+
+interface LowStockProduct {
+  id: string;
+  name: string;
+  sku: string | null;
+  quantity: number;
+  minStock: number;
+}
+
+interface RecentSale {
+  id: string;
+  number: string;
+  status: string;
+  createdAt: string;
+  customerName: string;
 }
 
 interface StatCardProps {
@@ -68,6 +108,17 @@ export default function EmployeeDashboard() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { data: stats, loading: statsLoading } = useApi<DashboardStats>('/reports/dashboard');
+  const { data: lowStockProducts } = useApi<LowStockProduct[]>('/reports/low-stock-products?limit=5');
+  const { data: recentSales } = useApi<RecentSale[]>('/reports/recent-sales?limit=5');
+
+  const chartData = stats
+    ? [
+        { name: 'Produits', value: stats.products },
+        { name: 'Stock faible', value: stats.lowStock },
+        { name: 'Ventes', value: stats.sales },
+        { name: 'Achats', value: stats.purchases },
+      ]
+    : [];
 
   if (authLoading || statsLoading) {
     return (
@@ -297,6 +348,24 @@ export default function EmployeeDashboard() {
                 </svg>
               </Link>
             )}
+
+            {/* Projets - Show if user can read projects */}
+            {hasPermission(user, 'projects.read') && (
+              <Link
+                href="/projects"
+                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors group"
+              >
+                <div className="flex items-center">
+                  <svg className="w-5 h-5 text-gray-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                  </svg>
+                  <span className="text-sm font-medium text-gray-700">Projets</span>
+                </div>
+                <svg className="w-4 h-4 text-gray-400 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            )}
             
             {/* Stock Movements - Show if user can read stock */}
             {hasPermission(user, 'stock.read') && (
@@ -343,6 +412,61 @@ export default function EmployeeDashboard() {
           </div>
         </div>
       )}
+
+      {/* Chart */}
+      <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 mb-8">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Résumé en graphique</h2>
+        <DashboardChart data={chartData} />
+      </div>
+
+      {/* Lists: Low stock + Recent sales */}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 mb-8">
+        <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">Produits en stock faible</h2>
+            <Link href="/products" className="text-sm font-medium text-blue-600 hover:text-blue-700">
+              Voir tout
+            </Link>
+          </div>
+          <ul className="space-y-2 max-h-48 overflow-y-auto">
+            {lowStockProducts?.length ? (
+              lowStockProducts.map((p) => (
+                <li key={p.id}>
+                  <Link href={`/products/${p.id}`} className="flex justify-between items-center py-2 px-2 rounded hover:bg-gray-50 text-sm">
+                    <span className="font-medium text-gray-900 truncate flex-1 mr-2">{p.name}</span>
+                    <span className="text-amber-600 font-medium shrink-0">{p.quantity} / {p.minStock}</span>
+                  </Link>
+                </li>
+              ))
+            ) : (
+              <li className="text-sm text-gray-500 py-4">Aucun produit en stock faible</li>
+            )}
+          </ul>
+        </div>
+        <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">Dernières ventes</h2>
+            <Link href="/sales" className="text-sm font-medium text-blue-600 hover:text-blue-700">
+              Voir tout
+            </Link>
+          </div>
+          <ul className="space-y-2 max-h-48 overflow-y-auto">
+            {recentSales?.length ? (
+              recentSales.map((o) => (
+                <li key={o.id}>
+                  <Link href={`/sales/${o.id}`} className="block py-2 px-2 rounded hover:bg-gray-50 text-sm">
+                    <span className="font-medium text-gray-900">{o.number}</span>
+                    <span className="text-gray-500 ml-2">{o.customerName}</span>
+                    <span className="block text-xs text-gray-400 mt-0.5">{format(new Date(o.createdAt), 'd MMM yyyy', { locale: fr })} · {o.status}</span>
+                  </Link>
+                </li>
+              ))
+            ) : (
+              <li className="text-sm text-gray-500 py-4">Aucune vente récente</li>
+            )}
+          </ul>
+        </div>
+      </div>
 
       {/* Information Section for Employees */}
       <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">

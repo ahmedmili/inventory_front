@@ -136,7 +136,7 @@ export default function EditProductPage() {
         barcode: data.barcode || undefined,
       };
       
-      await apiClient.put(`/products/${productId}`, payload);
+      await apiClient.post(`/products/${productId}`, payload);
       toast.success('Produit mis à jour avec succès!');
       router.push(`/products/${productId}`);
     } catch (err: any) {

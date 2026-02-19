@@ -2,17 +2,65 @@
 
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApi } from '@/hooks/useApi';
 import { SkeletonLoader } from '@/components/SkeletonLoader';
 import UsersListRealtime from '@/components/users/UsersListRealtime';
 import { usePresenceNotifications } from '@/hooks/usePresenceNotifications';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
+
+const DashboardChart = dynamic(
+  () =>
+    import('recharts').then((mod) => {
+      const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } = mod;
+      return function Chart({ data }: { data: Array<{ name: string; value: number }> }) {
+        return (
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={data} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+              <YAxis tick={{ fontSize: 12 }} />
+              <Tooltip />
+              <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Quantité" />
+            </BarChart>
+          </ResponsiveContainer>
+        );
+      };
+    }),
+  { ssr: false, loading: () => <div className="h-[260px] flex items-center justify-center text-gray-500">Chargement du graphique...</div> },
+);
 
 interface DashboardStats {
   products: number;
   lowStock: number;
   sales: number;
   purchases: number;
+}
+
+interface LowStockProduct {
+  id: string;
+  name: string;
+  sku: string | null;
+  quantity: number;
+  minStock: number;
+}
+
+interface RecentSale {
+  id: string;
+  number: string;
+  status: string;
+  createdAt: string;
+  customerName: string;
+}
+
+interface RecentPurchase {
+  id: string;
+  number: string;
+  status: string;
+  createdAt: string;
+  supplierName: string;
 }
 
 interface StatCardProps {
@@ -69,9 +117,21 @@ export default function AdminDashboard() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { data: stats, loading: statsLoading } = useApi<DashboardStats>('/reports/dashboard');
-  
-  // Activer les notifications de présence (toasts)
+  const { data: inventoryValueData } = useApi<{ inventoryValue: number }>('/reports/inventory-value');
+  const { data: lowStockProducts } = useApi<LowStockProduct[]>('/reports/low-stock-products?limit=6');
+  const { data: recentSales } = useApi<RecentSale[]>('/reports/recent-sales?limit=5');
+  const { data: recentPurchases } = useApi<RecentPurchase[]>('/reports/recent-purchases?limit=5');
+
   usePresenceNotifications();
+
+  const chartData = stats
+    ? [
+        { name: 'Produits', value: stats.products },
+        { name: 'Stock faible', value: stats.lowStock },
+        { name: 'Ventes (livrées)', value: stats.sales },
+        { name: 'Achats (reçus)', value: stats.purchases },
+      ]
+    : [];
 
   if (authLoading || statsLoading) {
     return (
@@ -195,6 +255,15 @@ export default function AdminDashboard() {
               <span className="text-sm font-medium text-gray-700">Nouvel Achat</span>
             </Link>
             <Link
+              href="/reservations/new"
+              className="flex flex-col items-center justify-center p-4 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors group"
+            >
+              <svg className="w-8 h-8 text-indigo-600 mb-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span className="text-sm font-medium text-gray-700">Nouvelle Réservation</span>
+            </Link>
+            <Link
               href="/reports"
               className="flex flex-col items-center justify-center p-4 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors group"
             >
@@ -265,6 +334,34 @@ export default function AdminDashboard() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </Link>
+            <Link
+              href="/projects"
+              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors group"
+            >
+              <div className="flex items-center">
+                <svg className="w-5 h-5 text-gray-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                </svg>
+                <span className="text-sm font-medium text-gray-700">Projets</span>
+              </div>
+              <svg className="w-4 h-4 text-gray-400 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+            <Link
+              href="/reservations"
+              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors group"
+            >
+              <div className="flex items-center">
+                <svg className="w-5 h-5 text-gray-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span className="text-sm font-medium text-gray-700">Réservations</span>
+              </div>
+              <svg className="w-4 h-4 text-gray-400 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
           </div>
         </div>
       </div>
@@ -293,6 +390,98 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+
+      {/* Chart + Inventory value */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 mb-8">
+        <div className="lg:col-span-2 bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Résumé en graphique</h2>
+          <DashboardChart data={chartData} />
+        </div>
+        <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Valeur de l&apos;inventaire</h2>
+          <p className="text-3xl font-bold text-blue-600">
+            {inventoryValueData?.inventoryValue != null
+              ? new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(inventoryValueData.inventoryValue)
+              : '—'}
+          </p>
+          <p className="text-sm text-gray-500 mt-2">Valeur totale du stock (prix d&apos;achat)</p>
+          <Link href="/reports" className="mt-4 inline-block text-sm font-medium text-blue-600 hover:text-blue-700">
+            Voir les rapports →
+          </Link>
+        </div>
+      </div>
+
+      {/* Lists: Low stock, Recent sales, Recent purchases */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 mb-8">
+        <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">Produits en stock faible</h2>
+            <Link href="/products" className="text-sm font-medium text-blue-600 hover:text-blue-700">
+              Tous
+            </Link>
+          </div>
+          <ul className="space-y-2 max-h-56 overflow-y-auto">
+            {lowStockProducts?.length ? (
+              lowStockProducts.map((p) => (
+                <li key={p.id}>
+                  <Link href={`/products/${p.id}`} className="flex justify-between items-center py-2 px-2 rounded hover:bg-gray-50 text-sm">
+                    <span className="font-medium text-gray-900 truncate flex-1 mr-2">{p.name}</span>
+                    <span className="text-amber-600 font-medium shrink-0">{p.quantity} / {p.minStock}</span>
+                  </Link>
+                </li>
+              ))
+            ) : (
+              <li className="text-sm text-gray-500 py-4">Aucun produit en stock faible</li>
+            )}
+          </ul>
+        </div>
+        <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">Dernières ventes</h2>
+            <Link href="/sales" className="text-sm font-medium text-blue-600 hover:text-blue-700">
+              Toutes
+            </Link>
+          </div>
+          <ul className="space-y-2 max-h-56 overflow-y-auto">
+            {recentSales?.length ? (
+              recentSales.map((o) => (
+                <li key={o.id}>
+                  <Link href={`/sales/${o.id}`} className="block py-2 px-2 rounded hover:bg-gray-50 text-sm">
+                    <span className="font-medium text-gray-900">{o.number}</span>
+                    <span className="text-gray-500 ml-2">{o.customerName}</span>
+                    <span className="block text-xs text-gray-400 mt-0.5">{format(new Date(o.createdAt), 'd MMM yyyy', { locale: fr })} · {o.status}</span>
+                  </Link>
+                </li>
+              ))
+            ) : (
+              <li className="text-sm text-gray-500 py-4">Aucune vente récente</li>
+            )}
+          </ul>
+        </div>
+        <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">Derniers achats</h2>
+            <Link href="/purchases" className="text-sm font-medium text-blue-600 hover:text-blue-700">
+              Tous
+            </Link>
+          </div>
+          <ul className="space-y-2 max-h-56 overflow-y-auto">
+            {recentPurchases?.length ? (
+              recentPurchases.map((o) => (
+                <li key={o.id}>
+                  <Link href={`/purchases/${o.id}`} className="block py-2 px-2 rounded hover:bg-gray-50 text-sm">
+                    <span className="font-medium text-gray-900">{o.number}</span>
+                    <span className="text-gray-500 ml-2">{o.supplierName}</span>
+                    <span className="block text-xs text-gray-400 mt-0.5">{format(new Date(o.createdAt), 'd MMM yyyy', { locale: fr })} · {o.status}</span>
+                  </Link>
+                </li>
+              ))
+            ) : (
+              <li className="text-sm text-gray-500 py-4">Aucun achat récent</li>
+            )}
+          </ul>
+        </div>
+      </div>
 
       {/* Users List with Real-time Status */}
       <div className="mb-8">

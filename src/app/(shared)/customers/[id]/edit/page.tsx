@@ -50,7 +50,7 @@ export default function EditCustomerPage() {
     setError('');
 
     try {
-      await mutate(`/customers/${id}`, 'PUT', data);
+      await mutate(`/customers/${id}`, 'POST', data);
       router.push(`/customers/${id}`);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to update customer');
