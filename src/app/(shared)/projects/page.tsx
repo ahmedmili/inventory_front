@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useApi } from '@/hooks/useApi';
 import Link from 'next/link';
 import Pagination from '@/components/Pagination';
@@ -25,6 +25,8 @@ import type { TableColumn } from '@/types/shared';
 import { useUrlSync } from '@/hooks/useUrlSync';
 import type { Project, PaginationMeta, ProjectStatus } from '@/types/shared';
 
+const LIMIT_OPTIONS = [10, 20, 50] as const;
+
 interface ProjectWithCounts extends Project {
   _count?: {
     members: number;
@@ -38,20 +40,31 @@ interface ProjectsResponse {
 }
 
 export default function ProjectsPage() {
-  const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+
+  const pageFromUrl = Number(searchParams?.get('page')) || 1;
+  const searchFromUrl = searchParams?.get('search') || '';
+  const statusFromUrl = searchParams?.get('status') || 'all';
+  const limitFromUrl = Math.min(
+    Number(searchParams?.get('limit')) || 20,
+    Math.max(...LIMIT_OPTIONS),
+  );
+  const validLimit = LIMIT_OPTIONS.includes(limitFromUrl as (typeof LIMIT_OPTIONS)[number])
+    ? (limitFromUrl as (typeof LIMIT_OPTIONS)[number])
+    : 20;
+
+  const [page, setPage] = useState(pageFromUrl);
+  const [search, setSearch] = useState(searchFromUrl);
+  const [statusFilter, setStatusFilter] = useState<string>(statusFromUrl);
+  const [limit, setLimit] = useState<number>(validLimit);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<{ id: string; name: string } | null>(null);
   const [isReservationModalOpen, setIsReservationModalOpen] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const limit = 20;
-  
-  // Hooks that require providers - call them after state initialization
+
   const toast = useToast();
   const modal = useModal();
   const { mutate: deleteProject, loading: deleting } = useApiMutation();
@@ -60,12 +73,26 @@ export default function ProjectsPage() {
   const canUpdate = hasPermission(user, 'projects.update');
   const canCreateReservation = hasPermission(user, 'reservations.create');
 
-  // Synchroniser l'URL avec les filtres et la pagination
+  // Synchroniser l'état depuis l'URL (lien partagé, rafraîchissement)
+  useEffect(() => {
+    setPage(pageFromUrl);
+    setSearch(searchFromUrl);
+    setStatusFilter(statusFromUrl);
+    setLimit(validLimit);
+  }, [pageFromUrl, searchFromUrl, statusFromUrl, validLimit]);
+
+  // Synchroniser l'URL avec les filtres, pagination et limite
   useUrlSync({
     page: page > 1 ? page : undefined,
+    limit: limit !== 20 ? limit : undefined,
     search: search || undefined,
     status: statusFilter !== 'all' ? statusFilter : undefined,
   });
+
+  const handleLimitChange = (newLimit: number) => {
+    setLimit(newLimit);
+    setPage(1);
+  };
 
   const apiParams = useMemo(() => {
     const params = new URLSearchParams();
@@ -455,23 +482,45 @@ export default function ProjectsPage() {
 
             {/* Pagination */}
             {data?.meta && data.meta.total > 0 && (
-              <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="text-sm text-gray-700">
-                  Affichage de <span className="font-medium">{(data.meta.page - 1) * data.meta.limit + 1}</span> à{' '}
-                  <span className="font-medium">
-                    {Math.min(data.meta.page * data.meta.limit, data.meta.total)}
-                  </span>{' '}
-                  sur <span className="font-medium">{data.meta.total}</span> projet{data.meta.total !== 1 ? 's' : ''}
+              <div className="mt-6 rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-3 sm:px-5">
+                <div className="flex flex-wrap items-center justify-between gap-4 sm:gap-6">
+                  <div className="flex flex-wrap items-center gap-4 sm:gap-6 min-w-0">
+                    <span className="text-sm text-gray-700">
+                      Affichage de <span className="font-medium">{(data.meta.page - 1) * data.meta.limit + 1}</span> à{' '}
+                      <span className="font-medium">
+                        {Math.min(data.meta.page * data.meta.limit, data.meta.total)}
+                      </span>{' '}
+                      sur <span className="font-medium">{data.meta.total}</span> projet{data.meta.total !== 1 ? 's' : ''}
+                    </span>
+                    {data.meta.totalPages > 1 && (
+                      <Pagination
+                        currentPage={data.meta.page}
+                        totalPages={data.meta.totalPages}
+                        onPageChange={setPage}
+                        hasNext={data.meta.hasNext}
+                        hasPrev={data.meta.hasPrev}
+                        embedded
+                      />
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <label htmlFor="projects-limit" className="text-sm text-gray-600 whitespace-nowrap">
+                      Par page
+                    </label>
+                    <select
+                      id="projects-limit"
+                      value={limit}
+                      onChange={(e) => handleLimitChange(Number(e.target.value))}
+                      className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    >
+                      {LIMIT_OPTIONS.map((n) => (
+                        <option key={n} value={n}>
+                          {n}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-                {data.meta.totalPages > 1 && (
-                  <Pagination
-                    currentPage={data.meta.page}
-                    totalPages={data.meta.totalPages}
-                    onPageChange={setPage}
-                    hasNext={data.meta.hasNext}
-                    hasPrev={data.meta.hasPrev}
-                  />
-                )}
               </div>
             )}
           </>
