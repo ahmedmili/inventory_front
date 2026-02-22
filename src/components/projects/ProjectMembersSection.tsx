@@ -27,9 +27,10 @@ export default function ProjectMembersSection({
   onAddMember,
   onRemoveMember,
 }: ProjectMembersSectionProps) {
+  const isEmpty = !members?.length;
   return (
-    <div className="bg-white rounded-xl shadow-md border border-gray-200 p-5 sm:p-6 hover:shadow-lg transition-shadow duration-200">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
+    <div className={`bg-white rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-200 ${isEmpty ? 'p-3 sm:p-4' : 'p-5 sm:p-6'}`}>
+      <div className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 ${isEmpty ? 'mb-2' : 'mb-5'}`}>
         <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
           <div className="h-1 w-8 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full"></div>
           <span>Membres ({members?.length || 0})</span>
@@ -74,7 +75,7 @@ export default function ProjectMembersSection({
           ))}
         </div>
       ) : (
-        <div className="text-center py-12">
+        <div className="text-center py-6">
           <div className="mx-auto h-16 w-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mb-4 shadow-inner">
             <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />

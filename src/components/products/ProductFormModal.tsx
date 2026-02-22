@@ -259,10 +259,10 @@ export default function ProductFormModal({
           )}
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            {/* Nom de produit - Required */}
-            <div className="md:col-span-2">
+            {/* Ligne 1: Nom du produit | Référence */}
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nom de produit <span className="text-red-500">*</span>
+                Nom du produit <span className="text-red-500">*</span>
               </label>
               <input
                 {...register('name')}
@@ -273,8 +273,24 @@ export default function ProductFormModal({
                 <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
               )}
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Référence
+              </label>
+              <input
+                {...register('sku')}
+                placeholder="Référence du produit (optionnel)"
+                className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-4 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                disabled={isEditMode}
+              />
+              {!isEditMode && (
+                <p className="mt-1 text-xs text-gray-500">
+                  Laissé vide, une référence sera générée automatiquement
+                </p>
+              )}
+            </div>
 
-            {/* Fournisseur - Optional with Autocomplete */}
+            {/* Ligne 2: Fournisseur | Quantité initiale */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Fournisseur
@@ -296,69 +312,30 @@ export default function ProductFormModal({
                 allowClear={true}
               />
             </div>
-
-            {/* Référence (SKU) - Optional */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Référence
-              </label>
-              <input
-                {...register('sku')}
-                placeholder="Référence du produit (optionnel)"
-                className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-4 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                disabled={isEditMode} // Disable editing SKU when editing
-              />
-              {!isEditMode && (
+            {!isEditMode ? (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Quantité initiale
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  {...register('initialQuantity', { valueAsNumber: true })}
+                  placeholder="0"
+                  className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-4 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                />
+                {errors.initialQuantity && (
+                  <p className="mt-1 text-sm text-red-600">{errors.initialQuantity.message}</p>
+                )}
                 <p className="mt-1 text-xs text-gray-500">
-                  Laissé vide, une référence sera générée automatiquement
+                  Sera créé dans l&apos;entrepôt principal (code MAIN)
                 </p>
-              )}
-            </div>
-
-            {/* Prix - Required */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Prix <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">€</span>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  {...register('salePrice', { valueAsNumber: true })}
-                  placeholder="0.00"
-                  className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 pl-8 pr-4 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                />
               </div>
-              {errors.salePrice && (
-                <p className="mt-1 text-sm text-red-600">{errors.salePrice.message}</p>
-              )}
-            </div>
+            ) : (
+              <div />
+            )}
 
-            {/* Commented out fields - can be restored later */}
-            {/* Prix d'achat - Required */}
-            {/* <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Prix d'achat <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">€</span>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  {...register('purchasePrice', { valueAsNumber: true })}
-                  placeholder="0.00"
-                  className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 pl-8 pr-4 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                />
-              </div>
-              {errors.purchasePrice && (
-                <p className="mt-1 text-sm text-red-600">{errors.purchasePrice.message}</p>
-              )}
-            </div> */}
-
-            {/* Seuil - Required */}
+            {/* Ligne 3: Seuil de stock | Prix */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Seuil de stock <span className="text-red-500">*</span>
@@ -377,30 +354,25 @@ export default function ProductFormModal({
                 Quantité minimale en stock avant alerte
               </p>
             </div>
-
-            {/* Quantité initiale - uniquement en création */}
-            {!isEditMode && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Quantité initiale (entrepôt principal)
-                </label>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Prix <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">DT</span>
                 <input
                   type="number"
+                  step="0.01"
                   min="0"
-                  {...register('initialQuantity', { valueAsNumber: true })}
-                  placeholder="0"
-                  className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-4 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                  {...register('salePrice', { valueAsNumber: true })}
+                  placeholder="0.00"
+                  className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 pl-8 pr-4 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                 />
-                {errors.initialQuantity && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.initialQuantity.message}
-                  </p>
-                )}
-                <p className="mt-1 text-xs text-gray-500">
-                  Sera créé automatiquement dans l&apos;entrepôt principal (code MAIN)
-                </p>
               </div>
-            )}
+              {errors.salePrice && (
+                <p className="mt-1 text-sm text-red-600">{errors.salePrice.message}</p>
+              )}
+            </div>
 
             {/* Commented out fields - can be restored later */}
             {/* Catégorie - Optional */}

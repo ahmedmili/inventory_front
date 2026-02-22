@@ -443,7 +443,7 @@ export default function ImportFormModal({
                           />
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                          {(line.quantity * (line.purchasePrice || 0)).toFixed(2)} €
+                          {(line.quantity * (line.purchasePrice || 0)).toFixed(2)} DT
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
                           <button
@@ -466,7 +466,7 @@ export default function ImportFormModal({
                         {totalQuantity} unités
                       </td>
                       <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                        {totalValue.toFixed(2)} €
+                        {totalValue.toFixed(2)} DT
                       </td>
                       <td></td>
                     </tr>

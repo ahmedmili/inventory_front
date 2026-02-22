@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
-import { ReservationIcon } from '@/components/icons';
+import React, { useState } from 'react';
+import { ReservationIcon, EditIcon, TrashIcon } from '@/components/icons';
 import StatusBadge from '@/components/ui/StatusBadge';
 import Pagination from '@/components/Pagination';
+import ConfirmModal from '@/components/ConfirmModal';
 
 function formatDateTime(dateString: string | null | undefined) {
   if (!dateString) return 'Non définie';
@@ -35,6 +36,12 @@ interface ProjectReservedProductsTableProps {
   onToggleProduct: (productId: string) => void;
   canCreateReservation: boolean;
   onNewReservation: () => void;
+  onFulfillGroup?: (groupId: string, reservationIds: string[]) => Promise<void>;
+  onEditGroup?: (groupId: string) => void;
+  onReleaseGroup?: (groupId: string, reservationIds: string[]) => Promise<void>;
+  canFulfill?: boolean;
+  canEdit?: boolean;
+  canRelease?: boolean;
 }
 
 export default function ProjectReservedProductsTable({
@@ -49,10 +56,42 @@ export default function ProjectReservedProductsTable({
   onToggleProduct,
   canCreateReservation,
   onNewReservation,
+  onFulfillGroup,
+  onEditGroup,
+  onReleaseGroup,
+  canFulfill = false,
+  canEdit = false,
+  canRelease = false,
 }: ProjectReservedProductsTableProps) {
+  const [releaseConfirm, setReleaseConfirm] = useState<{ groupId: string; reservationIds: string[] } | null>(null);
+  const [fulfillingGroupId, setFulfillingGroupId] = useState<string | null>(null);
+  const [releasing, setReleasing] = useState(false);
+
+  const handleFulfillGroup = async (groupId: string, reservationIds: string[]) => {
+    if (!onFulfillGroup) return;
+    setFulfillingGroupId(groupId);
+    try {
+      await onFulfillGroup(groupId, reservationIds);
+    } finally {
+      setFulfillingGroupId(null);
+    }
+  };
+
+  const handleReleaseConfirm = async () => {
+    if (!releaseConfirm || !onReleaseGroup) return;
+    setReleasing(true);
+    try {
+      await onReleaseGroup(releaseConfirm.groupId, releaseConfirm.reservationIds);
+      setReleaseConfirm(null);
+    } finally {
+      setReleasing(false);
+    }
+  };
+
+  const isEmpty = !loading && productReservations.length === 0;
   return (
-    <div className="bg-white rounded-xl shadow-md border border-gray-200 p-5 sm:p-6 hover:shadow-lg transition-shadow duration-200">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
+    <div className={`bg-white rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-200 ${isEmpty ? 'p-3 sm:p-4' : 'p-5 sm:p-6'}`}>
+      <div className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 ${isEmpty ? 'mb-2' : 'mb-5'}`}>
         <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
           <div className="h-1 w-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"></div>
           <span>Produits Réservés ({productReservations.length})</span>
@@ -67,8 +106,8 @@ export default function ProjectReservedProductsTable({
             className="px-4 py-2 border-2 border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-medium shadow-sm hover:shadow-md transition-all duration-200"
           >
             <option value="all">Tous les statuts</option>
-            <option value="PENDING">En attente</option>
-            <option value="CONFIRMED">Confirmée</option>
+            <option value="RESERVED">En attente</option>
+            <option value="FULFILLED">Confirmée</option>
             <option value="RELEASED">Libérée</option>
             <option value="EXPIRED">Expirée</option>
           </select>
@@ -232,6 +271,48 @@ export default function ProjectReservedProductsTable({
                                         <span className="font-medium">Expire: {formatDateTime(group.expiresAt)}</span>
                                       </div>
                                     )}
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      {canFulfill && group.status === 'RESERVED' && onFulfillGroup && (
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            const ids = items.map((i: any) => i.id);
+                                            handleFulfillGroup(group.groupId, ids);
+                                          }}
+                                          disabled={fulfillingGroupId === group.groupId}
+                                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-semibold hover:bg-green-700 disabled:opacity-50"
+                                        >
+                                          {fulfillingGroupId === group.groupId ? '...' : 'Confirmer'}
+                                        </button>
+                                      )}
+                                      {canEdit && onEditGroup && (
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            onEditGroup(group.groupId);
+                                          }}
+                                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg"
+                                          title="Modifier"
+                                        >
+                                          <EditIcon className="w-4 h-4" />
+                                        </button>
+                                      )}
+                                      {canRelease && onReleaseGroup && (
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setReleaseConfirm({ groupId: group.groupId, reservationIds: items.map((i: any) => i.id) });
+                                          }}
+                                          className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg"
+                                          title="Supprimer"
+                                        >
+                                          <TrashIcon className="w-4 h-4" />
+                                        </button>
+                                      )}
+                                    </div>
                                   </div>
 
                                   {group.notes && (
@@ -287,7 +368,7 @@ export default function ProjectReservedProductsTable({
           )}
         </>
       ) : (
-        <div className="text-center py-16">
+        <div className="text-center py-8">
           <div className="mx-auto h-20 w-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mb-6 shadow-inner">
             <ReservationIcon className="h-10 w-10 text-gray-400" />
           </div>
@@ -306,6 +387,17 @@ export default function ProjectReservedProductsTable({
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={!!releaseConfirm}
+        onClose={() => setReleaseConfirm(null)}
+        onConfirm={handleReleaseConfirm}
+        message="Êtes-vous sûr de vouloir supprimer cette réservation ?"
+        confirmText="Supprimer"
+        cancelText="Annuler"
+        type="danger"
+        loading={releasing}
+      />
     </div>
   );
 }

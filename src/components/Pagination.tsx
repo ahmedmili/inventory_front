@@ -6,6 +6,8 @@ interface PaginationProps {
   onPageChange: (page: number) => void;
   hasNext: boolean;
   hasPrev: boolean;
+  /** À true quand le composant est dans un conteneur (ex. barre de pagination produits) : pas de bordure ni fond */
+  embedded?: boolean;
 }
 
 export default function Pagination({
@@ -14,6 +16,7 @@ export default function Pagination({
   onPageChange,
   hasNext,
   hasPrev,
+  embedded = false,
 }: PaginationProps) {
   const pages = Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
     if (totalPages <= 7) return i + 1;
@@ -22,8 +25,12 @@ export default function Pagination({
     return currentPage - 3 + i;
   });
 
+  const wrapperClass = embedded
+    ? 'flex items-center gap-4'
+    : 'flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6';
+
   return (
-    <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+    <div className={wrapperClass}>
       <div className="flex flex-1 justify-between sm:hidden">
         <button
           onClick={() => onPageChange(currentPage - 1)}
@@ -42,14 +49,14 @@ export default function Pagination({
           Next
         </button>
       </div>
-      <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-        <div>
-          <p className="text-sm text-gray-700">
-            Page <span className="font-medium">{currentPage}</span> of{' '}
+      <div className={`hidden sm:flex sm:items-center ${embedded ? 'sm:gap-4' : 'sm:flex-1 sm:justify-between sm:gap-6'}`}>
+        <div className="shrink-0">
+          <p className="text-sm text-gray-700 whitespace-nowrap">
+            Page <span className="font-medium">{currentPage}</span> sur{' '}
             <span className="font-medium">{totalPages}</span>
           </p>
         </div>
-        <div>
+        <div className="min-w-0 flex justify-end">
           <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
             <button
               type="button"

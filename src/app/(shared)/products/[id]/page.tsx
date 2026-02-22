@@ -442,11 +442,11 @@ export default function ProductDetailPage() {
                   </div>
                   <div className="text-left sm:text-right">
                     <div className="text-3xl font-bold text-green-600">
-                      {Number(product.salePrice).toFixed(2)}€
+                      {Number(product.salePrice).toFixed(2)} DT
                     </div>
                     {product.purchasePrice && (
                       <div className="text-sm text-gray-500 mt-1">
-                        Achat: {Number(product.purchasePrice).toFixed(2)}€
+                        Achat: {Number(product.purchasePrice).toFixed(2)} DT
                       </div>
                     )}
                   </div>
@@ -599,7 +599,7 @@ export default function ProductDetailPage() {
                     <div className="flex items-center justify-between py-2 border-t border-gray-200 pt-3">
                       <span className="text-sm font-medium text-gray-600">Valeur du stock</span>
                       <span className="text-sm font-bold text-green-600">
-                        {(totalStock * Number(product.salePrice)).toFixed(2)}€
+                        {(totalStock * Number(product.salePrice)).toFixed(2)} DT
                       </span>
                     </div>
                     {product.purchasePrice && (
@@ -607,7 +607,7 @@ export default function ProductDetailPage() {
                         <div className="flex items-center justify-between py-2">
                           <span className="text-sm font-medium text-gray-600">Coût d'achat</span>
                           <span className="text-sm font-semibold text-gray-900">
-                            {(totalStock * Number(product.purchasePrice)).toFixed(2)}€
+                            {(totalStock * Number(product.purchasePrice)).toFixed(2)} DT
                           </span>
                         </div>
                         <div className="pt-3 border-t border-gray-200">
@@ -617,8 +617,7 @@ export default function ProductDetailPage() {
                               {(
                                 totalStock *
                                 (Number(product.salePrice) - Number(product.purchasePrice))
-                              ).toFixed(2)}
-                              €
+                              ).toFixed(2)} DT
                             </span>
                           </div>
                         </div>

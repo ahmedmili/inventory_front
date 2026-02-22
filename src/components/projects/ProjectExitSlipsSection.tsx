@@ -34,9 +34,10 @@ export default function ProjectExitSlipsSection({
   canCreateExitSlip,
   onCreateExitSlip,
 }: ProjectExitSlipsSectionProps) {
+  const isEmpty = !loading && exitSlipGroups.length === 0;
   return (
-    <div className="bg-white rounded-xl shadow-md border border-gray-200 p-5 sm:p-6 hover:shadow-lg transition-shadow duration-200">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
+    <div className={`bg-white rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-200 ${isEmpty ? 'p-3 sm:p-4' : 'p-5 sm:p-6'}`}>
+      <div className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 ${isEmpty ? 'mb-2' : 'mb-5'}`}>
         <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
           <div className="h-1 w-8 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full"></div>
           <span>Bons de sortie ({exitSlipGroups.length})</span>
@@ -102,7 +103,7 @@ export default function ProjectExitSlipsSection({
           ))}
         </div>
       ) : (
-        <div className="text-center py-12">
+        <div className="text-center py-6">
           <div className="mx-auto h-16 w-16 bg-amber-100 rounded-full flex items-center justify-center mb-4">
             <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8 4-8-4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />

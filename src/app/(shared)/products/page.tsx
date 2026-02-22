@@ -15,6 +15,7 @@ import type { TableColumn } from '@/types/shared';
 import { type SortDirection } from '@/components/Table';
 import { useUrlSync } from '@/hooks/useUrlSync';
 import { useApiMutation } from '@/hooks/useApi';
+import { TableSkeleton } from '@/components/SkeletonLoader';
 import { useToast } from '@/contexts/ToastContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { hasPermission } from '@/lib/permissions';
@@ -68,16 +69,29 @@ export default function ProductsPage() {
   const searchParams = useSearchParams();
   const toast = useToast();
   const { user } = useAuth();
-  const [page, setPage] = useState(Number(searchParams?.get('page')) || 1);
-  const [searchInput, setSearchInput] = useState(searchParams?.get('search') || ''); // Input value (no debounce)
-  const [search, setSearch] = useState(searchParams?.get('search') || ''); // Debounced search value
-  const [sortBy, setSortBy] = useState<string>(searchParams?.get('sortBy') || 'createdAt');
-  const [sortOrder, setSortOrder] = useState<SortDirection>((searchParams?.get('sortOrder') as SortDirection) || 'desc');
+  const LIMIT_OPTIONS = [10, 20, 50] as const;
+  const pageFromUrl = Number(searchParams?.get('page')) || 1;
+  const searchFromUrl = searchParams?.get('search') || '';
+  const sortByFromUrl = searchParams?.get('sortBy') || 'createdAt';
+  const sortOrderFromUrl = (searchParams?.get('sortOrder') as SortDirection) || 'desc';
+  const limitFromUrl = Math.min(
+    Number(searchParams?.get('limit')) || 20,
+    Math.max(...LIMIT_OPTIONS),
+  );
+  const validLimit = LIMIT_OPTIONS.includes(limitFromUrl as (typeof LIMIT_OPTIONS)[number])
+    ? (limitFromUrl as (typeof LIMIT_OPTIONS)[number])
+    : 20;
+
+  const [page, setPage] = useState(pageFromUrl);
+  const [searchInput, setSearchInput] = useState(searchFromUrl);
+  const [search, setSearch] = useState(searchFromUrl);
+  const [sortBy, setSortBy] = useState<string>(sortByFromUrl);
+  const [sortOrder, setSortOrder] = useState<SortDirection>(sortOrderFromUrl);
+  const [limit, setLimit] = useState<number>(validLimit);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<{ id: string; name: string } | null>(null);
-  const limit = 20;
   const { mutate: deleteProduct, loading: deleting } = useApiMutation();
   const canDelete = hasPermission(user, 'products.delete');
   const canCreate = hasPermission(user, 'products.create');
@@ -101,23 +115,39 @@ export default function ProductsPage() {
 
   const { data, loading, error, mutate } = useApi<ProductsResponse>(`/products?${apiParams}`);
 
-  // Debounce search input - wait 500ms after user stops typing
+  // Synchroniser l'état depuis l'URL (lien partagé, rafraîchissement, retour arrière)
+  useEffect(() => {
+    setPage(pageFromUrl);
+    setSearchInput(searchFromUrl);
+    setSearch(searchFromUrl);
+    setSortBy(sortByFromUrl);
+    setSortOrder(sortOrderFromUrl);
+    setLimit(validLimit);
+  }, [pageFromUrl, searchFromUrl, sortByFromUrl, sortOrderFromUrl, validLimit]);
+
+  // Debounce search input ; remettre page à 1 seulement si l'utilisateur a changé la recherche (pas au chargement depuis l'URL)
   useEffect(() => {
     const timer = setTimeout(() => {
       setSearch(searchInput);
-      setPage(1); // Reset to first page on search
-    }, 500); // 500ms debounce delay
+      if (searchInput !== search) setPage(1);
+    }, 500);
 
     return () => clearTimeout(timer);
-  }, [searchInput]);
+  }, [searchInput, search]);
 
-  // Synchroniser l'URL avec les filtres et la pagination
+  // Écrire l'URL quand les filtres / pagination changent (partage et refresh gardent le même résultat)
   useUrlSync({
     page: page > 1 ? page : undefined,
+    limit: limit !== 20 ? limit : undefined,
     search: search || undefined,
     sortBy: sortBy !== 'createdAt' ? sortBy : undefined,
     sortOrder: sortOrder !== 'desc' ? sortOrder : undefined,
   });
+
+  const handleLimitChange = (newLimit: number) => {
+    setLimit(newLimit);
+    setPage(1);
+  };
 
   // Écouter les mises à jour de stock en temps réel
   useProductsRealtime(() => {
@@ -229,13 +259,13 @@ export default function ProductsPage() {
 
   const columns: TableColumn<Product>[] = [
     {
-      key: 'id',
-      label: 'ID',
-      sortable: false,
-      className: 'font-mono text-xs min-w-[80px]',
+      key: 'sku',
+      label: 'Référence',
+      sortable: true,
       render: (product: Product) => (
-        <div className="font-mono text-xs text-gray-500 min-w-[80px]">{product.id.slice(0, 8)}...</div>
+        <div className="text-gray-600 font-mono text-sm min-w-[120px]">{product.sku || 'N/A'}</div>
       ),
+      className: 'min-w-[120px]',
     },
     {
       key: 'name',
@@ -260,15 +290,6 @@ export default function ProductsPage() {
       className: 'min-w-[150px]',
     },
     {
-      key: 'sku',
-      label: 'Référence',
-      sortable: true,
-      render: (product: Product) => (
-        <div className="text-gray-600 font-mono text-sm min-w-[120px]">{product.sku || 'N/A'}</div>
-      ),
-      className: 'min-w-[120px]',
-    },
-    {
       key: 'salePrice',
       label: 'Prix',
       sortable: true,
@@ -276,7 +297,7 @@ export default function ProductsPage() {
       className: 'text-right min-w-[100px]',
       render: (product: Product) => (
         <div className="text-right font-bold text-green-600 min-w-[100px]">
-          {Number(product.salePrice).toFixed(2)}€
+          {Number(product.salePrice).toFixed(2)} DT
         </div>
       ),
     },
@@ -418,7 +439,7 @@ export default function ProductsPage() {
     //   className: 'text-right',
     //   render: (product) => (
     //     <div className="text-right font-medium text-gray-900">
-    //       {Number(product.purchasePrice).toFixed(2)}€
+    //       {Number(product.purchasePrice).toFixed(2)}DT
     //     </div>
     //   ),
     // },
@@ -433,7 +454,7 @@ export default function ProductsPage() {
     >
         <div className="max-w-7xl mx-auto min-w-0 w-full p-4 sm:p-6 space-y-6">
           {/* Header */}
-          <div className="min-w-0 overflow-hidden bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6 sm:p-8 border border-green-100 shadow-sm">
+          <div className="min-w-0 overflow-hidden bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-4 sm:p-5 border border-green-100 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 min-w-0">
               <div className="min-w-0 flex-1">
                 <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Produits</h1>
@@ -503,7 +524,7 @@ export default function ProductsPage() {
 
           {/* Statistics Cards */}
           {data?.data && data.data.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
               <StatisticsCard
                 title="Total Produits"
                 value={totalProducts}
@@ -532,7 +553,7 @@ export default function ProductsPage() {
           )}
 
           {/* Filters */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4">
             <SearchFilter
               value={searchInput}
               onChange={handleSearch}
@@ -546,6 +567,12 @@ export default function ProductsPage() {
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
               <p className="text-red-800">Échec du chargement des produits. Veuillez réessayer.</p>
             </div>
+          ) : loading ? (
+            <>
+              <div className="rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm">
+                <TableSkeleton rows={8} cols={8} />
+              </div>
+            </>
           ) : (
             <>
               <ModernTable
@@ -559,23 +586,45 @@ export default function ProductsPage() {
               />
 
               {data?.meta && data.meta.total > 0 && (
-                <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div className="text-sm text-gray-700">
-                    Affichage de <span className="font-medium">{(data.meta.page - 1) * data.meta.limit + 1}</span> à{' '}
-                    <span className="font-medium">
-                      {Math.min(data.meta.page * data.meta.limit, data.meta.total)}
-                    </span>{' '}
-                    sur <span className="font-medium">{data.meta.total}</span> produit{data.meta.total !== 1 ? 's' : ''}
+                <div className="mt-6 rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-3 sm:px-5">
+                  <div className="flex flex-wrap items-center justify-between gap-4 sm:gap-6">
+                    <div className="flex flex-wrap items-center gap-4 sm:gap-6 min-w-0">
+                      <span className="text-sm text-gray-700">
+                        Affichage de <span className="font-medium">{(data.meta.page - 1) * data.meta.limit + 1}</span> à{' '}
+                        <span className="font-medium">
+                          {Math.min(data.meta.page * data.meta.limit, data.meta.total)}
+                        </span>{' '}
+                        sur <span className="font-medium">{data.meta.total}</span> produit{data.meta.total !== 1 ? 's' : ''}
+                      </span>
+                      {data.meta.totalPages > 1 && (
+                        <Pagination
+                          currentPage={data.meta.page}
+                          totalPages={data.meta.totalPages}
+                          onPageChange={setPage}
+                          hasNext={data.meta.hasNext}
+                          hasPrev={data.meta.hasPrev}
+                          embedded
+                        />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <label htmlFor="products-limit" className="text-sm text-gray-600 whitespace-nowrap">
+                        Par page
+                      </label>
+                      <select
+                        id="products-limit"
+                        value={limit}
+                        onChange={(e) => handleLimitChange(Number(e.target.value))}
+                        className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                      >
+                        {LIMIT_OPTIONS.map((n) => (
+                          <option key={n} value={n}>
+                            {n}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
-                  {data.meta.totalPages > 1 && (
-                    <Pagination
-                      currentPage={data.meta.page}
-                      totalPages={data.meta.totalPages}
-                      onPageChange={setPage}
-                      hasNext={data.meta.hasNext}
-                      hasPrev={data.meta.hasPrev}
-                    />
-                  )}
                 </div>
               )}
             </>

@@ -172,6 +172,7 @@ export default function ProjectsPage() {
         <div className="min-w-[200px]">
           <div className="font-semibold text-gray-900 mb-1">
             {project.code && <span className="text-gray-500 font-normal mr-2">{project.code}</span>}
+            {' '}
             {project.name}
           </div>
           {project.description && (
@@ -327,7 +328,7 @@ export default function ProjectsPage() {
     <RouteGuard requirements={{ requirePermissions: ['projects.read'] }}>
       <div className="max-w-7xl mx-auto min-w-0 w-full p-4 sm:p-6 space-y-6">
         {/* Header */}
-        <div className="min-w-0 overflow-hidden bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 sm:p-8 border border-blue-100 shadow-sm">
+        <div className="min-w-0 overflow-hidden bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-4 sm:p-5 border border-blue-100 shadow-sm">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 min-w-0">
             <div className="min-w-0 flex-1">
               <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Projets</h1>
@@ -384,7 +385,7 @@ export default function ProjectsPage() {
 
         {/* Statistics Cards */}
         {data?.data && data.data.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
             <StatisticsCard
               title="Total Projets"
               value={totalProjects}
@@ -413,7 +414,7 @@ export default function ProjectsPage() {
         )}
 
         {/* Filters */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4">
           <div className="flex flex-col sm:flex-row gap-4">
           <SearchFilter
             value={search}

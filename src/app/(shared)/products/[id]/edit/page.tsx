@@ -262,7 +262,7 @@ export default function EditProductPage() {
                   Prix d'achat <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">€</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">DT</span>
                   <input
                     type="number"
                     step="0.01"
@@ -283,7 +283,7 @@ export default function EditProductPage() {
                   Prix de vente <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">€</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">DT</span>
                   <input
                     type="number"
                     step="0.01"

@@ -9,7 +9,7 @@ interface StatusBadgeProps {
 const statusConfig: Record<string, { label: string; className: string }> = {
   // Reservation statuses (Modifier=bleu, Annuler=rouge, Valider=vert)
   RESERVED: { label: 'En attente', className: 'bg-blue-100 text-blue-800 border-blue-200' },
-  FULFILLED: { label: 'Validé', className: 'bg-green-100 text-green-800 border-green-200' },
+  FULFILLED: { label: 'Confirmée', className: 'bg-green-100 text-green-800 border-green-200' },
   RELEASED: { label: 'Annulé', className: 'bg-red-100 text-red-800 border-red-200' },
   CANCELLED: { label: 'Annulé', className: 'bg-red-100 text-red-800 border-red-200' },
   

@@ -8,10 +8,10 @@ import AddProjectProductModal from "@/components/projects/AddProjectProductModal
 import ProjectExitSlipModal from "@/components/projects/ProjectExitSlipModal";
 import ProjectExitSlipsSection from "@/components/projects/ProjectExitSlipsSection";
 import ProjectFormModal from "@/components/projects/ProjectFormModal";
-import ProjectGeneralInfoSection from "@/components/projects/ProjectGeneralInfoSection";
 import ProjectMembersSection from "@/components/projects/ProjectMembersSection";
 import ProjectReservedProductsTable from "@/components/projects/ProjectReservedProductsTable";
 import ReservationCartModal from "@/components/reservations/ReservationCartModal";
+import UpdateGroupReservationModal from "@/components/reservations/UpdateGroupReservationModal";
 import ExportDropdown from "@/components/ui/ExportDropdown";
 import PageHeader from "@/components/ui/PageHeader";
 import { useAuth } from "@/contexts/AuthContext";
@@ -108,9 +108,13 @@ export default function ProjectDetailPage() {
   );
   const [loadingExitSlips, setLoadingExitSlips] = useState(false);
   const canCreateReservation = hasPermission(user, "reservations.create");
+  const canFulfillReservation = hasPermission(user, "reservations.fulfill");
+  const canEditReservation = hasPermission(user, "reservations.update");
+  const canReleaseReservation = hasPermission(user, "reservations.cancel");
   const { mutate: deleteProject, loading: deleting } = useApiMutation();
   const canUpdate = hasPermission(user, "projects.update");
   const canDelete = hasPermission(user, "projects.delete");
+  const [editingReservationGroupId, setEditingReservationGroupId] = useState<string | null>(null);
 
   const {
     data: project,
@@ -317,6 +321,45 @@ export default function ProjectDetailPage() {
     toast.success("Produits du projet exportés en CSV");
   };
 
+  const handleFulfillReservationGroup = useCallback(
+    async (groupId: string, reservationIds: string[]) => {
+      try {
+        for (const id of reservationIds) {
+          await apiClient.post(`/reservations/${id}/fulfill`);
+        }
+        toast.success("Réservation confirmée");
+        loadReservations();
+      } catch (err: unknown) {
+        const msg = (err as any)?.response?.data?.message || "Erreur lors de la confirmation";
+        toast.error(msg);
+        throw err;
+      }
+    },
+    [toast, loadReservations]
+  );
+
+  const handleReleaseReservationGroup = useCallback(
+    async (groupId: string, reservationIds: string[]) => {
+      try {
+        for (const id of reservationIds) {
+          await apiClient.post(`/reservations/${id}/release`, {});
+        }
+        toast.success("Réservation supprimée");
+        loadReservations();
+      } catch (err: unknown) {
+        const msg = (err as any)?.response?.data?.message || "Erreur lors de la suppression";
+        toast.error(msg);
+        throw err;
+      }
+    },
+    [toast, loadReservations]
+  );
+
+  const editingReservationGroup = useMemo(
+    () => (editingReservationGroupId ? reservations.find((r) => r.groupId === editingReservationGroupId) ?? null : null),
+    [editingReservationGroupId, reservations]
+  );
+
   const handleExportProjectProductsExcel = async () => {
     if (!project || !productReservations.length) {
       toast.error("Aucun produit à exporter");
@@ -431,14 +474,6 @@ export default function ProjectDetailPage() {
           }
         />
 
-        <ProjectGeneralInfoSection
-          status={project.status}
-          createdBy={project.createdBy}
-          startDate={project.startDate}
-          endDate={project.endDate}
-          createdAt={project.createdAt}
-        />
-
         <ProjectMembersSection
           members={project.members ?? []}
           canUpdate={!!canUpdate}
@@ -484,6 +519,12 @@ export default function ProjectDetailPage() {
           onToggleProduct={toggleProduct}
           canCreateReservation={!!canCreateReservation}
           onNewReservation={() => setIsReservationModalOpen(true)}
+          onFulfillGroup={handleFulfillReservationGroup}
+          onEditGroup={(groupId) => setEditingReservationGroupId(groupId)}
+          onReleaseGroup={handleReleaseReservationGroup}
+          canFulfill={!!canFulfillReservation}
+          canEdit={!!canEditReservation}
+          canRelease={!!canReleaseReservation}
         />
 
         {/* Modals */}
@@ -560,6 +601,18 @@ export default function ProjectDetailPage() {
               mutate();
               loadExitSlips();
               setIsExitSlipModalOpen(false);
+            }}
+          />
+        )}
+
+        {editingReservationGroup && (
+          <UpdateGroupReservationModal
+            isOpen={!!editingReservationGroupId}
+            onClose={() => setEditingReservationGroupId(null)}
+            group={editingReservationGroup}
+            onSuccess={() => {
+              loadReservations();
+              setEditingReservationGroupId(null);
             }}
           />
         )}
