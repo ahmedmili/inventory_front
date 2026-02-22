@@ -104,7 +104,7 @@ export default function Modal({
 
   // Wrap ModalTemplate with animation wrapper
   const modalContent = (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
+    <div className="fixed inset-0 z-50 overflow-y-auto scrollbar-hide">
       {/* Backdrop with enhanced blur and gradient */}
       <div
         className={`fixed inset-0 bg-gradient-to-br from-black/80 via-black/70 to-black/80 backdrop-blur-xl transition-opacity ${animation === 'none' ? '' : 'duration-200'} ${isAnimating ? 'opacity-50' : 'opacity-0'}`}

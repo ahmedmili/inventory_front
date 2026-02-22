@@ -79,5 +79,15 @@ body {
   .scrollbar-track-gray-100::-webkit-scrollbar-track {
     background: rgb(243 244 246);
   }
+
+  /* Hide scrollbar but keep scroll behavior */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
 

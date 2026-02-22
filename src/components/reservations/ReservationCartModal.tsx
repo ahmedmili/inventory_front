@@ -335,21 +335,14 @@ export default function ReservationCartModal({
           </button>
         </div>
 
-        {/* Cart */}
+        {/* Cart - masqué quand vide */}
+        {cart.length > 0 && (
         <div>
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
             Panier ({cart.length} {cart.length === 1 ? 'produit' : 'produits'})
           </h3>
 
-          {cart.length === 0 ? (
-            <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
-              <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-              </svg>
-              <p>Votre panier est vide</p>
-            </div>
-          ) : (
-            <div className="space-y-3 max-h-64 overflow-y-auto">
+          <div className="space-y-3 max-h-64 overflow-y-auto scrollbar-hide">
               {cart.map((item, index) => (
                 <div key={index} className="border border-gray-200 rounded-lg p-3 sm:p-4 bg-white">
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
@@ -404,9 +397,9 @@ export default function ReservationCartModal({
                   </div>
                 </div>
               ))}
-            </div>
-          )}
+          </div>
         </div>
+        )}
 
         {/* Reservation Details */}
         {cart.length > 0 && (
