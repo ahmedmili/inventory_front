@@ -37,7 +37,7 @@ export default function ExportDropdown({ options, trigger, className = '' }: Exp
   }, [isOpen]);
 
   return (
-    <div className={`relative ${className}`} ref={dropdownRef}>
+    <div className={`relative z-10 ${className}`} ref={dropdownRef}>
       {/* Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -56,7 +56,7 @@ export default function ExportDropdown({ options, trigger, className = '' }: Exp
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden">
+        <div className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border border-gray-200 z-[100] overflow-hidden">
           <div className="p-2">
             <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
               Exporter les produits
