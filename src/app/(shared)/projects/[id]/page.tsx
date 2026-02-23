@@ -344,11 +344,7 @@ export default function ProjectDetailPage() {
         loadReservations();
       } catch (err: unknown) {
         const ax = err as { response?: { data?: { message?: string }; status?: number } };
-        const msg =
-          ax?.response?.data?.message ||
-          (ax?.response?.status === 403
-            ? "Droits insuffisants pour confirmer cette réservation"
-            : "Erreur lors de la confirmation");
+        const msg = ax?.response?.data?.message || (ax?.response?.status === 403 ? "Droits insuffisants pour confirmer cette réservation" : "Erreur lors de la confirmation");
         toast.error(msg);
       }
     },
