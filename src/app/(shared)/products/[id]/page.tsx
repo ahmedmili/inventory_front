@@ -285,7 +285,7 @@ export default function ProductDetailPage() {
   }
 
   if (error || !product) {
-    const isServerError = error?.response?.status >= 500;
+    const isServerError = (error?.response?.status ?? 0) >= 500;
     return (
       <RouteGuard
         requirements={{

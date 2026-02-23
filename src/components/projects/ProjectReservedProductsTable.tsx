@@ -113,12 +113,8 @@ export default function ProjectReservedProductsTable({
     if (currentStatus !== 'RESERVED' || newStatus !== 'FULFILLED') return;
     if (onFulfillGroup && canChangeStatus) {
       setUpdatingStatusGroupId(groupId);
-    } else if (newStatus === 'RELEASED' && onReleaseGroup && (canRelease ?? false)) {
-      setReleaseConfirm({ groupId, reservationIds });
       try {
         await onFulfillGroup(groupId, reservationIds);
-    } else if (newStatus === 'RELEASED' && onReleaseGroup && (canRelease ?? false)) {
-      setReleaseConfirm({ groupId, reservationIds });
       } finally {
         setUpdatingStatusGroupId(null);
       }

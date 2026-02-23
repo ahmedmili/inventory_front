@@ -131,20 +131,6 @@ export default function ProjectDetailPage() {
     if (!project) return false;
     if (project.createdBy?.id === user.id) return true;
     if (project.members?.some((m) => m.user.id === user.id)) return true;
-  const {
-    data: project,
-    loading,
-    error,
-    mutate,
-  } = useApi<ProjectDetail>(projectId ? `/projects/${projectId}` : null);
-
-  const {
-    data: project,
-    loading,
-    error,
-    mutate,
-  } = useApi<ProjectDetail>(projectId ? `/projects/${projectId}` : null);
-
     return false;
   }, [user, project, canFulfillReservation, canReleaseReservation]);
 
@@ -352,7 +338,6 @@ export default function ProjectDetailPage() {
     async (groupId: string, reservationIds: string[]) => {
       try {
         for (const id of reservationIds) {
-        throw err;
           await apiClient.post(`/reservations/${id}/fulfill`, {});
         }
         toast.success("Réservation confirmée");
@@ -360,7 +345,6 @@ export default function ProjectDetailPage() {
       } catch (err: unknown) {
         const ax = err as { response?: { data?: { message?: string }; status?: number } };
         const msg =
-        throw err;
           ax?.response?.data?.message ||
           (ax?.response?.status === 403
             ? "Droits insuffisants pour confirmer cette réservation"
