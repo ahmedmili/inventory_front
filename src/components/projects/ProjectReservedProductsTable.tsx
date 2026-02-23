@@ -42,6 +42,8 @@ interface ProjectReservedProductsTableProps {
   canFulfill?: boolean;
   canEdit?: boolean;
   canRelease?: boolean;
+  /** Créateur réservation, responsable/créateur projet, membre projet, manager ou admin */
+  canUpdateReservationStatus?: boolean;
 }
 
 export default function ProjectReservedProductsTable({
@@ -62,10 +64,23 @@ export default function ProjectReservedProductsTable({
   canFulfill = false,
   canEdit = false,
   canRelease = false,
+  canUpdateReservationStatus = false,
 }: ProjectReservedProductsTableProps) {
+  const canChangeStatus = canFulfill || canRelease || canUpdateReservationStatus;
   const [releaseConfirm, setReleaseConfirm] = useState<{ groupId: string; reservationIds: string[] } | null>(null);
   const [fulfillingGroupId, setFulfillingGroupId] = useState<string | null>(null);
   const [releasing, setReleasing] = useState(false);
+  const [updatingStatusGroupId, setUpdatingStatusGroupId] = useState<string | null>(null);
+
+  /** Mise à jour autorisée uniquement : En attente → Confirmée */
+  const STATUS_UPDATE_OPTIONS: { value: string; label: string }[] = [
+    { value: 'RELEASED', label: 'Libérée' },
+    { value: 'EXPIRED', label: 'Expirée' },
+    { value: 'RELEASED', label: 'Libérée' },
+    { value: 'EXPIRED', label: 'Expirée' },
+    { value: 'RESERVED', label: 'En attente' },
+    { value: 'FULFILLED', label: 'Confirmée' },
+  ];
 
   const handleFulfillGroup = async (groupId: string, reservationIds: string[]) => {
     if (!onFulfillGroup) return;
@@ -85,6 +100,28 @@ export default function ProjectReservedProductsTable({
       setReleaseConfirm(null);
     } finally {
       setReleasing(false);
+    }
+  };
+
+  const handleStatusDropdownChange = async (
+    groupId: string,
+    reservationIds: string[],
+    newStatus: string,
+    currentStatus: string
+  ) => {
+    if (newStatus === currentStatus) return;
+    if (currentStatus !== 'RESERVED' || newStatus !== 'FULFILLED') return;
+    if (onFulfillGroup && canChangeStatus) {
+      setUpdatingStatusGroupId(groupId);
+    } else if (newStatus === 'RELEASED' && onReleaseGroup && (canRelease ?? false)) {
+      setReleaseConfirm({ groupId, reservationIds });
+      try {
+        await onFulfillGroup(groupId, reservationIds);
+    } else if (newStatus === 'RELEASED' && onReleaseGroup && (canRelease ?? false)) {
+      setReleaseConfirm({ groupId, reservationIds });
+      } finally {
+        setUpdatingStatusGroupId(null);
+      }
     }
   };
 
@@ -217,9 +254,29 @@ export default function ProjectReservedProductsTable({
                             {entry.reservations.length}
                           </span>
                         </td>
-                        <td className="px-4 py-4">
+                        <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
                           <div className="flex flex-wrap items-center justify-center gap-1.5">
-                            {uniqueStatuses.length > 0 ? (
+                            {entry.groups.length === 1 && canChangeStatus && entry.groups[0].status === 'RESERVED' ? (
+                              <select
+                                value={entry.groups[0].status}
+                                onChange={(e) => {
+                                  const newStatus = e.target.value;
+                                  const group = entry.groups[0];
+                                  const ids = entry.reservations
+                                    .filter((r: any) => r.groupId === group.groupId)
+                                    .map((i: any) => i.id);
+                                  handleStatusDropdownChange(group.groupId, ids, newStatus, group.status);
+                                }}
+                                disabled={updatingStatusGroupId === entry.groups[0].groupId}
+                                className="rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-sm font-medium text-gray-700 shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 disabled:opacity-60 cursor-pointer"
+                              >
+                                {STATUS_UPDATE_OPTIONS.map((opt) => (
+                                  <option key={opt.value} value={opt.value}>
+                                    {opt.label}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : uniqueStatuses.length > 0 ? (
                               uniqueStatuses.map((status: string) => (
                                 <StatusBadge key={status} status={status} variant="default" size="sm" />
                               ))
@@ -245,7 +302,26 @@ export default function ProjectReservedProductsTable({
                                 >
                                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 pb-3 border-b border-gray-200">
                                     <div className="flex items-center gap-3 flex-wrap">
-                                      <StatusBadge status={group.status} variant="default" size="sm" />
+                                      {canChangeStatus && group.status === 'RESERVED' ? (
+                                        <select
+                                          value={group.status}
+                                          onChange={(e) => {
+                                            const newStatus = e.target.value;
+                                            const ids = items.map((i: any) => i.id);
+                                            handleStatusDropdownChange(group.groupId, ids, newStatus, group.status);
+                                          }}
+                                          disabled={updatingStatusGroupId === group.groupId}
+                                          className="rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-sm font-medium text-gray-700 shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 disabled:opacity-60 cursor-pointer"
+                                        >
+                                          {STATUS_UPDATE_OPTIONS.map((opt) => (
+                                            <option key={opt.value} value={opt.value}>
+                                              {opt.label}
+                                            </option>
+                                          ))}
+                                        </select>
+                                      ) : (
+                                        <StatusBadge status={group.status} variant="default" size="sm" />
+                                      )}
                                       <div className="flex items-center gap-1.5 text-xs text-gray-600 px-2.5 py-1 rounded-lg bg-gray-100 border border-gray-200">
                                         <svg className="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />

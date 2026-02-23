@@ -129,14 +129,16 @@ class ApiClient {
           }
         }
 
-        // Handle 403 Forbidden
+        // Handle 403 Forbidden - do NOT redirect or reload; let the calling component handle it (toast only)
         if (error.response?.status === 403) {
+            // Could show a toast here, but we'll let the component handle it
+            // Could show a toast here, but we'll let the component handle it
           const data = error.response?.data as { message?: string } | undefined;
           const message = data?.message || 'You do not have permission to perform this action';
           if (typeof window !== 'undefined') {
-            // Could show a toast here, but we'll let the component handle it
             console.warn('Forbidden:', message);
           }
+          return Promise.reject(error);
         }
 
         // Handle 404 Not Found
