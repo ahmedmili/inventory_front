@@ -246,7 +246,7 @@ export default function ProductFormModal({
           </div>
         </div>
       ) : (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
           {error && (
             <div className="mb-4 bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-r-lg shadow-sm">
               <div className="flex items-center">
@@ -258,29 +258,29 @@ export default function ProductFormModal({
             </div>
           )}
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             {/* Ligne 1: Nom du produit | Référence */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Nom du produit <span className="text-red-500">*</span>
               </label>
               <input
                 {...register('name')}
                 placeholder="Entrez le nom du produit"
-                className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-4 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-4 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
               />
               {errors.name && (
                 <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Référence
               </label>
               <input
                 {...register('sku')}
                 placeholder="Référence du produit (optionnel)"
-                className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-4 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-4 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                 disabled={isEditMode}
               />
               {!isEditMode && (
@@ -292,7 +292,7 @@ export default function ProductFormModal({
 
             {/* Ligne 2: Fournisseur | Quantité initiale */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Fournisseur
               </label>
               <Autocomplete
@@ -314,7 +314,7 @@ export default function ProductFormModal({
             </div>
             {!isEditMode ? (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Quantité initiale
                 </label>
                 <input
@@ -322,14 +322,11 @@ export default function ProductFormModal({
                   min="0"
                   {...register('initialQuantity', { valueAsNumber: true })}
                   placeholder="0"
-                  className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-4 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                  className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-4 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                 />
                 {errors.initialQuantity && (
                   <p className="mt-1 text-sm text-red-600">{errors.initialQuantity.message}</p>
                 )}
-                <p className="mt-1 text-xs text-gray-500">
-                  Sera créé dans l&apos;entrepôt principal (code MAIN)
-                </p>
               </div>
             ) : (
               <div />
@@ -337,7 +334,7 @@ export default function ProductFormModal({
 
             {/* Ligne 3: Seuil de stock | Prix */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Seuil de stock <span className="text-red-500">*</span>
               </label>
               <input
@@ -345,7 +342,7 @@ export default function ProductFormModal({
                 min="0"
                 {...register('minStock', { valueAsNumber: true })}
                 placeholder="0"
-                className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-4 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-4 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
               />
               {errors.minStock && (
                 <p className="mt-1 text-sm text-red-600">{errors.minStock.message}</p>
@@ -355,18 +352,17 @@ export default function ProductFormModal({
               </p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Prix <span className="text-red-500">*</span>
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">DT</span>
                 <input
                   type="number"
                   step="0.01"
                   min="0"
                   {...register('salePrice', { valueAsNumber: true })}
-                  placeholder="0.00"
-                  className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 pl-8 pr-4 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                  placeholder="0 DT"
+                  className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-4 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                 />
               </div>
               {errors.salePrice && (
@@ -377,12 +373,12 @@ export default function ProductFormModal({
             {/* Commented out fields - can be restored later */}
             {/* Catégorie - Optional */}
             {/* <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Catégorie
               </label>
               <select
                 {...register('categoryId')}
-                className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-4 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all bg-white"
+                className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-4 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all bg-white"
               >
                 <option value="">Sélectionner une catégorie</option>
                 {categories.map((cat) => (
@@ -395,21 +391,21 @@ export default function ProductFormModal({
 
             {/* Description - Optional */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Description
               </label>
               <textarea
                 {...register('description')}
                 rows={4}
                 placeholder="Description du produit (optionnel)"
-                className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-4 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all resize-none"
+                className="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm py-2 px-4 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all resize-none"
               />
             </div>
 
             {/* Commented out fields - can be restored later */}
             {/* Images */}
             {/* <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Images du produit
               </label>
               <ImageUpload
@@ -422,7 +418,7 @@ export default function ProductFormModal({
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end space-x-3 pt-5 border-t border-gray-200/80">
+          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200/80">
             <button
               type="button"
               onClick={handleClose}

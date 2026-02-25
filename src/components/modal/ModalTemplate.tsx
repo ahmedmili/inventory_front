@@ -211,7 +211,7 @@ export default function ModalTemplate({
           </div>
 
       {/* Content */}
-      <div className={`px-4 sm:px-6 py-4 sm:py-6 max-h-[min(100vh-12rem,calc(100vh-220px))] overflow-y-auto scrollbar-hide bg-gradient-to-b from-white to-gray-50/30 rounded-b-xl ${contentClassName}`}>
+      <div className={`px-4 sm:px-6 py-4 sm:py-6 max-h-[calc(100vh-5rem)] overflow-y-auto scrollbar-hide bg-gradient-to-b from-white to-gray-50/30 rounded-b-xl ${contentClassName}`}>
         {children}
       </div>
     </>
