@@ -16,7 +16,7 @@ import { useModal } from '@/contexts/ModalContext';
 import ProjectFormModal from '@/components/projects/ProjectFormModal';
 import ReservationCartModal from '@/components/reservations/ReservationCartModal';
 import { TableSkeleton } from '@/components/SkeletonLoader';
-import { SearchFilter, SelectFilter, StatusBadge, StatisticsCard, ModernTable } from '@/components/ui';
+import { SearchFilter, SelectFilter, StatusBadge, StatisticsCard, ModernTable, Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui';
 import type { TableColumn } from '@/types/shared';
 import { useUrlSync } from '@/hooks/useUrlSync';
 import type { Project, PaginationMeta, ProjectStatus } from '@/types/shared';
@@ -236,17 +236,12 @@ export default function ProjectsPage() {
       render: (project) => (
         <div className="text-sm min-w-[150px]">
           {project.createdBy ? (
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-semibold">
-                {project.createdBy.firstName[0]}{project.createdBy.lastName[0]}
+            <div>
+              <div className="font-medium text-gray-900">
+                {project.createdBy.firstName} {project.createdBy.lastName}
               </div>
-              <div>
-                <div className="font-medium text-gray-900">
-                  {project.createdBy.firstName} {project.createdBy.lastName}
-                </div>
-                <div className="text-xs text-gray-500 truncate max-w-[120px]">
-                  {project.createdBy.email}
-                </div>
+              <div className="text-xs text-gray-500 truncate max-w-[120px]">
+                {project.createdBy.email}
               </div>
             </div>
           ) : (
@@ -408,18 +403,128 @@ export default function ProjectsPage() {
 
         {/* Table */}
         {loading ? (
-          <TableSkeleton rows={5} cols={6} />
+          <>
+            <div className="hidden md:block rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm">
+              <TableSkeleton rows={8} cols={6} />
+            </div>
+            <div className="md:hidden grid gap-3 grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm animate-pulse">
+                  <div className="border-t-4 border-t-blue-500 bg-gray-50/50 px-4 pt-4 pb-3">
+                    <div className="flex justify-between gap-2">
+                      <div className="flex-1">
+                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+                        <div className="h-3 bg-gray-100 rounded w-1/2" />
+                      </div>
+                      <div className="h-6 w-16 bg-gray-200 rounded-full" />
+                    </div>
+                  </div>
+                  <div className="px-4 py-3 space-y-0">
+                    <div className="flex justify-between py-2.5 border-b border-gray-100"><div className="h-3 bg-gray-100 rounded w-16" /><div className="h-3 bg-gray-100 rounded w-24" /></div>
+                    <div className="flex justify-between py-2.5 border-b border-gray-100"><div className="h-3 bg-gray-100 rounded w-12" /><div className="h-3 bg-gray-100 rounded w-20" /></div>
+                    <div className="flex justify-between py-2.5"><div className="h-3 bg-gray-100 rounded w-14" /><div className="h-3 bg-gray-100 rounded w-8" /></div>
+                  </div>
+                  <div className="px-4 py-3 bg-gray-50/50 border-t border-gray-100 flex gap-1">
+                    <div className="h-9 w-9 bg-gray-200 rounded-lg" />
+                    <div className="h-9 w-9 bg-gray-200 rounded-lg" />
+                    <div className="h-9 w-9 bg-gray-200 rounded-lg" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         ) : (
           <>
-            <ModernTable
-              columns={columns}
-              data={data?.data || []}
-              headerGradient="from-blue-600 via-blue-500 to-indigo-600"
-              striped={true}
-              hoverable={true}
-              emptyMessage="Aucun projet trouvé"
-              minWidth="1000px"
-            />
+            <div className="hidden md:block w-full min-w-0">
+              <ModernTable
+                columns={columns}
+                data={data?.data || []}
+                headerGradient="from-blue-600 via-blue-500 to-indigo-600"
+                striped={true}
+                hoverable={true}
+                emptyMessage="Aucun projet trouvé"
+                minWidth="100%"
+                resizable={true}
+              />
+            </div>
+
+            {/* Cards: small screens */}
+            <div className="md:hidden grid gap-3 grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
+              {(!data?.data || data.data.length === 0) ? (
+                <div className="col-span-full rounded-xl border-2 border-gray-200 bg-white py-8 text-center">
+                  <p className="text-gray-500 text-sm">Aucun projet trouvé</p>
+                </div>
+              ) : (
+                data.data.map((project: ProjectWithCounts) => (
+                  <Card key={project.id} className="overflow-hidden border-t-4 border-t-blue-500">
+                    <CardHeader className="pb-3 pt-4 px-4 bg-gradient-to-b from-gray-50/80 to-white">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <CardTitle className="text-base font-bold truncate text-gray-900" title={project.name}>{project.name}</CardTitle>
+                          <CardDescription className="text-xs mt-1 text-gray-500">
+                            {formatDate(project.startDate)} → {formatDate(project.endDate)}
+                          </CardDescription>
+                        </div>
+                        <span className="shrink-0"><StatusBadge status={project.status as ProjectStatus} variant="default" size="sm" /></span>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="px-4 py-3 space-y-0">
+                      <div className="flex justify-between items-center py-2.5 border-b border-gray-100">
+                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Membres</span>
+                        <span className="text-sm font-medium text-gray-700">{project._count?.members ?? 0}</span>
+                      </div>
+                      <div className="flex justify-between items-center py-2.5 border-b border-gray-100">
+                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Produits</span>
+                        <span className="text-sm font-medium text-gray-700">{project._count?.products ?? 0}</span>
+                      </div>
+                      <div className="flex justify-between items-center py-2.5">
+                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Créé par</span>
+                        <span className="text-sm text-gray-700 truncate max-w-[55%]">
+                          {project.createdBy ? `${project.createdBy.firstName} ${project.createdBy.lastName}` : '—'}
+                        </span>
+                      </div>
+                    </CardContent>
+                    <CardFooter className="flex flex-wrap gap-0.5 px-4 py-3 bg-gray-50/50 border-t border-gray-100">
+                      <Link
+                        href={`/projects/${project.id}`}
+                        className="inline-flex items-center justify-center p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors active:scale-95"
+                        title="Voir les détails"
+                      >
+                        <EyeIcon className="w-5 h-5" />
+                      </Link>
+                      {canCreateReservation && (
+                        <button
+                          onClick={() => { setSelectedProjectId(project.id); setIsReservationModalOpen(true); }}
+                          className="inline-flex items-center justify-center p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors active:scale-95"
+                          title="Créer une réservation"
+                        >
+                          <ReservationIcon className="w-5 h-5" />
+                        </button>
+                      )}
+                      {canUpdate && (
+                        <button
+                          onClick={() => handleOpenEditModal(project.id)}
+                          className="inline-flex items-center justify-center p-2 text-amber-600 hover:bg-amber-100 rounded-lg transition-colors active:scale-95"
+                          title="Modifier"
+                        >
+                          <EditIcon className="w-5 h-5" />
+                        </button>
+                      )}
+                      {canDelete && (
+                        <button
+                          onClick={() => handleDeleteClick(project.id, project.name)}
+                          disabled={deleting}
+                          className="inline-flex items-center justify-center p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+                          title="Supprimer"
+                        >
+                          <TrashIcon className="w-5 h-5" />
+                        </button>
+                      )}
+                    </CardFooter>
+                  </Card>
+                ))
+              )}
+            </div>
 
             {/* Pagination */}
             {data?.meta && data.meta.total > 0 && (
