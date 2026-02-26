@@ -5,6 +5,8 @@ import React, { ReactNode, useRef, useState, useCallback, useEffect } from 'reac
 const MIN_COL_WIDTH = 5;
 const MAX_COL_WIDTH = 60;
 
+export type SortDirection = 'asc' | 'desc';
+
 interface Column {
   key: string;
   label: string;
@@ -14,6 +16,7 @@ interface Column {
   align?: 'left' | 'center' | 'right';
   width?: string;
   widthPercent?: number;
+  sortable?: boolean;
 }
 
 interface ModernTableProps {
@@ -25,8 +28,12 @@ interface ModernTableProps {
   emptyMessage?: string;
   minWidth?: string;
   nested?: boolean;
-  /** Colonnes redimensionnables par glissement */
   resizable?: boolean;
+  /** Tri : colonne active et ordre */
+  sortBy?: string;
+  sortOrder?: SortDirection;
+  /** Callback au clic sur un en-tête triable */
+  onSort?: (key: string, direction: SortDirection) => void;
 }
 
 function normalizeWidths(columns: Column[]): Record<string, number> {
@@ -58,7 +65,19 @@ export default function ModernTable({
   minWidth = '600px',
   nested = false,
   resizable = false,
+  sortBy,
+  sortOrder = 'asc',
+  onSort,
 }: ModernTableProps) {
+  const handleHeaderClick = useCallback(
+    (key: string, sortable: boolean | undefined) => {
+      if (!sortable || !onSort) return;
+      const nextOrder: SortDirection =
+        sortBy === key ? (sortOrder === 'asc' ? 'desc' : 'asc') : 'asc';
+      onSort(key, nextOrder);
+    },
+    [onSort, sortBy, sortOrder]
+  );
   const tableRef = useRef<HTMLTableElement>(null);
   const columnsRef = useRef(columns);
   columnsRef.current = columns;
@@ -143,7 +162,7 @@ export default function ModernTable({
 
   return (
     <div
-      className={`min-w-0 overflow-x-auto bg-white ${nested ? 'rounded-lg border border-gray-200 shadow-sm' : 'rounded-xl border-2 border-gray-300 shadow-xl'}`}
+      className={`min-w-0 overflow-x-auto overflow-y-hidden bg-white ${nested ? 'rounded-lg border border-gray-200 shadow-sm' : 'rounded-xl border-2 border-gray-300 shadow-xl'}`}
       style={{ width: '100%' }}
     >
       <table
@@ -160,20 +179,22 @@ export default function ModernTable({
             {columns.map((column, index) => (
               <th
                 key={column.key || index}
-                className={`relative px-3 py-2.5 text-${column.align || 'left'} text-xs font-bold text-white uppercase tracking-wider ${resizable && index < columns.length - 1 ? 'border-r-2 border-white/50' : ''} ${column.width ? `w-${column.width}` : ''} ${column.headerClassName || ''}`}
+                className={`relative min-w-0 overflow-hidden pl-3 pr-4 py-2.5 text-${column.align || 'left'} text-xs font-bold text-white uppercase tracking-wider ${column.sortable && onSort ? 'cursor-pointer select-none hover:bg-white/10' : ''} ${column.width ? `w-${column.width}` : ''} ${column.headerClassName || ''}`}
                 style={
                   getColWidth(column.key) != null
                     ? { width: `${getColWidth(column.key)}%` }
                     : undefined
                 }
+                onClick={() => handleHeaderClick(column.key, column.sortable)}
               >
-                {column.label}
+                <span className="block min-w-0 truncate" title={column.label}>{column.label}</span>
                 {resizable && index < columns.length - 1 && (
                   <span
                     role="separator"
                     aria-orientation="vertical"
-                    className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize touch-none border-r-2 border-white/60 hover:border-white hover:bg-white/25 active:bg-white/40"
-                    onMouseDown={(e) => handleResizeStart(index, e)}
+                    className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize touch-none border-r border-white/40 hover:border-white/80 hover:bg-white/15 transition-colors z-10"
+                    onMouseDown={(e) => { e.stopPropagation(); handleResizeStart(index, e); }}
+                    onClick={(e) => e.stopPropagation()}
                     title="Redimensionner la colonne"
                   />
                 )}
@@ -200,7 +221,7 @@ export default function ModernTable({
                       : undefined
                   }
                 >
-                  <div className="min-w-0 max-w-full overflow-hidden truncate">
+                  <div className="min-w-0 max-w-full overflow-hidden [&>*]:min-w-0 [&>*]:overflow-hidden">
                     {column.render ? column.render(item, rowIndex) : item[column.key]}
                   </div>
                 </td>

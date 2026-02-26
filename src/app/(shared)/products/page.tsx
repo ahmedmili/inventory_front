@@ -322,7 +322,7 @@ export default function ProductsPage() {
     {
       key: 'stock',
       label: 'Stock',
-      sortable: false,
+      sortable: true,
       align: 'right',
       className: 'text-right min-w-0',
       widthPercent: 7,
@@ -460,7 +460,7 @@ export default function ProductsPage() {
         requirePermissions: ['products.read'],
       }}
     >
-        <div className="max-w-7xl mx-auto min-w-0 w-full p-4 sm:p-6 space-y-6 overflow-x-hidden">
+        <div className="max-w-7xl mx-auto min-w-0 w-full p-4 sm:p-6 space-y-6">
           {/* Header */}
           <div className="min-w-0 overflow-hidden bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-4 sm:p-5 border border-green-100 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 min-w-0">
@@ -608,8 +608,8 @@ export default function ProductsPage() {
             </>
           ) : (
             <>
-              {/* Table: desktop (md+) - déborde du padding pour occuper toute la largeur */}
-              <div className="hidden md:block -mx-4 sm:-mx-6 w-[calc(100%+2rem)] sm:w-[calc(100%+3rem)] min-w-0">
+              {/* Table: desktop (md+) - aligné avec le reste du contenu */}
+              <div className="hidden md:block w-full min-w-0">
                 <ModernTable
                   columns={columns}
                   data={data?.data || []}
@@ -619,6 +619,9 @@ export default function ProductsPage() {
                   emptyMessage="Aucun produit trouvé"
                   minWidth="100%"
                   resizable={true}
+                  sortBy={sortBy}
+                  sortOrder={sortOrder ?? 'desc'}
+                  onSort={(key, direction) => handleSort(key, direction)}
                 />
               </div>
 
