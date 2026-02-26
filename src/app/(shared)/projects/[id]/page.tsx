@@ -189,9 +189,13 @@ export default function ProjectDetailPage() {
           limit: "100",
         },
       });
-      const raw = response.data;
-      const data = raw?.data ?? (Array.isArray(raw) ? raw : []);
-      setExitSlipMovements(Array.isArray(data) ? (data as StockMovement[]) : []);
+      const raw = response?.data;
+      const list = Array.isArray(raw?.data)
+        ? raw.data
+        : Array.isArray(raw)
+          ? raw
+          : [];
+      setExitSlipMovements(list as StockMovement[]);
     } catch (err: unknown) {
       console.error("Failed to load exit slips:", err);
       toast.error("Erreur lors du chargement des bons de sortie");
@@ -612,9 +616,9 @@ export default function ProjectDetailPage() {
             projectId={projectId}
             projectName={project.name}
             onSuccess={() => {
+              setIsExitSlipModalOpen(false);
               mutate();
               loadExitSlips();
-              setIsExitSlipModalOpen(false);
             }}
           />
         )}

@@ -103,20 +103,20 @@ export default function ProjectExitSlipsSection({
           ))}
         </div>
       ) : (
-        <div className="text-center py-6">
-          <div className="mx-auto h-16 w-16 bg-amber-100 rounded-full flex items-center justify-center mb-4">
-            <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="text-center py-4">
+          <div className="mx-auto h-12 w-12 bg-amber-100 rounded-full flex items-center justify-center mb-3">
+            <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8 4-8-4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
           </div>
-          <p className="text-gray-600 font-medium">Aucun bon de sortie</p>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-gray-600 font-medium text-sm">Aucun bon de sortie</p>
+          <p className="text-xs text-gray-500 mt-0.5">
             Les sorties créées via « Créer un bon de sortie » apparaîtront ici.
           </p>
           {canCreateExitSlip && (
             <button
               onClick={onCreateExitSlip}
-              className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-xl hover:bg-amber-700 text-sm font-medium"
+              className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 text-xs font-medium"
             >
               <span>Créer un bon de sortie</span>
             </button>

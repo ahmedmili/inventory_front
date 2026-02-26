@@ -72,12 +72,8 @@ export default function ProjectReservedProductsTable({
   const [releasing, setReleasing] = useState(false);
   const [updatingStatusGroupId, setUpdatingStatusGroupId] = useState<string | null>(null);
 
-  /** Mise à jour autorisée uniquement : En attente → Confirmée */
+  /** En attente → Confirmée uniquement pour le passage de statut */
   const STATUS_UPDATE_OPTIONS: { value: string; label: string }[] = [
-    { value: 'RELEASED', label: 'Libérée' },
-    { value: 'EXPIRED', label: 'Expirée' },
-    { value: 'RELEASED', label: 'Libérée' },
-    { value: 'EXPIRED', label: 'Expirée' },
     { value: 'RESERVED', label: 'En attente' },
     { value: 'FULFILLED', label: 'Confirmée' },
   ];
@@ -440,19 +436,19 @@ export default function ProjectReservedProductsTable({
           )}
         </>
       ) : (
-        <div className="text-center py-8">
-          <div className="mx-auto h-20 w-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mb-6 shadow-inner">
-            <ReservationIcon className="h-10 w-10 text-gray-400" />
+        <div className="text-center py-4">
+          <div className="mx-auto h-12 w-12 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mb-3 shadow-inner">
+            <ReservationIcon className="h-6 w-6 text-gray-400" />
           </div>
-          <p className="text-lg font-semibold text-gray-900 mb-2">Aucun produit réservé</p>
-          <p className="text-sm text-gray-600 mb-6">Commencez par créer une réservation pour ce projet</p>
-          <div className="flex flex-wrap gap-3 justify-center">
+          <p className="text-sm font-semibold text-gray-900 mb-1">Aucun produit réservé</p>
+          <p className="text-xs text-gray-600 mb-3">Commencez par créer une réservation pour ce projet</p>
+          <div className="flex flex-wrap gap-2 justify-center">
             {canCreateReservation && (
               <button
                 onClick={onNewReservation}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-medium text-sm shadow-md"
               >
-                <ReservationIcon className="w-5 h-5" />
+                <ReservationIcon className="w-4 h-4" />
                 <span>Créer une réservation</span>
               </button>
             )}
@@ -464,6 +460,7 @@ export default function ProjectReservedProductsTable({
         isOpen={!!releaseConfirm}
         onClose={() => setReleaseConfirm(null)}
         onConfirm={handleReleaseConfirm}
+        title="Supprimer la réservation"
         message="Êtes-vous sûr de vouloir supprimer cette réservation ?"
         confirmText="Supprimer"
         cancelText="Annuler"

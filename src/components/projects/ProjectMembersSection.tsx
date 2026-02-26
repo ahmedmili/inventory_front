@@ -75,14 +75,14 @@ export default function ProjectMembersSection({
           ))}
         </div>
       ) : (
-        <div className="text-center py-6">
-          <div className="mx-auto h-16 w-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mb-4 shadow-inner">
-            <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="text-center py-4">
+          <div className="mx-auto h-12 w-12 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mb-3 shadow-inner">
+            <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
           </div>
-          <p className="text-gray-600 font-medium">Aucun membre assigné</p>
-          <p className="text-sm text-gray-500 mt-1">Ajoutez des membres pour collaborer sur ce projet</p>
+          <p className="text-gray-600 font-medium text-sm">Aucun membre assigné</p>
+          <p className="text-xs text-gray-500 mt-0.5">Ajoutez des membres pour collaborer sur ce projet</p>
         </div>
       )}
     </div>
