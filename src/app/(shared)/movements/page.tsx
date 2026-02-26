@@ -112,7 +112,7 @@ export default function MovementsPage() {
   const getTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
       IN: 'Dispose',
-      OUT: 'Withdraw',
+      OUT: 'Retirer',
       ADJUSTMENT: 'Adjustment',
     };
     return labels[type] || type;
@@ -332,7 +332,7 @@ export default function MovementsPage() {
               options={[
                 { value: 'all', label: 'Tous les types' },
                 { value: 'IN', label: 'Dispose (IN)' },
-                { value: 'OUT', label: 'Withdraw (OUT)' },
+                { value: 'OUT', label: 'Retirer (OUT)' },
                 { value: 'ADJUSTMENT', label: 'Adjustment' },
               ]}
               placeholder="Tous les types"

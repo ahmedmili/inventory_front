@@ -37,10 +37,10 @@ function ProductMovementsHistory({ productId }: { productId: string }) {
 
   const getTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
-      IN: 'Dispose',
-      OUT: 'Withdraw',
-      TRANSFER: 'Transfer',
-      ADJUSTMENT: 'Adjustment',
+      IN: 'Disposer',
+      OUT: 'Retirer',
+      TRANSFER: 'Transfert',
+      ADJUSTMENT: 'Ajustement',
     };
     return labels[type] || type;
   };
@@ -442,10 +442,10 @@ export default function ProductDetailPage() {
           </div>
         </div>
 
-        {/* Main Content Grid: row 1 = Product (8) + Statistics (4), row 2 = Full-width movements */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left Column - Product information only (8 columns) */}
-          <div className="lg:col-span-8">
+        {/* Main Content Grid: Product info pleine largeur, puis Historique */}
+        <div className="grid grid-cols-1 gap-6">
+          {/* Colonne unique - Informations produit */}
+          <div>
             {/* Product Info Card */}
             <div className="bg-white shadow-sm rounded-xl overflow-hidden border border-gray-200">
               <div className="px-6 py-5 bg-gradient-to-r from-gray-50 via-white to-gray-50 border-b border-gray-200">
@@ -460,28 +460,23 @@ export default function ProductDetailPage() {
                     <div className="text-3xl font-bold text-green-600">
                       {Number(product.salePrice).toFixed(2)} DT
                     </div>
-                    {product.purchasePrice && (
+                    {/* {product.purchasePrice && (
                       <div className="text-sm text-gray-500 mt-1">
                         Achat: {Number(product.purchasePrice).toFixed(2)} DT
                       </div>
-                    )}
+                    )} */}
                   </div>
                 </div>
               </div>
 
               <div className="px-6 py-6">
                 <dl className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500">ID</dt>
-                    <dd className="mt-1 text-sm text-gray-900 font-mono">{product.id}</dd>
-                  </div>
-
-                  {product.barcode && (
+                  {/* {product.barcode && (
                     <div>
                       <dt className="text-sm font-medium text-gray-500">Code-barres</dt>
                       <dd className="mt-1 text-sm text-gray-900 font-mono">{product.barcode}</dd>
                     </div>
-                  )}
+                  )} */}
 
                   <div>
                     <dt className="text-sm font-medium text-gray-500">Fournisseur</dt>
@@ -585,68 +580,8 @@ export default function ProductDetailPage() {
             )}
           </div>
 
-          {/* Right Column - Statistics sidebar (4 columns) */}
-          <div className="lg:col-span-4 lg:border-l lg:border-gray-200 lg:pl-6">
-            <div className="lg:sticky lg:top-6 space-y-6">
-              {/* COMMENTED: Stock by Warehouse - Removed from view (using MAIN warehouse silently) */}
-              {/* Stock display removed - warehouse information hidden from user */}
-
-              {/* Quick Stats */}
-              <div className="bg-white shadow-sm rounded-xl overflow-hidden border border-gray-200">
-                <div className="px-6 py-4 bg-gradient-to-r from-gray-50 via-white to-gray-50 border-b border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-900">Statistiques</h3>
-                </div>
-                <div className="px-6 py-5">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between py-2">
-                      <span className="text-sm font-medium text-gray-600">Stock total</span>
-                      <span
-                        className={`text-sm font-bold ${
-                          isLowStock ? 'text-red-600' : 'text-green-600'
-                        }`}
-                      >
-                        {totalStock} unités
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between py-2">
-                      <span className="text-sm font-medium text-gray-600">Seuil minimum</span>
-                      <span className="text-sm font-semibold text-gray-900">{product.minStock}</span>
-                    </div>
-                    <div className="flex items-center justify-between py-2 border-t border-gray-200 pt-3">
-                      <span className="text-sm font-medium text-gray-600">Valeur du stock</span>
-                      <span className="text-sm font-bold text-green-600">
-                        {(totalStock * Number(product.salePrice)).toFixed(2)} DT
-                      </span>
-                    </div>
-                    {product.purchasePrice && (
-                      <>
-                        <div className="flex items-center justify-between py-2">
-                          <span className="text-sm font-medium text-gray-600">Coût d'achat</span>
-                          <span className="text-sm font-semibold text-gray-900">
-                            {(totalStock * Number(product.purchasePrice)).toFixed(2)} DT
-                          </span>
-                        </div>
-                        <div className="pt-3 border-t border-gray-200">
-                          <div className="flex items-center justify-between py-2">
-                            <span className="text-sm font-semibold text-gray-900">Marge potentielle</span>
-                            <span className="text-sm font-bold text-green-600">
-                              {(
-                                totalStock *
-                                (Number(product.salePrice) - Number(product.purchasePrice))
-                              ).toFixed(2)} DT
-                            </span>
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Full-width row: Historique des mouvements */}
-          <div className="lg:col-span-12 pt-6 mt-2 border-t border-gray-200">
+          {/* Historique des mouvements */}
+          <div className="pt-2 border-t border-gray-200">
             <ProductMovementsHistory key={movementRefreshKey} productId={product.id} />
           </div>
         </div>
