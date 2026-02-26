@@ -15,11 +15,7 @@ import ConfirmModal from '@/components/ConfirmModal';
 import { useModal } from '@/contexts/ModalContext';
 import ProjectFormModal from '@/components/projects/ProjectFormModal';
 import ReservationCartModal from '@/components/reservations/ReservationCartModal';
-import ExportDropdown from '@/components/ui/ExportDropdown';
 import { TableSkeleton } from '@/components/SkeletonLoader';
-import { apiClient } from '@/lib/api';
-import { exportProjectsToCSV, downloadCSV } from '@/lib/csv-utils';
-import { exportProjectsToExcel } from '@/lib/excel-utils';
 import { SearchFilter, SelectFilter, StatusBadge, StatisticsCard, ModernTable } from '@/components/ui';
 import type { TableColumn } from '@/types/shared';
 import { useUrlSync } from '@/hooks/useUrlSync';
@@ -162,33 +158,6 @@ export default function ProjectsPage() {
   const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleDateString('fr-FR');
-  };
-
-  const handleExportProjectsCSV = async () => {
-    try {
-      // Fetch all projects for export
-      const response = await apiClient.get('/projects?limit=10000');
-      const projects = response.data?.data || response.data || [];
-      const csvContent = exportProjectsToCSV(projects);
-      downloadCSV(csvContent, `projets_${new Date().toISOString().split('T')[0]}.csv`);
-      toast.success('Export CSV réussi');
-    } catch (error: any) {
-      console.error('Export CSV error:', error);
-      toast.error('Erreur lors de l\'export CSV');
-    }
-  };
-
-  const handleExportProjectsExcel = async () => {
-    try {
-      // Fetch all projects for export
-      const response = await apiClient.get('/projects?limit=10000');
-      const projects = response.data?.data || response.data || [];
-      await exportProjectsToExcel(projects, `projets_${new Date().toISOString().split('T')[0]}.xlsx`);
-      toast.success('Export Excel réussi');
-    } catch (error: any) {
-      console.error('Export Excel error:', error);
-      toast.error('Erreur lors de l\'export Excel');
-    }
   };
 
   const columns: TableColumn<ProjectWithCounts>[] = [
@@ -368,38 +337,6 @@ export default function ProjectsPage() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <ExportDropdown
-                trigger={
-                  <>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    Exporter
-                  </>
-                }
-                options={[
-                  {
-                    label: 'Exporter en CSV',
-                    description: 'Format texte compatible avec Excel',
-                    icon: (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                    ),
-                    onClick: handleExportProjectsCSV,
-                  },
-                  {
-                    label: 'Exporter en Excel',
-                    description: 'Format .xlsx avec formatage',
-                    icon: (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                    ),
-                    onClick: handleExportProjectsExcel,
-                  },
-                ]}
-              />
               {canCreate && (
                 <button
                   onClick={handleOpenCreateModal}
@@ -463,7 +400,7 @@ export default function ProjectsPage() {
               { value: 'ON_HOLD', label: 'En attente' },
               { value: 'CANCELLED', label: 'Annulé' },
             ]}
-            placeholder="Tous les statuts"
+            placeholder=""
             className="w-full sm:w-auto"
           />
           </div>
