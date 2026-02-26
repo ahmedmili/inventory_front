@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useState, useMemo, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useApi } from '@/hooks/useApi';
 import Link from 'next/link';
 import Pagination from '@/components/Pagination';
@@ -18,7 +18,6 @@ import ReservationCartModal from '@/components/reservations/ReservationCartModal
 import { TableSkeleton } from '@/components/SkeletonLoader';
 import { SearchFilter, SelectFilter, StatusBadge, StatisticsCard, ModernTable, Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui';
 import type { TableColumn } from '@/types/shared';
-import { useUrlSync } from '@/hooks/useUrlSync';
 import type { Project, PaginationMeta, ProjectStatus } from '@/types/shared';
 
 const LIMIT_OPTIONS = [10, 20, 50] as const;
@@ -36,24 +35,22 @@ interface ProjectsResponse {
 }
 
 export default function ProjectsPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
 
-  const pageFromUrl = Number(searchParams?.get('page')) || 1;
-  const searchFromUrl = searchParams?.get('search') || '';
-  const statusFromUrl = searchParams?.get('status') || 'all';
+  // URL = seule source de vérité : plus de retour à la page 1 par effet
+  const page = Number(searchParams?.get('page')) || 1;
+  const search = searchParams?.get('search') || '';
+  const statusFilter = searchParams?.get('status') || 'all';
   const limitFromUrl = Math.min(
     Number(searchParams?.get('limit')) || 20,
     Math.max(...LIMIT_OPTIONS),
   );
-  const validLimit = LIMIT_OPTIONS.includes(limitFromUrl as (typeof LIMIT_OPTIONS)[number])
+  const limit = LIMIT_OPTIONS.includes(limitFromUrl as (typeof LIMIT_OPTIONS)[number])
     ? (limitFromUrl as (typeof LIMIT_OPTIONS)[number])
     : 20;
 
-  const [page, setPage] = useState(pageFromUrl);
-  const [search, setSearch] = useState(searchFromUrl);
-  const [statusFilter, setStatusFilter] = useState<string>(statusFromUrl);
-  const [limit, setLimit] = useState<number>(validLimit);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -69,25 +66,21 @@ export default function ProjectsPage() {
   const canUpdate = hasPermission(user, 'projects.update');
   const canCreateReservation = hasPermission(user, 'reservations.create');
 
-  // Synchroniser l'état depuis l'URL (lien partagé, rafraîchissement)
-  useEffect(() => {
-    setPage(pageFromUrl);
-    setSearch(searchFromUrl);
-    setStatusFilter(statusFromUrl);
-    setLimit(validLimit);
-  }, [pageFromUrl, searchFromUrl, statusFromUrl, validLimit]);
-
-  // Synchroniser l'URL avec les filtres, pagination et limite
-  useUrlSync({
-    page: page > 1 ? page : undefined,
-    limit: limit !== 20 ? limit : undefined,
-    search: search || undefined,
-    status: statusFilter !== 'all' ? statusFilter : undefined,
-  });
+  const updateUrl = useCallback(
+    (updates: { page?: number; search?: string; status?: string; limit?: number }) => {
+      const p = new URLSearchParams(searchParams?.toString() || '');
+      if (updates.page !== undefined) updates.page === 1 ? p.delete('page') : p.set('page', String(updates.page));
+      if (updates.search !== undefined) updates.search ? p.set('search', updates.search) : p.delete('search');
+      if (updates.status !== undefined) updates.status === 'all' ? p.delete('status') : p.set('status', updates.status);
+      if (updates.limit !== undefined) updates.limit === 20 ? p.delete('limit') : p.set('limit', String(updates.limit));
+      router.replace(`?${p.toString()}`, { scroll: false });
+    },
+    [router, searchParams]
+  );
 
   const handleLimitChange = (newLimit: number) => {
-    setLimit(newLimit);
-    setPage(1);
+    if (newLimit === limit) return;
+    updateUrl({ limit: newLimit, page: 1 });
   };
 
   const apiParams = useMemo(() => {
@@ -102,13 +95,13 @@ export default function ProjectsPage() {
   const { data, loading, error, mutate } = useApi<ProjectsResponse>(`/projects?${apiParams}`);
 
   const handleSearchChange = (value: string) => {
-    setSearch(value);
-    setPage(1);
+    if (value === search) return; // évite le reset page 1 quand SearchFilter appelle onChange au montage / debounce
+    updateUrl({ search: value, page: 1 });
   };
 
   const handleStatusFilterChange = (value: string) => {
-    setStatusFilter(value);
-    setPage(1);
+    if (value === statusFilter) return; // évite le reset page 1 si même valeur
+    updateUrl({ status: value, page: 1 });
   };
 
   const handleOpenCreateModal = () => {
@@ -542,7 +535,7 @@ export default function ProjectsPage() {
                       <Pagination
                         currentPage={data.meta.page}
                         totalPages={data.meta.totalPages}
-                        onPageChange={setPage}
+                        onPageChange={(p) => updateUrl({ page: p })}
                         hasNext={data.meta.hasNext}
                         hasPrev={data.meta.hasPrev}
                         embedded
