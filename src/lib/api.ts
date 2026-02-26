@@ -4,8 +4,9 @@ import { localStorageService, LOCAL_STORAGE_KEYS } from './local-storage';
 // En navigateur sans NEXT_PUBLIC_API_URL, utiliser le proxy Next.js pour éviter les requêtes vers la mauvaise origine
 const getApiBaseUrl = () => {
   const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  // En dev, forcer le proxy same-origin pour éviter les faux positifs CORS navigateur.
+  if (process.env.NODE_ENV === 'development') return '/api-proxy';
   if (envUrl) return envUrl;
-  if (typeof window !== 'undefined') return '/api-proxy'; // proxy défini dans next.config.js (dev)
   return 'http://localhost:4000';
 };
 const API_URL = getApiBaseUrl();
