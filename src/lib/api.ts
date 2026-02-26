@@ -1,11 +1,10 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import { localStorageService, LOCAL_STORAGE_KEYS } from './local-storage';
 
-// En navigateur sans NEXT_PUBLIC_API_URL, utiliser le proxy Next.js pour éviter les requêtes vers la mauvaise origine
+// En navigateur, utiliser toujours le proxy Next.js pour un comportement identique dev/prod.
 const getApiBaseUrl = () => {
   const envUrl = process.env.NEXT_PUBLIC_API_URL;
-  // En dev, forcer le proxy same-origin pour éviter les faux positifs CORS navigateur.
-  if (process.env.NODE_ENV === 'development') return '/api-proxy';
+  if (typeof window !== 'undefined') return '/api-proxy';
   if (envUrl) return envUrl;
   return 'http://localhost:4000';
 };

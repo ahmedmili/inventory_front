@@ -22,10 +22,12 @@ const nextConfig = {
   compress: true,
   poweredByHeader: false,
   output: 'standalone', // Required for Docker
-  // En dev, proxy /api-proxy vers le backend (évite CORS et mauvaise URL)
+  // Proxy /api-proxy vers le backend en dev et prod pour un comportement identique.
   async rewrites() {
-    if (process.env.NODE_ENV !== 'development') return [];
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    const apiUrl =
+      process.env.API_PROXY_TARGET ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      'http://localhost:4000';
     const match = apiUrl.match(/^https?:\/\/[^/]+/);
     const origin = match ? match[0] : 'http://localhost:4000';
     return [{ source: '/api-proxy/:path*', destination: `${origin}/:path*` }];
