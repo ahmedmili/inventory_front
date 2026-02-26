@@ -16,3 +16,4 @@ export { default as Autocomplete } from './Autocomplete';
 export type { AutocompleteOption } from './Autocomplete';
 export { default as ExportDropdown } from './ExportDropdown';
 export { default as StockActionsDropdown } from './StockActionsDropdown';
+export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './Card';

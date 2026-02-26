@@ -10,7 +10,7 @@ import Pagination from '@/components/Pagination';
 import RouteGuard from '@/components/guards/RouteGuard';
 import ProductFormModal from '@/components/products/ProductFormModal';
 import { EyeIcon, EditIcon, PlusIcon, TrashIcon, PackageIcon } from '@/components/icons';
-import { StatisticsCard, ModernTable, SearchFilter } from '@/components/ui';
+import { StatisticsCard, ModernTable, SearchFilter, Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui';
 import type { TableColumn } from '@/types/shared';
 import { type SortDirection } from '@/components/Table';
 import { useUrlSync } from '@/hooks/useUrlSync';
@@ -262,41 +262,45 @@ export default function ProductsPage() {
       key: 'sku',
       label: 'Référence',
       sortable: true,
+      widthPercent: 9,
       render: (product: Product) => (
-        <div className="text-gray-600 font-mono text-sm min-w-[120px]">{product.sku || 'N/A'}</div>
+        <div className="text-gray-600 font-mono text-sm truncate">{product.sku || 'N/A'}</div>
       ),
-      className: 'min-w-[120px]',
+      className: 'min-w-0',
     },
     {
       key: 'name',
       label: 'Nom du produit',
       sortable: true,
+      widthPercent: 18,
       render: (product: Product) => (
-        <div className="font-semibold text-gray-900 min-w-[200px]">{product.name}</div>
+        <div className="font-semibold text-gray-900 truncate" title={product.name}>{product.name}</div>
       ),
-      className: 'min-w-[200px]',
+      className: 'min-w-0',
     },
     {
       key: 'supplier',
       label: 'Fournisseur',
       sortable: true,
+      widthPercent: 12,
       render: (product: Product) => (
-        <div className="text-gray-600 min-w-[150px]">
+        <div className="text-gray-600 truncate" title={product.supplier?.name || undefined}>
           {product.supplier?.name || (
             <span className="text-gray-400 italic">Non assigné</span>
           )}
         </div>
       ),
-      className: 'min-w-[150px]',
+      className: 'min-w-0',
     },
     {
       key: 'salePrice',
       label: 'Prix',
       sortable: true,
       align: 'right',
-      className: 'text-right min-w-[100px]',
+      className: 'text-right min-w-0',
+      widthPercent: 8,
       render: (product: Product) => (
-        <div className="text-right font-bold text-green-600 min-w-[100px]">
+        <div className="text-right font-bold text-green-600">
           {Number(product.salePrice).toFixed(2)} DT
         </div>
       ),
@@ -305,26 +309,28 @@ export default function ProductsPage() {
       key: 'description',
       label: 'Description',
       sortable: false,
+      widthPercent: 22,
       render: (product: Product) => (
-        <div className="text-gray-600 max-w-xs truncate min-w-[200px]" title={product.description || undefined}>
+        <div className="text-gray-600 truncate max-w-[180px]" title={product.description || undefined}>
           {product.description || (
             <span className="text-gray-400 italic">Aucune description</span>
           )}
         </div>
       ),
-      className: 'min-w-[200px]',
+      className: 'min-w-0',
     },
     {
       key: 'stock',
       label: 'Stock',
       sortable: false,
       align: 'right',
-      className: 'text-right min-w-[100px]',
+      className: 'text-right min-w-0',
+      widthPercent: 7,
       render: (product: Product) => {
         const totalStock = getProductQuantity(product);
         const isLowStock = totalStock <= product.minStock;
         return (
-          <div className="text-right min-w-[100px]">
+          <div className="text-right">
             <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-bold ${
               isLowStock 
                 ? 'bg-red-100 text-red-800 border-2 border-red-200' 
@@ -343,9 +349,10 @@ export default function ProductsPage() {
       label: 'Seuil',
       sortable: true,
       align: 'right',
-      className: 'text-right min-w-[80px]',
+      className: 'text-right min-w-0',
+      widthPercent: 6,
       render: (product: Product) => (
-        <div className="text-right min-w-[80px]">
+        <div className="text-right">
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-800 border border-gray-200">
             {product.minStock}
           </span>
@@ -357,12 +364,13 @@ export default function ProductsPage() {
       label: 'Actions',
       sortable: false,
       align: 'center',
-      className: 'text-center',
+      className: 'text-center min-w-0',
+      widthPercent: 18,
       render: (product: Product) => (
-        <div className="flex items-center justify-center gap-1">
+        <div className="flex items-center justify-center gap-0.5">
           <Link
             href={`/products/${product.id}`}
-            className="inline-flex items-center justify-center p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-all duration-200 hover:scale-110"
+            className="inline-flex items-center justify-center p-1.5 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-all duration-200 hover:scale-110"
             onClick={(e) => e.stopPropagation()}
             title="Voir les détails"
           >
@@ -375,7 +383,7 @@ export default function ProductsPage() {
                 setSelectedProductId(product.id);
                 setIsReservationModalOpen(true);
               }}
-              className="inline-flex items-center justify-center p-2 text-green-600 hover:text-green-900 hover:bg-green-50 rounded-lg transition-all duration-200 hover:scale-110"
+              className="inline-flex items-center justify-center p-1.5 text-green-600 hover:text-green-900 hover:bg-green-50 rounded-lg transition-all duration-200 hover:scale-110"
               title="Réserver"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -389,7 +397,7 @@ export default function ProductsPage() {
                 e.stopPropagation();
                 handleOpenEditModal(product.id);
               }}
-              className="inline-flex items-center justify-center p-2 text-yellow-600 hover:text-yellow-900 hover:bg-yellow-50 rounded-lg transition-all duration-200 hover:scale-110"
+              className="inline-flex items-center justify-center p-1.5 text-yellow-600 hover:text-yellow-900 hover:bg-yellow-50 rounded-lg transition-all duration-200 hover:scale-110"
               title="Modifier"
             >
               <EditIcon />
@@ -402,7 +410,7 @@ export default function ProductsPage() {
                 handleDeleteClick(product.id, product.name);
               }}
               disabled={deleting}
-              className="inline-flex items-center justify-center p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg transition-all duration-200 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center justify-center p-1.5 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg transition-all duration-200 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
               title="Supprimer"
             >
               <TrashIcon />
@@ -452,7 +460,7 @@ export default function ProductsPage() {
         requirePermissions: ['products.read'],
       }}
     >
-        <div className="max-w-7xl mx-auto min-w-0 w-full p-4 sm:p-6 space-y-6">
+        <div className="max-w-7xl mx-auto min-w-0 w-full p-4 sm:p-6 space-y-6 overflow-x-hidden">
           {/* Header */}
           <div className="min-w-0 overflow-hidden bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-4 sm:p-5 border border-green-100 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 min-w-0">
@@ -569,21 +577,138 @@ export default function ProductsPage() {
             </div>
           ) : loading ? (
             <>
-              <div className="rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm">
+              <div className="hidden md:block rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm">
                 <TableSkeleton rows={8} cols={8} />
+              </div>
+              <div className="md:hidden grid gap-3 grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm animate-pulse">
+                    <div className="border-t-4 border-t-gray-200 bg-gray-50/50 px-4 pt-4 pb-3">
+                      <div className="flex justify-between gap-2">
+                        <div className="flex-1">
+                          <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+                          <div className="h-3 bg-gray-100 rounded w-1/2" />
+                        </div>
+                        <div className="h-6 w-10 bg-gray-200 rounded-full" />
+                      </div>
+                    </div>
+                    <div className="px-4 py-3 space-y-0">
+                      <div className="flex justify-between py-2.5 border-b border-gray-100"><div className="h-3 bg-gray-100 rounded w-20" /><div className="h-3 bg-gray-100 rounded w-24" /></div>
+                      <div className="flex justify-between py-2.5 border-b border-gray-100"><div className="h-3 bg-gray-100 rounded w-12" /><div className="h-3 bg-gray-100 rounded w-16" /></div>
+                      <div className="flex justify-between py-2.5"><div className="h-3 bg-gray-100 rounded w-14" /><div className="h-3 bg-gray-100 rounded w-8" /></div>
+                    </div>
+                    <div className="px-4 py-3 bg-gray-50/50 border-t border-gray-100 flex gap-1">
+                      <div className="h-9 w-9 bg-gray-200 rounded-lg" />
+                      <div className="h-9 w-9 bg-gray-200 rounded-lg" />
+                      <div className="h-9 w-9 bg-gray-200 rounded-lg" />
+                    </div>
+                  </div>
+                ))}
               </div>
             </>
           ) : (
             <>
-              <ModernTable
-                columns={columns}
-                data={data?.data || []}
-                headerGradient="from-green-600 via-green-500 to-emerald-600"
-                striped={true}
-                hoverable={true}
-                emptyMessage="Aucun produit trouvé"
-                minWidth="1200px"
-              />
+              {/* Table: desktop (md+) - déborde du padding pour occuper toute la largeur */}
+              <div className="hidden md:block -mx-4 sm:-mx-6 w-[calc(100%+2rem)] sm:w-[calc(100%+3rem)] min-w-0">
+                <ModernTable
+                  columns={columns}
+                  data={data?.data || []}
+                  headerGradient="from-green-600 via-green-500 to-emerald-600"
+                  striped={true}
+                  hoverable={true}
+                  emptyMessage="Aucun produit trouvé"
+                  minWidth="100%"
+                  resizable={true}
+                />
+              </div>
+
+              {/* Cards: small screens */}
+              <div className="md:hidden grid gap-3 grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
+                {(!data?.data || data.data.length === 0) ? (
+                  <div className="col-span-full rounded-xl border-2 border-gray-200 bg-white py-8 text-center">
+                    <p className="text-gray-500 text-sm">Aucun produit trouvé</p>
+                  </div>
+                ) : (
+                  data.data.map((product: Product) => {
+                    const totalStock = getProductQuantity(product);
+                    const isLowStock = totalStock <= product.minStock;
+                    const stockVariant = isLowStock ? 'danger' : totalStock > product.minStock * 1.5 ? 'success' : 'warning';
+                    return (
+                      <Card key={product.id} className="overflow-hidden border-t-4 border-t-green-500">
+                        <CardHeader className="pb-3 pt-4 px-4 bg-gradient-to-b from-gray-50/80 to-white">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              <CardTitle className="text-base font-bold truncate text-gray-900" title={product.name}>{product.name}</CardTitle>
+                              <CardDescription className="font-mono text-xs mt-1 text-gray-500">{product.sku || 'N/A'}</CardDescription>
+                            </div>
+                            <span className={`shrink-0 inline-flex px-2.5 py-1 rounded-full text-xs font-bold ${
+                              stockVariant === 'danger' ? 'bg-red-100 text-red-700 ring-1 ring-red-200' : stockVariant === 'success' ? 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200' : 'bg-amber-100 text-amber-700 ring-1 ring-amber-200'
+                            }`}>
+                              {totalStock}
+                            </span>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="px-4 py-3 space-y-0">
+                          <div className="flex justify-between items-center py-2.5 border-b border-gray-100">
+                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Fournisseur</span>
+                            <span className="text-sm text-gray-800 truncate max-w-[55%]">{product.supplier?.name || '—'}</span>
+                          </div>
+                          <div className="flex justify-between items-center py-2.5 border-b border-gray-100">
+                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Prix</span>
+                            <span className="text-sm font-bold text-green-600">{Number(product.salePrice).toFixed(2)} DT</span>
+                          </div>
+                          <div className="flex justify-between items-center py-2.5">
+                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Seuil</span>
+                            <span className="text-sm font-medium text-gray-700">{product.minStock}</span>
+                          </div>
+                          {(product.description != null && product.description !== '') && (
+                            <p className="text-gray-500 text-xs pt-2 mt-2 border-t border-gray-100 truncate" title={product.description}>{product.description}</p>
+                          )}
+                        </CardContent>
+                        <CardFooter className="flex flex-wrap gap-0.5 px-4 py-3 bg-gray-50/50 border-t border-gray-100">
+                          <Link
+                            href={`/products/${product.id}`}
+                            className="inline-flex items-center justify-center p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors active:scale-95"
+                            title="Voir les détails"
+                          >
+                            <EyeIcon />
+                          </Link>
+                          {canCreateReservation && (
+                            <button
+                              onClick={() => { setSelectedProductId(product.id); setIsReservationModalOpen(true); }}
+                              className="inline-flex items-center justify-center p-2 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-colors active:scale-95"
+                              title="Réserver"
+                            >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                            </button>
+                          )}
+                          {canUpdate && (
+                            <button
+                              onClick={() => handleOpenEditModal(product.id)}
+                              className="inline-flex items-center justify-center p-2 text-amber-600 hover:bg-amber-100 rounded-lg transition-colors active:scale-95"
+                              title="Modifier"
+                            >
+                              <EditIcon />
+                            </button>
+                          )}
+                          {canDelete && (
+                            <button
+                              onClick={() => handleDeleteClick(product.id, product.name)}
+                              disabled={deleting}
+                              className="inline-flex items-center justify-center p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+                              title="Supprimer"
+                            >
+                              <TrashIcon />
+                            </button>
+                          )}
+                        </CardFooter>
+                      </Card>
+                    );
+                  })
+                )}
+              </div>
 
               {data?.meta && data.meta.total > 0 && (
                 <div className="mt-6 rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-3 sm:px-5">

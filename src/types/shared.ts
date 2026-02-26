@@ -148,4 +148,6 @@ export interface TableColumn<T> {
   headerClassName?: string;
   align?: 'left' | 'center' | 'right';
   width?: string;
+  /** Largeur initiale en % pour les tableaux redimensionnables */
+  widthPercent?: number;
 }
