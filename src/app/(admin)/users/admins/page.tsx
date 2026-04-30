@@ -6,8 +6,8 @@ import { useSearchParams } from 'next/navigation';
 import Modal from '@/components/Modal';
 import { useApi, useApiMutation } from '@/hooks/useApi';
 import { useToast } from '@/contexts/ToastContext';
-import { StatisticsCard, ModernTable, SearchFilter, StatusBadge } from '@/components/ui';
-import { UserIcon, PlusIcon } from '@/components/icons';
+import { ModernTable, SearchFilter, StatusBadge } from '@/components/ui';
+import { UserIcon, PlusIcon, EditIcon } from '@/components/icons';
 import type { TableColumn } from '@/types/shared';
 import { type SortDirection } from '@/components/Table';
 import Pagination from '@/components/Pagination';
@@ -42,7 +42,16 @@ interface CreateAdminForm {
   roleId: string;
 }
 
-const numberFormatter = new Intl.NumberFormat('fr-FR');
+interface UpdateAdminForm {
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
+interface ChangePasswordForm {
+  newPassword: string;
+}
+
 const dateFormatter = new Intl.DateTimeFormat('fr-FR', {
   day: '2-digit',
   month: 'short',
@@ -57,6 +66,9 @@ export default function AdminsPage() {
   const [includeDeleted, setIncludeDeleted] = useState(searchParams?.get('includeDeleted') === 'true');
   const [page, setPage] = useState(Number(searchParams?.get('page')) || 1);
   const [isInviteModalOpen, setInviteModalOpen] = useState(false);
+  const [isEditModalOpen, setEditModalOpen] = useState(false);
+  const [isPasswordModalOpen, setPasswordModalOpen] = useState(false);
+  const [selectedAdmin, setSelectedAdmin] = useState<AdminUser | null>(null);
   const [actionUserId, setActionUserId] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<string>('createdAt');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
@@ -126,6 +138,31 @@ export default function AdminsPage() {
     },
   });
 
+  const {
+    register: registerEdit,
+    handleSubmit: handleEditSubmit,
+    reset: resetEdit,
+    setValue: setEditValue,
+    formState: { errors: editErrors },
+  } = useForm<UpdateAdminForm>({
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      email: '',
+    },
+  });
+
+  const {
+    register: registerPassword,
+    handleSubmit: handlePasswordSubmit,
+    reset: resetPassword,
+    formState: { errors: passwordErrors },
+  } = useForm<ChangePasswordForm>({
+    defaultValues: {
+      newPassword: '',
+    },
+  });
+
   const watchedRoleId = watch('roleId');
 
   useEffect(() => {
@@ -137,6 +174,32 @@ export default function AdminsPage() {
   const handleInviteModalClose = () => {
     setInviteModalOpen(false);
     reset();
+  };
+
+  const handleEditModalClose = () => {
+    setEditModalOpen(false);
+    setSelectedAdmin(null);
+    resetEdit();
+  };
+
+  const handlePasswordModalClose = () => {
+    setPasswordModalOpen(false);
+    setSelectedAdmin(null);
+    resetPassword();
+  };
+
+  const handleOpenEditModal = (user: AdminUser) => {
+    setSelectedAdmin(user);
+    setEditValue('firstName', user.firstName);
+    setEditValue('lastName', user.lastName);
+    setEditValue('email', user.email);
+    setEditModalOpen(true);
+  };
+
+  const handleOpenPasswordModal = (user: AdminUser) => {
+    setSelectedAdmin(user);
+    resetPassword();
+    setPasswordModalOpen(true);
   };
 
   const onInviteSubmit = async (data: CreateAdminForm) => {
@@ -153,6 +216,35 @@ export default function AdminsPage() {
     }
   };
 
+  const onEditSubmit = async (data: UpdateAdminForm) => {
+    if (!selectedAdmin) return;
+    setActionUserId(selectedAdmin.id);
+    try {
+      await sendUserAction(`/users/${selectedAdmin.id}`, 'PATCH', data);
+      toast.success('Administrateur modifié avec succès');
+      handleEditModalClose();
+      refreshAdmins();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Impossible de modifier le compte');
+    } finally {
+      setActionUserId(null);
+    }
+  };
+
+  const onPasswordSubmit = async (data: ChangePasswordForm) => {
+    if (!selectedAdmin) return;
+    setActionUserId(selectedAdmin.id);
+    try {
+      await sendUserAction(`/users/${selectedAdmin.id}/password`, 'POST', data);
+      toast.success('Mot de passe modifié avec succès');
+      handlePasswordModalClose();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Impossible de modifier le mot de passe');
+    } finally {
+      setActionUserId(null);
+    }
+  };
+
   const handleDeactivate = async (user: AdminUser) => {
     setActionUserId(user.id);
     try {
@@ -161,51 +253,6 @@ export default function AdminsPage() {
       refreshAdmins();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Erreur lors de la désactivation');
-    } finally {
-      setActionUserId(null);
-    }
-  };
-
-  const handleRestore = async (user: AdminUser) => {
-    setActionUserId(user.id);
-    try {
-      await sendUserAction(`/users/${user.id}/restore`, 'POST');
-      toast.success('Compte restauré avec succès');
-      refreshAdmins();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Impossible de restaurer le compte');
-    } finally {
-      setActionUserId(null);
-    }
-  };
-
-  const handleStatusChange = async (user: AdminUser, value: 'active' | 'inactive') => {
-    const isCurrentlyInactive = Boolean(user.deletedAt);
-    if (value === 'active' && isCurrentlyInactive) {
-      await handleRestore(user);
-      return;
-    }
-    if (value === 'inactive' && !isCurrentlyInactive) {
-      await handleDeactivate(user);
-    }
-  };
-
-  const handleToggleRole = async (user: AdminUser) => {
-    if (!user.role) return;
-    const targetRoleCode = user.role.code === 'ADMIN' ? 'MANAGER' : 'ADMIN';
-    const targetRole = adminRoles.find((role) => role.code === targetRoleCode);
-    if (!targetRole) {
-      toast.error('Rôle cible introuvable');
-      return;
-    }
-
-    setActionUserId(user.id);
-    try {
-      await sendUserAction(`/users/${user.id}/role`, 'POST', { role: targetRole.id });
-      toast.success(`Rôle mis à jour (${targetRole.name})`);
-      refreshAdmins();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Impossible de mettre à jour le rôle');
     } finally {
       setActionUserId(null);
     }
@@ -316,24 +363,16 @@ export default function AdminsPage() {
       label: 'Statut',
       sortable: true,
       render: (user: AdminUser) => (
-        <div className="flex items-center gap-2 min-w-[120px]">
+        <div className="flex items-center gap-2 min-w-[120px] text-xs font-medium">
           <span
             className={`inline-flex h-2 w-2 rounded-full ${
               user.deletedAt ? 'bg-gray-400' : 'bg-green-500'
             }`}
             aria-hidden
           />
-          <select
-            value={user.deletedAt ? 'inactive' : 'active'}
-            onChange={(event) =>
-              handleStatusChange(user, event.target.value as 'active' | 'inactive')
-            }
-            disabled={actionLoading && actionUserId === user.id}
-            className="rounded-lg border border-gray-200 bg-white py-1 pl-2 pr-6 text-xs font-medium text-gray-700 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-200 disabled:opacity-50"
-          >
-            <option value="active">Actif</option>
-            <option value="inactive">Désactivé</option>
-          </select>
+          <span className={user.deletedAt ? 'text-gray-500' : 'text-green-700'}>
+            {user.deletedAt ? 'Désactivé' : 'Actif'}
+          </span>
         </div>
       ),
       className: 'min-w-[120px]',
@@ -341,44 +380,46 @@ export default function AdminsPage() {
     {
       key: 'actions',
       label: 'Actions',
-      className: 'min-w-0 w-28',
+      className: 'min-w-0 w-40',
       render: (user) => (
         <div className="flex min-w-0 flex-shrink items-center gap-2">
           <button
             type="button"
-            onClick={() => handleToggleRole(user)}
+            onClick={() => handleOpenEditModal(user)}
             disabled={actionLoading && actionUserId === user.id}
-            className="inline-flex flex-shrink-0 items-center justify-center rounded-full border border-primary-200 bg-white p-2 text-primary-600 hover:bg-primary-50 hover:text-primary-800 disabled:opacity-50 disabled:cursor-not-allowed"
-            title={user.role?.code === 'ADMIN' ? 'Basculer en Manager' : 'Basculer en Admin'}
-            aria-label={user.role?.code === 'ADMIN' ? 'Basculer en Manager' : 'Basculer en Admin'}
+            className="inline-flex flex-shrink-0 items-center justify-center rounded-full border border-blue-200 bg-blue-50 p-2 text-blue-700 hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Modifier le compte"
+            aria-label="Modifier le compte"
           >
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              viewBox="0 0 24 24"
-              aria-hidden
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 7h13M4 17h13" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 3l6 4-6 4M15 21l6-4-6-4" />
+            <EditIcon className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => handleOpenPasswordModal(user)}
+            disabled={actionLoading && actionUserId === user.id}
+            className="inline-flex flex-shrink-0 items-center justify-center rounded-full border border-amber-200 bg-amber-50 p-2 text-amber-700 hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Changer le mot de passe"
+            aria-label="Changer le mot de passe"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2h-1V9a5 5 0 00-10 0v2H6a2 2 0 00-2 2v6a2 2 0 002 2zm3-10V9a3 3 0 116 0v2H9z" />
             </svg>
           </button>
           <button
             type="button"
-            onClick={() => (user.deletedAt ? handleRestore(user) : handleDeactivate(user))}
-            disabled={actionLoading && actionUserId === user.id}
+            onClick={() => handleDeactivate(user)}
+            disabled={Boolean(user.deletedAt) || (actionLoading && actionUserId === user.id)}
             className={`inline-flex flex-shrink-0 items-center justify-center rounded-full border p-2 ${
               user.deletedAt
-                ? 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100'
+                ? 'border-gray-200 bg-gray-100 text-gray-400'
                 : 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100'
             } disabled:opacity-50 disabled:cursor-not-allowed`}
-            title={user.deletedAt ? 'Restaurer le compte' : 'Désactiver le compte'}
-            aria-label={user.deletedAt ? 'Restaurer le compte' : 'Désactiver le compte'}
+            title={user.deletedAt ? 'Compte déjà supprimé' : 'Supprimer le compte'}
+            aria-label={user.deletedAt ? 'Compte déjà supprimé' : 'Supprimer le compte'}
           >
             {user.deletedAt ? (
               <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 12h16M4 12l5 5M4 12l5-5" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             ) : (
               <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden>
@@ -391,11 +432,11 @@ export default function AdminsPage() {
     },
   ];
 
-  const totalAdmins = admins.length;
-  const activeAdmins = admins.filter((user) => !user.deletedAt).length;
-  const adminCount = admins.filter((user) => user.role?.code === 'ADMIN').length;
-  const managerCount = admins.filter((user) => user.role?.code === 'MANAGER').length;
-  const inactiveAdmins = totalAdmins - activeAdmins;
+  const totalAdmins = sortedAdmins.length;
+  const paginationStart = totalAdmins === 0 ? 0 : (page - 1) * limit + 1;
+  const paginationEnd = totalAdmins === 0
+    ? 0
+    : Math.min((page - 1) * limit + paginatedAdmins.length, totalAdmins);
 
   return (
     <div className="max-w-7xl mx-auto min-w-0 w-full overflow-x-hidden p-4 sm:p-6 space-y-6">
@@ -411,44 +452,14 @@ export default function AdminsPage() {
           <button
             onClick={() => setInviteModalOpen(true)}
             className="inline-flex items-center justify-center px-4 py-3 border border-transparent rounded-xl shadow-lg text-sm font-semibold text-white bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-200 flex-shrink-0 whitespace-nowrap"
-            title="Inviter un nouvel administrateur ou manager"
+            title="Ajouter un nouvel administrateur ou manager"
           >
             <PlusIcon className="w-5 h-5 sm:mr-2 flex-shrink-0" />
-            <span className="hidden lg:inline">Inviter un administrateur</span>
-            <span className="lg:hidden">Inviter</span>
+            <span className="hidden lg:inline">Ajouter un administrateur</span>
+            <span className="lg:hidden">Ajouter</span>
           </button>
         </div>
       </div>
-
-      {/* Statistics Cards */}
-      {admins.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 min-w-0">
-          <StatisticsCard
-            title="Comptes actifs"
-            value={activeAdmins}
-            icon={<UserIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
-            colorScheme="green"
-          />
-          <StatisticsCard
-            title="Admins"
-            value={adminCount}
-            icon={<UserIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
-            colorScheme="purple"
-          />
-          <StatisticsCard
-            title="Managers"
-            value={managerCount}
-            icon={<UserIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
-            colorScheme="blue"
-          />
-          <StatisticsCard
-            title="Total comptes"
-            value={totalAdmins}
-            icon={<UserIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
-            colorScheme="orange"
-          />
-        </div>
-      )}
 
       {/* Filters */}
       <div className="min-w-0 overflow-hidden bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
@@ -498,24 +509,32 @@ export default function AdminsPage() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="mt-6">
-          <Pagination
-            currentPage={page}
-            totalPages={totalPages}
-            hasNext={page < totalPages}
-            hasPrev={page > 1}
-            onPageChange={(newPage) => {
-              setPage(newPage);
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-          />
+        <div className="mt-6 rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-3 sm:px-5">
+          <div className="flex flex-wrap items-center justify-between gap-4 sm:gap-6">
+            <span className="text-sm text-gray-700">
+              Affichage de <span className="font-medium">{paginationStart}</span> à{' '}
+              <span className="font-medium">{paginationEnd}</span> sur{' '}
+              <span className="font-medium">{totalAdmins}</span> administrateur{totalAdmins > 1 ? 's' : ''}
+            </span>
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              hasNext={page < totalPages}
+              hasPrev={page > 1}
+              onPageChange={(newPage) => {
+                setPage(newPage);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              embedded
+            />
+          </div>
         </div>
       )}
 
       <Modal
         isOpen={isInviteModalOpen}
         onClose={handleInviteModalClose}
-        title="Inviter un administrateur"
+        title="Ajouter un administrateur"
         size="lg"
         variant="form"
         icon={
@@ -524,7 +543,7 @@ export default function AdminsPage() {
           </div>
         }
       >
-        <form className="space-y-6" onSubmit={handleSubmit(onInviteSubmit)}>
+        <form className="space-y-6 max-h-[70vh] overflow-y-auto pr-1" onSubmit={handleSubmit(onInviteSubmit)}>
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-semibold text-gray-800 mb-2.5">Prénom</label>
@@ -642,23 +661,6 @@ export default function AdminsPage() {
             </p>
           </div>
 
-          <div className="rounded-xl border-2 border-amber-200/80 bg-gradient-to-br from-amber-50 via-yellow-50/50 to-amber-50 px-5 py-4 shadow-sm">
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 mt-0.5">
-                <svg className="w-5 h-5 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <p className="font-bold text-amber-900 text-sm mb-1.5">Bon à savoir</p>
-                <p className="text-sm text-amber-800 leading-relaxed">
-                  L'envoi automatique d'e-mails n'est pas encore configuré. Transmettez les identifiants
-                  via votre canal sécurisé habituel.
-                </p>
-              </div>
-            </div>
-          </div>
-
           <div className="flex flex-col gap-3 border-t border-gray-200/60 pt-5 sm:flex-row sm:justify-end">
             <button
               type="button"
@@ -701,6 +703,110 @@ export default function AdminsPage() {
               ) : (
                 'Créer le compte'
               )}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={handleEditModalClose}
+        title="Modifier un administrateur"
+        size="lg"
+        variant="form"
+      >
+        <form className="space-y-6" onSubmit={handleEditSubmit(onEditSubmit)}>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <label className="block text-sm font-semibold text-gray-800 mb-2.5">Prénom</label>
+              <input
+                type="text"
+                {...registerEdit('firstName', { required: 'Le prénom est requis' })}
+                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm transition-all duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              />
+              {editErrors.firstName && <p className="mt-2 text-xs font-medium text-red-600">{editErrors.firstName.message}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-800 mb-2.5">Nom</label>
+              <input
+                type="text"
+                {...registerEdit('lastName', { required: 'Le nom est requis' })}
+                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm transition-all duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              />
+              {editErrors.lastName && <p className="mt-2 text-xs font-medium text-red-600">{editErrors.lastName.message}</p>}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-800 mb-2.5">Adresse email</label>
+            <input
+              type="email"
+              {...registerEdit('email', {
+                required: "L'email est requis",
+                pattern: { value: /\S+@\S+\.\S+/, message: 'Email invalide' },
+              })}
+              className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm transition-all duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            />
+            {editErrors.email && <p className="mt-2 text-xs font-medium text-red-600">{editErrors.email.message}</p>}
+          </div>
+
+          <div className="flex flex-col gap-3 border-t border-gray-200/60 pt-5 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={handleEditModalClose}
+              className="rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 shadow-sm"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              disabled={!selectedAdmin || (actionLoading && actionUserId === selectedAdmin.id)}
+              className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-3 text-sm font-semibold text-white shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              Enregistrer
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal
+        isOpen={isPasswordModalOpen}
+        onClose={handlePasswordModalClose}
+        title="Changer le mot de passe"
+        size="lg"
+        variant="form"
+      >
+        <form className="space-y-6" onSubmit={handlePasswordSubmit(onPasswordSubmit)}>
+          <div>
+            <label className="block text-sm font-semibold text-gray-800 mb-2.5">Nouveau mot de passe</label>
+            <input
+              type="password"
+              {...registerPassword('newPassword', {
+                required: 'Le mot de passe est requis',
+                minLength: { value: 8, message: 'Au moins 8 caractères' },
+              })}
+              className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm transition-all duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              placeholder="Minimum 8 caractères"
+            />
+            {passwordErrors.newPassword && (
+              <p className="mt-2 text-xs font-medium text-red-600">{passwordErrors.newPassword.message}</p>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-3 border-t border-gray-200/60 pt-5 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={handlePasswordModalClose}
+              className="rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 shadow-sm"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              disabled={!selectedAdmin || (actionLoading && actionUserId === selectedAdmin.id)}
+              className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-3 text-sm font-semibold text-white shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              Mettre à jour
             </button>
           </div>
         </form>
